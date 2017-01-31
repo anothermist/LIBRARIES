@@ -117,7 +117,7 @@ extern void squawk_playroutine() asm("squawk_playroutine");
 // uses 132 cycles (not counting playroutine)
 //     ~1/3 CPU @ 44kHz on 16MHz
 #define SQUAWK_CONSTRUCT_ISR(TARGET_REGISTER) \
-uint16_t cia, cia_count; \
+__attribute__((used)) uint16_t cia, cia_count; \
 intptr_t squawk_register = (intptr_t)&TARGET_REGISTER; \
 ISR(TIMER1_COMPA_vect, ISR_NAKED) { \
   asm volatile( \

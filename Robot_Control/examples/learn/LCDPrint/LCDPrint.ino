@@ -16,7 +16,6 @@
 
 #include <ArduinoRobot.h>
 #include <Wire.h>
-#include <SPI.h>
 
 int value;
 

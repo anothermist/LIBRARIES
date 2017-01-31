@@ -32,11 +32,11 @@ XLR8adcClass XLR8ADC;
 //  likely be static
 // uint8_t XLR8adcClass::placeholder = 0;
 
-XLR8adcClass::begin() {
+void XLR8adcClass::begin() {
   // Assume that if you're using this library you probably want 12 bit mode
   set12bitMode();
 }
-XLR8adcClass::end() {
+void XLR8adcClass::end() {
   // Assume that if you're returning to non-XLR8, you probably want 10 bit mode to match Arduino
   set10bitMode();
 }

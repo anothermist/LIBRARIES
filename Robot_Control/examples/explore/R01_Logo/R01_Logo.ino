@@ -24,7 +24,6 @@
 
 #include <ArduinoRobot.h> // include the robot library
 #include <Wire.h>
-#include <SPI.h>
 
 int commands[20];  //  array for storing commands
 
@@ -56,8 +55,9 @@ void loop() {
 
 // empty the commands array
 void iniCommands() {
-  for (int i = 0; i < 20; i++)
+  for (int i = 0; i < 20; i++) {
     commands[i] = -1;
+  }
 }
 
 // add commands to the array

@@ -77,8 +77,8 @@ extern intptr_t squawk_register;
 extern uint16_t cia;
 
 // Exports
-osc_t osc[4];
-uint8_t pcm = 128;
+__attribute__((used)) osc_t osc[4];
+__attribute__((used)) uint8_t pcm = 128;
 
 // ProTracker period tables
 const uint16_t period_tbl[84] PROGMEM = {
@@ -371,7 +371,7 @@ void SquawkSynth::stop() {
 }
 
 // Progress module by one tick
-void squawk_playroutine() {
+__attribute__((used)) void squawk_playroutine() {
   static bool lockout = false;
 
   if(!order_count) return;

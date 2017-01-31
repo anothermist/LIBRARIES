@@ -23,7 +23,6 @@
 
 #include <ArduinoRobot.h>
 #include <Wire.h>
-#include <SPI.h>
 
 void setup() {
   // initialize the robot

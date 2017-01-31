@@ -43,10 +43,10 @@ class XLR8adcClass {
   // Done similar to Arduino SPI class with begin() and end() instead of
   //  constructor/destructor
   static void begin();
-  inline static void set12bitMode() { XLR8ADCR |= _BV(AD12EN); }
+  inline static void set12bitMode() { XLR8ADCR |=  _BV(AD12EN); }
   inline static void set10bitMode() { XLR8ADCR &= ~_BV(AD12EN); }
-  inline static bool is12bitMode(return (XLR8ADCR & _BV(AD12EN)));
-  inline static bool is10bitMode(return !(XLR8ADCR & _BV(AD12EN));
+  inline static bool is12bitMode() { return  (XLR8ADCR & _BV(AD12EN)); }
+  inline static bool is10bitMode() { return !(XLR8ADCR & _BV(AD12EN)); }
   static void end();
   private:
   // Placeholder to remind myself that any variables we add in the future probably
@@ -57,5 +57,7 @@ class XLR8adcClass {
 #else
  #error "XLR8ADC library requires Tools->Board->XLR8xxx selection. Install boards from https://github.com/AloriumTechnology/Arduino_Boards"
 #endif
+
+extern XLR8adcClass XLR8ADC;
 
 #endif

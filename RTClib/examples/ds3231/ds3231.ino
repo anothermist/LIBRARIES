@@ -1,7 +1,7 @@
 // Date and time functions using a DS3231 RTC connected via I2C and Wire lib
 #include <Wire.h>
 #include "RTClib.h"
-
+const int VCC = 12;
 RTC_DS3231 rtc;
 
 char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
@@ -11,8 +11,9 @@ void setup () {
 #ifndef ESP8266
   while (!Serial); // for Leonardo/Micro/Zero
 #endif
-
-  Serial.begin(9600);
+ pinMode(VCC, OUTPUT);
+  digitalWrite(VCC, HIGH);
+  Serial.begin(115200);
 
   delay(3000); // wait for console opening
 
