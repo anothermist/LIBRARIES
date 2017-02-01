@@ -1,22 +1,21 @@
 #######################################
-# Syntax Coloring Map For EEPROM
+# Syntax Coloring Map HID
 #######################################
 
 #######################################
 # Datatypes (KEYWORD1)
 #######################################
 
-EEPROM	KEYWORD1
-EERef	KEYWORD1
-EEPtr	KEYWORD2
+HID	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
-
-update	KEYWORD2
+begin	KEYWORD2
+SendReport	KEYWORD2
+AppendDescriptor	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
 #######################################
-
+HID_TX	LITERAL1
