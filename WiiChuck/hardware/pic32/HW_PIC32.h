@@ -22,13 +22,17 @@ void WiiChuck::begin()
 		_use_hw = false;
 		pinMode(_scl_pin, OUTPUT);
 	}
-	_writeRegister(0x40, 0x00);
+	initBytes();
 	delay(100);
 	_burstRead();
 	delay(100);
 	_burstRead();
 	_joy_x_center = _dataarray[0];
 	_joy_y_center = _dataarray[1];
+	_joy_x_max=_joy_x_center;
+	_joy_x_min=_joy_x_center;
+	_joy_y_max=_joy_y_center;
+	_joy_y_min=_joy_y_center;
 }
 
 void WiiChuck::_burstRead()
