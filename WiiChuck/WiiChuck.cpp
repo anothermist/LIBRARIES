@@ -20,23 +20,15 @@
  examples and tools supplied with the library.
  */
 #include "WiiChuck.h"
+#include <Arduino.h>
+#include <Wire.h>
 
-// Include hardware-specific functions for the correct MCU
-#if defined(__AVR__)
-#include "hardware/avr/HW_AVR.h"
-#elif defined(__PIC32MX__)
-#include "hardware/pic32/HW_PIC32.h"
-#elif defined(__arm__)
-#include "hardware/arm/HW_ARM.h"
-#else
-#include  "hardware/generic/HW_Generic.h"
-#endif
 
 /* Public */
 
 WiiChuck::WiiChuck(uint8_t data_pin, uint8_t sclk_pin) {
 	_sda_pin = data_pin;
-	_scl_pin = sclk_pin;
+	_scl_PIN = sclk_pin;
 	_callCount = 0;
 	callCountBeforeReset = 1000;
 	_clockSpacing = 1;
@@ -45,6 +37,8 @@ WiiChuck::WiiChuck(uint8_t data_pin, uint8_t sclk_pin) {
 	type = THIRDPARTYWII;
 	maps = NULL;
 	numMaps=0;
+	printServos=false;
+	usePullUpClock=false;
 }
 
 void WiiChuck::readData() {
@@ -56,9 +50,10 @@ void WiiChuck::readData() {
 		while (tmp != NULL && i++<=numMaps) {
 			// perform the mapping
 			int value = performMap(tmp);
-			Serial.print(" value ");
-			Serial.print(value);
-
+			if(printServos){
+				Serial.print(" value ");
+				Serial.print(value);
+			}
 			tmp->myservo.write(value);
 			if (tmp->next == NULL) {
 				// The end of the list
@@ -182,19 +177,12 @@ int WiiChuck::getAccelY() {
 int WiiChuck::getAccelZ() {
 	return ((_dataarray[4] << 2) + ((_dataarray[5] & 0xC0) >> 6)) - 512;;
 }
+boolean WiiChuck::checkButtonZ() {
 
+	return (_dataarray[5] & 0x01)==0;
+}
 boolean WiiChuck::checkButtonC() {
-	int buttons = _dataarray[5] & 0x03;
-	switch (buttons) {
-	case 0:
-		return false;
-	case 1:
-		return true;
-	case 2:
-		return true;
-	case 3:
-		return false;
-	}
+	return (_dataarray[5] & 0x02)==0;
 }
 boolean WiiChuck::leftShoulderPressed() {
 	return _PressedRowBit(0, 5);
@@ -282,20 +270,7 @@ int WiiChuck::rightStickY() {
 	return (_dataarray[2] & 0x1f);
 }
 
-boolean WiiChuck::checkButtonZ() {
 
-	int buttons = _dataarray[5] & 0x03;
-	switch (buttons) {
-	case 0:
-		return true;
-	case 1:
-		return false;
-	case 2:
-		return true;
-	case 3:
-		return false;
-	}
-}
 
 // Create a map between controller and a servo
 void WiiChuck::addControlMap(int servoPin, int servoMin, int servoCenter,
@@ -484,79 +459,122 @@ boolean WiiChuck::_PressedRowBit(byte row, byte bit) {
 }
 
 void WiiChuck::_sendStart(byte addr) {
-	pinMode(_sda_pin, OUTPUT);
-	digitalWrite(_sda_pin, HIGH);
-	digitalWrite(_scl_pin, HIGH);
-	digitalWrite(_sda_pin, LOW);
-	digitalWrite(_scl_pin, LOW);
-	_shiftOut(_sda_pin, _scl_pin, addr);
+	_dataHigh();
+	_clockHigh();
+	_dataLow();
+	_clockLow();
+	_shiftOut( addr);
+
 }
 
 void WiiChuck::_sendStop() {
-	pinMode(_sda_pin, OUTPUT);
-	digitalWrite(_sda_pin, LOW);
-	digitalWrite(_scl_pin, HIGH);
-	digitalWrite(_sda_pin, HIGH);
+	_clockLow();
+	_clockHigh();
+	_dataHigh();
 	pinMode(_sda_pin, INPUT);
 }
 
 void WiiChuck::_sendNack() {
-	pinMode(_sda_pin, OUTPUT);
-	digitalWrite(_scl_pin, LOW);
-	digitalWrite(_sda_pin, HIGH);
-	digitalWrite(_scl_pin, HIGH);
-	digitalWrite(_scl_pin, LOW);
+	_clockLow();
+	_dataHigh();
+	_clockHigh();
+	_clockLow();
 	pinMode(_sda_pin, INPUT);
 }
 
 void WiiChuck::_sendAck() {
-	pinMode(_sda_pin, OUTPUT);
-	digitalWrite(_scl_pin, LOW);
-	digitalWrite(_sda_pin, LOW);
-	digitalWrite(_scl_pin, HIGH);
-	digitalWrite(_scl_pin, LOW);
+	_clockLow();
+	_dataLow();
+	_clockHigh();
+	_clockLow();
 	pinMode(_sda_pin, INPUT);
 }
 
+void WiiChuck::_dataHigh(){
+	//Serial.println("high");
+	if(usePullUpClock){
+		pinMode(_sda_pin, INPUT);
+	}else{
+		pinMode(_sda_pin, OUTPUT);
+		digitalWrite(_sda_pin, HIGH);
+	}
+
+}
+void WiiChuck::_dataLow(){
+	//Serial.println("low");
+	pinMode(_sda_pin, OUTPUT);
+	digitalWrite(_sda_pin, LOW);
+
+}
+void WiiChuck::_clockHigh(){
+	//Serial.println("high");
+	if(usePullUpClock){
+		_clockStallCheck();
+	}else{
+		pinMode(_scl_PIN, OUTPUT);
+		digitalWrite(_scl_PIN, HIGH);
+	}
+//	pinMode(_scl_PIN, OUTPUT);
+//	digitalWrite(_scl_PIN, HIGH);
+	if (_clockSpacing > 0)delayMicroseconds(_clockSpacing);
+
+}
+void WiiChuck::_clockLow(){
+	//Serial.println("low");
+	pinMode(_scl_PIN, OUTPUT);
+	digitalWrite(_scl_PIN, LOW);
+	if (_clockSpacing > 0)delayMicroseconds(_clockSpacing);
+
+}
+
+void WiiChuck::_clockStallCheck(){
+	pinMode(_scl_PIN, INPUT);
+
+	unsigned long time = millis();
+	while (digitalRead(_scl_PIN) != HIGH && (time + ackTimeout) < millis()) {
+	}
+//	if ((time + ackTimeout) < millis()) {
+//		_timeoutCount++;
+//		if (_timeoutCount > 10) {
+//			_timeoutCount = 0;
+//			Serial.println("Stall reset");
+//			begin();
+//		}
+//	}
+}
 void WiiChuck::_waitForAck() {
 	pinMode(_sda_pin, INPUT);
-	digitalWrite(_scl_pin, HIGH);
+	_clockHigh();
 	unsigned long time = millis();
 	while (digitalRead(_sda_pin) == HIGH && (time + ackTimeout) < millis()) {
 	}
-	if ((time + ackTimeout) < millis()) {
-		_timeoutCount++;
-		if (_timeoutCount > 10) {
-			_timeoutCount = 0;
-			//Serial.println("Timeout reset");
-			begin();
-		}
-	}
-	digitalWrite(_scl_pin, LOW);
+//	if ((time + ackTimeout) < millis()) {
+//		_timeoutCount++;
+//		if (_timeoutCount > 10) {
+//			_timeoutCount = 0;
+//			Serial.println("Timeout reset");
+//			begin();
+//		}
+//	}
+	_clockLow();
+	delayMicroseconds(75);
 }
 
 uint8_t WiiChuck::_readByte() {
 	pinMode(_sda_pin, INPUT);
 
 	uint8_t value = 0;
-	uint8_t currentBit = 0;
-
+	//_clockLow();
 	for (int i = 0; i < 8; ++i) {
-		digitalWrite(_scl_pin, HIGH);
-		currentBit = digitalRead(_sda_pin);
-		value |= (currentBit << 7 - i);
-		if (_clockSpacing > 0)
-			delayMicroseconds(_clockSpacing);
-		digitalWrite(_scl_pin, LOW);
-		if (_clockSpacing > 0)
-			delayMicroseconds(_clockSpacing);
+		_clockHigh();
+		value |= (digitalRead(_sda_pin) << (7 - i));
+		_clockLow();
 	}
 	return value;
 }
 
 void WiiChuck::_writeByte(uint8_t value) {
-	pinMode(_sda_pin, OUTPUT);
-	_shiftOut(_sda_pin, _scl_pin, value);
+	_shiftOut( value);
 }
 void WiiChuck::initBytes() {
 	switch (type) {
@@ -569,23 +587,116 @@ void WiiChuck::initBytes() {
 	case WIICLASSIC:
 
 		break;
-//	default:
-//		Serial.println("Error, specify a controller type");
 	}
 	_writeRegister(0x40, 0x00);
 }
 
-void WiiChuck::_shiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t val) {
+void WiiChuck::_shiftOut( uint8_t val) {
 	uint8_t i;
-
 	for (i = 0; i < 8; i++) {
-		digitalWrite(dataPin, (val & (1 << (7 - i))) == 0 ? 0 : 1);
-		digitalWrite(clockPin, HIGH);
-		if (_clockSpacing > 0)
-			delayMicroseconds(_clockSpacing);
-		digitalWrite(clockPin, LOW);
-		if (_clockSpacing > 0)
-			delayMicroseconds(_clockSpacing);
+		if((val & (1 << (7 - i))) == 0) {
+			_dataLow() ;
+		}else
+			_dataHigh();
+		_clockHigh();
+		_clockLow();
+	}
+}
+
+void WiiChuck::begin()
+{
+
+
+	_use_hw = false;
+	if (	(_sda_pin == SDA) and (_scl_PIN == SCL))
+	{
+		_use_hw = true;
+		  Wire.begin();
+		  Serial.println("Starting Wire");
+
+	}
+	initBytes();
+	//Serial.println("Init sent, reading");
+
+	delay(100);
+	_burstRead();
+	//Serial.println("re-reading");
+	delay(100);
+	_burstRead();
+	_joy_x_center = _dataarray[0];
+	_joy_y_center = _dataarray[1];
+	_joy_x_max=_joy_x_center;
+	_joy_x_min=_joy_x_center;
+	_joy_y_max=_joy_y_center;
+	_joy_y_min=_joy_y_center;
+	Serial.println("Initialization Done");
+
+}
+
+void WiiChuck::_burstRead()
+{
+	if (_use_hw)
+	{
+		 // send conversion command
+		  Wire.beginTransmission(I2C_ADDR);
+		  Wire.write(0x00);
+		  Wire.endTransmission();
+
+		  // wait for data to be converted
+		  delay(1);
+
+		  // read data
+		  Wire.readBytes(_dataarray, Wire.requestFrom(I2C_ADDR, sizeof(_dataarray)));
+
+	}else{
+	// send conversion command
+		_sendStart(I2C_ADDR_W);
+		_waitForAck();
+		_writeByte(0);
+		_waitForAck();
+		_sendStop();
+		// wait for data to be converted
+		  delay(1);
+		_sendStart(I2C_ADDR_R);
+		_waitForAck();
+
+		for (int i=0; i<6; i++)
+		{
+			delayMicroseconds(40);
+			_dataarray[i] = _readByte()  ;
+			if (i<5)
+				_sendAck();
+			else
+				_sendNack();
+		}
+		_sendStop();
+	}
+}
+
+void WiiChuck::_writeRegister(uint8_t reg, uint8_t value)
+{
+	if (_use_hw)
+	{
+		//Serial.println("Writing reg");
+		  Wire.beginTransmission(I2C_ADDR);
+		  Wire.write(reg);
+		  Wire.write(value);
+		  Wire.endTransmission();
+		  //Serial.println("Writing reg done");
+	}else{
+	//Serial.println("Sending start");
+		_sendStart(I2C_ADDR_W);
+		_waitForAck();
+		//Serial.println("First byte");
+		_writeByte(reg);
+		_waitForAck();
+		//Serial.println("Seconde byte");
+		_writeByte(value);
+		//Serial.println("waiting");
+		_waitForAck();
+		//Serial.println("stopping");
+		_sendStop();
+		//Serial.println("done");
 	}
 }
 

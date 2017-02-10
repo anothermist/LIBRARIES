@@ -48,9 +48,13 @@ a WebSocket Server and Client for Arduino based on RFC6455.
 
 This libary can run in Async TCP mode on the ESP.
 
-The mode can be aktivated in the ```WebSockets.h``` (see WEBSOCKETS_NETWORK_TYPE define).
+The mode can be activated in the ```WebSockets.h``` (see WEBSOCKETS_NETWORK_TYPE define).
 
 [ESPAsyncTCP](https://github.com/me-no-dev/ESPAsyncTCP) libary is required.
+
+### Support for Particle devices ###
+- ESP.getFreeHeap() replaced by macro GET_FREE_HEAP, defined by the type of device (currently only for ESP and STM32-based/Particle devices).
+- Use Particle's TCPClient and TCPServer classes instead of Arduino's.
 
 ### Issues ###
 Submit issues to: https://github.com/Links2004/arduinoWebSockets/issues

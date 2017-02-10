@@ -25,7 +25,6 @@
 #ifndef WEBSOCKETSSERVER_H_
 #define WEBSOCKETSSERVER_H_
 
-#include <Arduino.h>
 #include "WebSockets.h"
 
 #define WEBSOCKETS_SERVER_CLIENT_MAX  (5)
@@ -33,7 +32,7 @@
 
 
 
-class WebSocketsServer: private WebSockets {
+class WebSocketsServer: protected WebSockets {
 public:
 
 #ifdef __AVR__

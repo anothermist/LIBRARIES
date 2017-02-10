@@ -31,9 +31,6 @@
 #elif defined(__arm__)
 #include "Arduino.h"
 #include "hardware/arm/HW_ARM_defines.h"
-#else
-#include "Arduino.h"
-#include "hardware/generic/HW_Generic_defines.h"
 #endif
 
 #define I2C_ADDR		0x52
@@ -104,6 +101,8 @@ public:
 	int leftStickY();
 	int rightStickX();
 	int rightStickY();
+	bool printServos;
+
 	// Create a map between controller and a servo
 	void addControlMap(int servoPin, int servoMin,int servoCenter,
 			int servoMax,int axisMin,int axiscenter,int axisMax,
@@ -111,15 +110,21 @@ public:
 	void addButtonMap(int servoPin, int servoMin,
 				int servoMax,
 				ButtonMapName mapName);
+
+	void _clockHigh();
+	void _clockLow();
+	void _dataHigh();
+	void _dataLow();
+	uint8_t _dataarray[6];
+	boolean usePullUpClock;
 private:
 	ServoWiiControllerMap * maps;
 	void addControlMap(int servoPin, int servoMin,int servoCenter,
 				int servoMax,int axisMin,int axisCenter,int axisMax,
 				FunctionMapName mapName,ButtonMapName button);
 	int performMap(ServoWiiControllerMap * tmp);
-	uint8_t _scl_pin;
+	uint8_t _scl_PIN;
 	uint8_t _sda_pin;
-	uint8_t _dataarray[6];
 	int32_t _joy_x_center, _joy_y_center;
 	int32_t _joy_x_max, _joy_y_max;
 	int32_t _joy_x_min, _joy_y_min;
@@ -133,11 +138,12 @@ private:
 	void _sendAck();
 	void _sendNack();
 	void _waitForAck();
+	void _clockStallCheck();
 	uint8_t _readByte();
 	void _writeByte(uint8_t value);
 	void _burstRead();
 	void _writeRegister(uint8_t reg, uint8_t value);
-	void _shiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t val);
+	void _shiftOut(uint8_t val);
 	boolean _PressedRowBit(uint8_t row, uint8_t bit);
 
 #if defined(__arm__)

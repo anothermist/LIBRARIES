@@ -63,6 +63,7 @@ void WebSocketsClient::begin(const char *host, uint16_t port, const char * url, 
     _client.cVersion = 0;
     _client.base64Authorization = "";
     _client.plainAuthorization = "";
+    _client.isSocketIO = false;
 
 #ifdef ESP8266
     randomSeed(RANDOM_REG32);
@@ -215,7 +216,7 @@ bool WebSocketsClient::sendBIN(const uint8_t * payload, size_t length) {
  */
 bool WebSocketsClient::sendPing(uint8_t * payload, size_t length) {
     if(clientIsConnected(&_client)) {
-        return sendFrame(&_client, WSop_ping, payload, length);
+        return sendFrame(&_client, WSop_ping, payload, length, true);
     }
     return false;
 }
@@ -331,6 +332,7 @@ void WebSocketsClient::clientDisconnect(WSclient_t * client) {
     client->cVersion = 0;
     client->cIsUpgrade = false;
     client->cIsWebsocket = false;
+    client->cSessionId = "";
 
     client->status = WSC_NOT_CONNECTED;
 
@@ -429,8 +431,6 @@ void WebSocketsClient::sendHeader(WSclient_t * client) {
                     "Host: " + _host + ":" + _port + "\r\n"
                     "Connection: Upgrade\r\n"
                     "Upgrade: websocket\r\n"
-                    "Origin: file://\r\n"
-                    "User-Agent: arduino-WebSocket-Client\r\n"
                     "Sec-WebSocket-Version: 13\r\n"
                     "Sec-WebSocket-Key: " + client->cKey + "\r\n";
 
@@ -444,11 +444,11 @@ void WebSocketsClient::sendHeader(WSclient_t * client) {
 
     } else {
         handshake = "GET " + client->cUrl + "&transport=polling HTTP/1.1\r\n"
+                    "Host: " + _host + ":" + _port + "\r\n"
                     "Connection: keep-alive\r\n";
     }
 
-    handshake +=    "Host: " + _host + ":" + _port + "\r\n"
-                    "Origin: file://\r\n"
+    handshake +=    "Origin: file://\r\n"
                     "User-Agent: arduino-WebSocket-Client\r\n";
 
     if(client->base64Authorization.length() > 0) {
@@ -461,7 +461,8 @@ void WebSocketsClient::sendHeader(WSclient_t * client) {
 
     handshake += "\r\n";
 
-    client->tcp->write(handshake.c_str(), handshake.length());
+    DEBUG_WEBSOCKETS("[WS-Client][sendHeader] handshake %s", (uint8_t*)handshake.c_str());
+    client->tcp->write((uint8_t*)handshake.c_str(), handshake.length());
 
 #if (WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266_ASYNC)
         client->tcp->readStringUntil('\n', &(client->cHttpLine), std::bind(&WebSocketsClient::handleHeader, this, client, &(client->cHttpLine)));
@@ -507,7 +508,11 @@ void WebSocketsClient::handleHeader(WSclient_t * client, String * headerLine) {
             } else if(headerName.equalsIgnoreCase("Sec-WebSocket-Version")) {
                 client->cVersion = headerValue.toInt();
             } else if(headerName.equalsIgnoreCase("Set-Cookie")) {
-                client->cSessionId = headerValue.substring(headerValue.indexOf('=') + 1);
+                if (headerValue.indexOf("HttpOnly") > -1) { 
+                    client->cSessionId = headerValue.substring(headerValue.indexOf('=') + 1, headerValue.indexOf(";"));
+                } else { 
+                    client->cSessionId = headerValue.substring(headerValue.indexOf('=') + 1); 
+                }
             }
         } else {
             DEBUG_WEBSOCKETS("[WS-Client][handleHeader] Header error (%s)\n", headerLine->c_str());
