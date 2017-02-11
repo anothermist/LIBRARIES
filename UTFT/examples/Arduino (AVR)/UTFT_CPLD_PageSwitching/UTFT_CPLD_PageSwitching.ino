@@ -25,7 +25,7 @@ extern uint8_t SevenSegNumFont[];
 // CTE TFT LCD/SD Shield for Arduino Mega      : <display model>,38,39,40,41
 //
 // Remember to change the model parameter to suit your display module!
-UTFT myGLCD(CPLD,38,39,40,41);
+UTFT myGLCD(SSD1289,38,39,40,41);
 
 void setup()
 {
