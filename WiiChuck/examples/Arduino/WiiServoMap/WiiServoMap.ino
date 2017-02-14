@@ -10,12 +10,9 @@ void setup() {
 
 	Serial.begin(115200);
 	Serial.println("\n\nStarting WiiChuck Demo");
-	//myChuck.type=OFFICIALWII;
-	myChuck.type = THIRDPARTYWII;
 	myChuck.printServos=true;	
 	myChuck.usePullUpClock = false;
 
-	//myChuck.type = WIICLASSIC;
 	// optional functions 
 	//JOY_X,JOY_Y,ROLL,PITCH,ACCELX,ACCELY ,ACCELZ,
 	//classic controller
@@ -41,7 +38,7 @@ void setup() {
 	//classic controller
 	//LZ,RZ,LD,RD,UD,DD,SL,H,START,X,Y,A,B
 	myChuck.addButtonMap(D6, // Servo IO pin
-			20,// released value
+			60,// released value
 			130, //pressed falue
 			ZBUTTON);// select a button funtion
 	myChuck.begin();

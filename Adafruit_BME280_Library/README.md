@@ -5,6 +5,9 @@ Designed specifically to work with the Adafruit BME280 Breakout
 
 These sensors use I2C or SPI to communicate, up to 4 pins are required to interface
 
+Use of this library also requires [Adafruit_Sensor](https://github.com/adafruit/Adafruit_Sensor)
+to be installed on your local system.
+
 Adafruit invests time and resources providing this open source code, 
 please support Adafruit and open-source hardware by purchasing 
 products from Adafruit!
@@ -26,18 +29,20 @@ http://learn.adafruit.com/adafruit-all-about-arduino-libraries-install-use
 
 ## Compatibility
 
-MCU               | Tested Works | Doesn't Work | Not Tested  | Notes
------------------ | :----------: | :----------: | :---------: | -----
-Atmega328 @ 16MHz |      X       |             |            | 
-Atmega328 @ 12MHz |      X       |             |            | 
+MCU                | Tested Works | Doesn't Work | Not Tested  | Notes
+------------------ | :----------: | :----------: | :---------: | -----
+Atmega328 @ 16MHz  |      X       |             |            | 
+Atmega328 @ 12MHz  |      X       |             |            | 
 Atmega32u4 @ 16MHz |      X       |             |            | Use SDA/SCL on pins D2 &amp; D3
-Atmega32u4 @ 8MHz |      X       |             |            | Use SDA/SCL on pins D2 &amp; D3
-ESP8266           |      X       |             |            | SDA/SCL default to pins 4 &amp; 5 but any two pins can be assigned as SDA/SCL using Wire.begin(SDA,SCL)
+Atmega32u4 @ 8MHz  |      X       |             |            | Use SDA/SCL on pins D2 &amp; D3
+ESP8266            |      X       |             |            | SDA/SCL default to pins 4 &amp; 5 but any two pins can be assigned as SDA/SCL using Wire.begin(SDA,SCL)
 Atmega2560 @ 16MHz |      X       |             |            | Use SDA/SCL on pins 20 &amp; 21
-ATSAM3X8E         |      X       |             |            | Use SDA/SCL on pins 20 &amp; 21
-ATSAM21D          |      X       |             |            | 
-ATtiny85 @ 16MHz  |             |             |     X       | 
-ATtiny85 @ 8MHz   |             |             |     X       | 
+ATSAM3X8E          |      X       |             |            | Use SDA/SCL on pins 20 &amp; 21
+ATSAM21D           |      X       |             |            | 
+ATtiny85 @ 16MHz   |             |      X       |            | 
+ATtiny85 @ 8MHz    |             |      X       |            | 
+Intel Curie @ 32MHz |             |             |     X       | 
+STM32F2            |             |             |     X       | 
 
   * ATmega328 @ 16MHz : Arduino UNO, Adafruit Pro Trinket 5V, Adafruit Metro 328, Adafruit Metro Mini
   * ATmega328 @ 12MHz : Adafruit Pro Trinket 3V

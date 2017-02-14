@@ -1,23 +1,5 @@
-/*
- WiiChuck.cpp - Arduino/chipKit library support for the WiiChuck
- Copyright (C)2015 Rinky-Dink Electronics, Henning Karlsen. All right reserved
-
- This library has been made to easily interface and use the WiiChuck with
- an Arduino or chipKit.
-
- You can find the latest version of the library at
- http://www.RinkyDinkElectronics.com/
-
- This library is free software; you can redistribute it and/or
- modify it under the terms of the CC BY-NC-SA 3.0 license.
- Please see the included documents for further information.
-
- Commercial use of this library requires you to buy a license that
- will allow commercial use. This includes using the library,
- modified or not, as a tool to sell products.
-
- The license applies to all part of the library including the
- examples and tools supplied with the library.
+/**
+ * @author Kevin Harrington, Alex Camilo
  */
 #include "WiiChuck.h"
 #include <Arduino.h>
@@ -34,15 +16,76 @@ WiiChuck::WiiChuck(uint8_t data_pin, uint8_t sclk_pin) {
 	_clockSpacing = 1;
 	ackTimeout = 100;
 	_timeoutCount = 0;
-	type = THIRDPARTYWII;
+	type = Mystery;
 	maps = NULL;
 	numMaps=0;
 	printServos=false;
 	usePullUpClock=false;
+
 }
 
+ControllerType WiiChuck::identifyController(){
+	_burstReadWithAddress(0xfe);
+  
+  if (_dataarray[0] == 0x01)
+    if (_dataarray[1] == 0x01)
+      return WIICLASSIC; // Classic Controller
+      
+  if (_dataarray[0] == 0x00)
+    if (_dataarray[1] == 0x00)
+      return NUNCHUCK; // nunchuck
+      
+  // It's something else.
+  _burstReadWithAddress(0xfa);
+  
+  if (_dataarray[0] == 0x00)
+    if (_dataarray[1] == 0x00)
+      if (_dataarray[2] == 0xa4)
+        if (_dataarray[3] == 0x20)
+          if (_dataarray[4] == 0x01)
+            if (_dataarray[5] == 0x03)
+              return GuitarHeroController; // Guitar Hero Controller
+  
+  if (_dataarray[0] == 0x01)
+    if (_dataarray[1] == 0x00)
+      if (_dataarray[2] == 0xa4)
+        if (_dataarray[3] == 0x20)
+          if (_dataarray[4] == 0x01)
+            if (_dataarray[5] == 0x03)
+              return GuitarHeroWorldTourDrums; // Guitar Hero World Tour Drums
+              
+              
+  if (_dataarray[0] == 0x03)
+    if (_dataarray[1] == 0x00)
+      if (_dataarray[2] == 0xa4)
+        if (_dataarray[3] == 0x20)
+          if (_dataarray[4] == 0x01)
+            if (_dataarray[5] == 0x03)
+              return GuitarHeroWorldTourDrums; // Guitar Hero World Tour Drums
+              
+  if (_dataarray[0] == 0x00)
+    if (_dataarray[1] == 0x00)
+      if (_dataarray[2] == 0xa4)
+        if (_dataarray[3] == 0x20)
+          if (_dataarray[4] == 0x01)
+            if (_dataarray[5] == 0x11)
+              return DrumController; // Taiko no Tatsujin TaTaCon (Drum controller)
+              
+  if (_dataarray[0] == 0xFF)
+    if (_dataarray[1] == 0x00)
+      if (_dataarray[2] == 0xa4)
+        if (_dataarray[3] == 0x20)
+          if (_dataarray[4] == 0x00)
+            if (_dataarray[5] == 0x13)
+              return DrawsomeTablet; // Drawsome Tablet
+              
+  return Mystery;
+}
+
+
 void WiiChuck::readData() {
-	initBytes();
+
+	//delay(100);
 	_burstRead();
 	if (maps != NULL) {
 		ServoWiiControllerMap * tmp = maps;
@@ -62,26 +105,18 @@ void WiiChuck::readData() {
 				tmp = tmp->next;
 			}
 		}
-		Serial.println();
+		if(printServos)Serial.println();
 	}
 }
 
 int WiiChuck::getJoyX() {
 	int JoyPos = _dataarray[0];
 	int center = _joy_x_center;
-	int min = _joy_x_min;
-	int max = _joy_x_max;
+	int min = 0;
+	int max = 255;
 
 	int value =0;
-	// Set up the min and max values on this channel
-	if(JoyPos>max){
-		_joy_x_max=JoyPos;
-		max=JoyPos;
-	}
-	if(JoyPos<min){
-		_joy_x_min=JoyPos;
-		min=JoyPos;
-	}
+
 	bool m=false;
 	// select the bounding value to map to
 	if (JoyPos < center) {
@@ -95,44 +130,19 @@ int WiiChuck::getJoyX() {
 	// calculate a mapping value
 	float valueDiff = value -center;
 	float joyDiff =  JoyPos -center;
-//	Serial.print("Raw x center ");
-//	Serial.print (center);
-//
-//	Serial.print(" Raw x val ");
-//	Serial.print (JoyPos);
-//	Serial.print("  ");
-//	Serial.print(" Raw bound ");
-//	Serial.print (value);
-//	Serial.print("  ");
+
 	return (int) ((100.0*joyDiff)/valueDiff)*(m?1:-1);
 
-/*
-	if (_dataarray[0] < _joy_x_center) {
-		return -((_joy_x_center - _dataarray[0]) / (_joy_x_center / 100.0f));
-	} else if (_dataarray[0] > _joy_x_center) {
-		return ((_dataarray[0] - _joy_x_center)
-				/ ((255 - _joy_x_center) / 100.0f));
-	} else
-		return 0;
-*/
 }
 
 int WiiChuck::getJoyY() {
 	int JoyPos = _dataarray[1];
 	int center = _joy_y_center;
-	int min = _joy_y_min;
-	int max = _joy_y_max;
+	int min = 0;
+	int max = 255;
 
 	int value =0;
-	// Set up the min and max values on this channel
-	if(JoyPos>max){
-		_joy_y_max=JoyPos;
-		max=JoyPos;
-	}
-	if(JoyPos<min){
-		_joy_y_min=JoyPos;
-		min=JoyPos;
-	}
+
 	bool m=false;
 	// select the bounding value to map to
 	if (JoyPos < center) {
@@ -146,15 +156,7 @@ int WiiChuck::getJoyY() {
 	// calculate a mapping value
 	float valueDiff = value -center;
 	float joyDiff =  JoyPos -center;
-//	Serial.print("Raw  center ");
-//	Serial.print (center);
-//
-//	Serial.print(" Raw  val ");
-//	Serial.print (JoyPos);
-//	Serial.print("  ");
-//	Serial.print(" Raw bound ");
-//	Serial.print (value);
-//	Serial.print("  ");
+
 	return (int) ((100.0*joyDiff)/valueDiff)*(m?1:-1);
 }
 
@@ -384,16 +386,7 @@ int WiiChuck::performMap(ServoWiiControllerMap * tmp) {
 		float valueRange =(float)(axis -tmp->axisCenter);
 		float servoRange =serv -tmp->servoCenter;
 		int servoIncremt =(int) (servoRange*axisRange/valueRange);
-//		Serial.print(" incoming ");
-//		Serial.print(value);
-//		Serial.print(" axisRange ");
-//		Serial.print(axisRange);
-//		Serial.print(" valueRange ");
-//		Serial.print(valueRange);
-//		Serial.print(" servoRange ");
-//		Serial.print(servoRange);
-//		Serial.print(" servoIncremt ");
-//		Serial.print(servoIncremt);
+
 		return tmp->servoCenter+servoIncremt;
 	}
 	if (tmp->button != NOBUTTON) {
@@ -557,7 +550,7 @@ void WiiChuck::_waitForAck() {
 //		}
 //	}
 	_clockLow();
-	delayMicroseconds(75);
+//	delayMicroseconds(75);
 }
 
 uint8_t WiiChuck::_readByte() {
@@ -577,18 +570,11 @@ void WiiChuck::_writeByte(uint8_t value) {
 	_shiftOut( value);
 }
 void WiiChuck::initBytes() {
-	switch (type) {
-	case THIRDPARTYWII:
+
 		// improved startup procedure from http://playground.arduino.cc/Main/WiiChuckClass
 		_writeRegister(0xF0, 0x55);
 		_writeRegister(0xFB, 0x00);
-		break;
-	case OFFICIALWII:
-	case WIICLASSIC:
 
-		break;
-	}
-	_writeRegister(0x40, 0x00);
 }
 
 void WiiChuck::_shiftOut( uint8_t val) {
@@ -625,21 +611,24 @@ void WiiChuck::begin()
 	_burstRead();
 	_joy_x_center = _dataarray[0];
 	_joy_y_center = _dataarray[1];
-	_joy_x_max=_joy_x_center;
-	_joy_x_min=_joy_x_center;
-	_joy_y_max=_joy_y_center;
-	_joy_y_min=_joy_y_center;
+	type=identifyController();
 	Serial.println("Initialization Done");
 
 }
 
-void WiiChuck::_burstRead()
+void WiiChuck::_burstRead(){
+	_burstReadWithAddress(0);
+}
+
+void WiiChuck::_burstReadWithAddress(unsigned char addr)
 {
+	int readAmnt =6;
+
 	if (_use_hw)
 	{
 		 // send conversion command
 		  Wire.beginTransmission(I2C_ADDR);
-		  Wire.write(0x00);
+		  Wire.write(addr);
 		  Wire.endTransmission();
 
 		  // wait for data to be converted
@@ -652,7 +641,7 @@ void WiiChuck::_burstRead()
 	// send conversion command
 		_sendStart(I2C_ADDR_W);
 		_waitForAck();
-		_writeByte(0);
+		_writeByte(addr);
 		_waitForAck();
 		_sendStop();
 		// wait for data to be converted
@@ -660,11 +649,11 @@ void WiiChuck::_burstRead()
 		_sendStart(I2C_ADDR_R);
 		_waitForAck();
 
-		for (int i=0; i<6; i++)
+		for (int i=0; i<readAmnt; i++)
 		{
 			delayMicroseconds(40);
 			_dataarray[i] = _readByte()  ;
-			if (i<5)
+			if (i<(readAmnt-1))
 				_sendAck();
 			else
 				_sendNack();
