@@ -21,7 +21,7 @@ unsigned long lastMillis = 0;
 void connect(); // <- predefine connect() for setup()
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   WiFi.begin(ssid, pass);
   client.begin("broker.shiftr.io", 8883, net); // MQTT brokers usually use port 8883 for secure connections
 
@@ -51,12 +51,12 @@ void loop() {
   client.loop();
   delay(10); // <- fixes some issues with WiFi stability
 
-  if(!client.connected()) {
+  if (!client.connected()) {
     connect();
   }
 
   // publish a message roughly every second.
-  if(millis() - lastMillis > 1000) {
+  if (millis() - lastMillis > 1000) {
     lastMillis = millis();
     client.publish("/hello", "world");
   }

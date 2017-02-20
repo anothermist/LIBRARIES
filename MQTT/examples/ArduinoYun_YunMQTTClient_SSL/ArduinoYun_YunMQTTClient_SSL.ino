@@ -1,6 +1,10 @@
 // This example uses an Arduino Yun or a Yun-Shield
 // and the YunMQTTClient to connect to shiftr.io.
 //
+// Note: You need to upgrade the Arduino Yun to the
+// latest firmware version to have the certificates
+// present.
+//
 // The YunMQTTClient uses a Linux side python
 // script to manage the connection which results
 // in less program space and memory used on the Arduino.
@@ -20,7 +24,7 @@ unsigned long lastMillis = 0;
 
 void setup() {
   Bridge.begin();
-  Serial.begin(9600);
+  Serial.begin(115200);
   client.begin("broker.shiftr.io", 8883); // MQTT brokers usually use port 8883 for secure connections
   client.setTls("/etc/ssl/certs/AddTrust_External_Root.crt"); // select the CA for the broker
 
@@ -43,12 +47,12 @@ void connect() {
 void loop() {
   client.loop();
 
-  if(!client.connected()) {
+  if (!client.connected()) {
     connect();
   }
 
   // publish a message roughly every second.
-  if(millis() - lastMillis > 1000) {
+  if (millis() - lastMillis > 1000) {
     lastMillis = millis();
     client.publish("/hello", "world");
   }

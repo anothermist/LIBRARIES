@@ -8,9 +8,7 @@ This library bundles the [Embedded MQTT C/C++ Client](https://eclipse.org/paho/c
 
 The first release of the library only supports QoS0 and the basic features to get going. In the next releases more of the features will be available. Please create an issue if you need a specific functionality.
 
-This library is an alternative to the [pubsubclient](https://github.com/knolleary/pubsubclient) library by [knolleary](https://github.com/knolleary) which uses a custom protocol implementation.
-
-[Download version 1.10.1 of the library.](https://github.com/256dpi/arduino-mqtt/releases/download/v1.10.1/mqtt.zip)
+[Download version 1.11.0 of the library.](https://github.com/256dpi/arduino-mqtt/releases/download/v1.11.0/mqtt.zip)
 
 *Or even better use the Library Manager in the Arduino IDE.*
 
@@ -18,12 +16,13 @@ This library is an alternative to the [pubsubclient](https://github.com/knollear
 
 The following examples show how you can use the library with various Arduino compatible hardware:
 
-- [Arduino Yun / Yun-Shield (MQTTClient)](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoYun_MQTTClient/ArduinoYun_MQTTClient.ino)
-- [Arduino Yun / Yun-Shield (YunMQTTClient)](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoYun_YunMQTTClient/ArduinoYun_YunMQTTClient.ino) ([SSL](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoYun_YunMQTTClient_SSL/ArduinoYun_YunMQTTClient_SSL.ino))
+- [Arduino Yun & Yun-Shield (MQTTClient)](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoYun_MQTTClient/ArduinoYun_MQTTClient.ino)
+- [Arduino Yun & Yun-Shield (YunMQTTClient)](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoYun_YunMQTTClient/ArduinoYun_YunMQTTClient.ino) ([SSL](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoYun_YunMQTTClient_SSL/ArduinoYun_YunMQTTClient_SSL.ino))
 - [Arduino Ethernet Shield](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoEthernetShield/ArduinoEthernetShield.ino)
 - [Arduino WiFi Shield](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoWiFiShield/ArduinoWiFiShield.ino)
 - [Adafruit HUZZAH ESP8266](https://github.com/256dpi/arduino-mqtt/blob/master/examples/AdafruitHuzzahESP8266/AdafruitHuzzahESP8266.ino) ([SSL](https://github.com/256dpi/arduino-mqtt/blob/master/examples/AdafruitHuzzahESP8266_SSL/AdafruitHuzzahESP8266_SSL.ino))
 - [Arduino/Genuino WiFi101 Shield](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoWiFi101/ArduinoWiFi101.ino) ([SSL](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoWiFi101_SSL/ArduinoWiFi101_SSL.ino))
+- [ESP32 Development Board](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ESP32DevelopmentBoard/ESP32DevelopmentBoard.ino) ([SSL](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ESP32DevelopmentBoard_SSL/ESP32DevelopmentBoard_SSL.ino))
 
 Other shields and boards should work if they also provide a [Client](https://www.arduino.cc/en/Reference/ClientConstructor) based network implementation.
 
@@ -96,12 +95,20 @@ void messageReceived(String topic, String payload, char * bytes, unsigned int le
 Initialize the object using the hostname of the broker, the brokers port (default: `1883`) and the underlying Client class for network transport:
 
 ```c++
+boolean begin(Client& client);
 boolean begin(const char * hostname, Client& client);
 boolean begin(const char * hostname, int port, Client& client);
 ```
 
 - Specify port `8883` when using SSL clients for secure connections.
 - The `YunMQTTClient` does not need the `client` parameter.
+
+The host can also be changed later:
+
+```c++
+void setHost(const char * hostname);
+void setHost(const char * hostname, int port);
+```
 
 Set the will message that gets registered on a connect:
 
