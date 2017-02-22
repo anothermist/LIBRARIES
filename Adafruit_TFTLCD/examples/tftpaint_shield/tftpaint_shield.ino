@@ -5,6 +5,11 @@
 #include <Adafruit_TFTLCD.h> // Hardware-specific library
 #include <TouchScreen.h>
 
+#if defined(__SAM3X8E__)
+    #undef __FlashStringHelper::F(string_literal)
+    #define F(string_literal) string_literal
+#endif
+
 #ifndef USE_ADAFRUIT_SHIELD_PINOUT 
  #error "This sketch is intended for use with the TFT LCD Shield. Make sure that USE_ADAFRUIT_SHIELD_PINOUT is #defined in the Adafruit_TFTLCD.h library file."
 #endif
@@ -15,10 +20,17 @@
 #define YM 7   // can be a digital pin
 #define XP 6   // can be a digital pin
 
-#define TS_MINX 150
-#define TS_MINY 120
-#define TS_MAXX 920
-#define TS_MAXY 940
+#ifdef __SAM3X8E__
+  #define TS_MINX 125
+  #define TS_MINY 170
+  #define TS_MAXX 880
+  #define TS_MAXY 940
+#else
+  #define TS_MINX  150
+  #define TS_MINY  120
+  #define TS_MAXX  920
+  #define TS_MAXY  940
+#endif
 
 // For better pressure precision, we need to know the resistance
 // between X+ and X- Use any multimeter to read it
@@ -49,20 +61,20 @@ int oldcolor, currentcolor;
 
 void setup(void) {
   Serial.begin(9600);
-  progmemPrintln(PSTR("Paint!"));
+  Serial.println(F("Paint!"));
 
   tft.reset();
 
   uint16_t identifier = tft.readID();
 
   if(identifier == 0x9325) {
-    progmemPrintln(PSTR("Found ILI9325 LCD driver"));
+    Serial.println(F("Found ILI9325 LCD driver"));
   } else if(identifier == 0x9328) {
-    progmemPrintln(PSTR("Found ILI9328 LCD driver"));
+    Serial.println(F("Found ILI9328 LCD driver"));
   } else if(identifier == 0x7575) {
-    progmemPrintln(PSTR("Found HX8347G LCD driver"));
+    Serial.println(F("Found HX8347G LCD driver"));
   } else {
-    progmemPrint(PSTR("Unknown LCD driver chip: "));
+    Serial.print(F("Unknown LCD driver chip: "));
     Serial.println(identifier, HEX);
     return;
   }
@@ -91,7 +103,7 @@ void setup(void) {
 void loop()
 {
   digitalWrite(13, HIGH);
-  Point p = ts.getPoint();
+  TSPoint p = ts.getPoint();
   digitalWrite(13, LOW);
 
   // if sharing pins, you'll need to fix the directions of the touchscreen pins
@@ -159,18 +171,5 @@ void loop()
       tft.fillCircle(p.x, p.y, PENRADIUS, currentcolor);
     }
   }
-}
-
-// Copy string from flash to serial port
-// Source string MUST be inside a PSTR() declaration!
-void progmemPrint(const char *str) {
-  char c;
-  while(c = pgm_read_byte(str++)) Serial.print(c);
-}
-
-// Same as above, with trailing newline
-void progmemPrintln(const char *str) {
-  progmemPrint(str);
-  Serial.println();
 }
 

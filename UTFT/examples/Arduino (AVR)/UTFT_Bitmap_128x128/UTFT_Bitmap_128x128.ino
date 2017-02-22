@@ -1,5 +1,6 @@
-// UTFT_Bitmap_128x128 (C)2012 Henning Karlsen
-// web: http://www.henningkarlsen.com/electronics
+// UTFT_Bitmap_128x128 
+// Copyright (C)2015 Rinky-Dink Electronics, Henning Karlsen. All right reserved
+// web: http://www.RinkyDinkElectronics.com/
 //
 // This program is a demo of the drawBitmap()-function.
 //

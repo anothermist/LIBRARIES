@@ -1,5 +1,6 @@
-// UTFT_CPLD_PageSwitching (C)2014 Henning Karlsen
-// web: http://www.henningkarlsen.com/electronics
+// UTFT_CPLD_PageSwitching 
+// Copyright (C)2015 Rinky-Dink Electronics, Henning Karlsen. All right reserved
+// web: http://www.RinkyDinkElectronics.com/
 //
 // This program is a demo of page switching on CPLD-based display modules..
 //
@@ -25,7 +26,7 @@ extern uint8_t SevenSegNumFont[];
 // CTE TFT LCD/SD Shield for Arduino Mega      : <display model>,38,39,40,41
 //
 // Remember to change the model parameter to suit your display module!
-UTFT myGLCD(SSD1289,38,39,40,41);
+UTFT myGLCD(CPLD,38,39,40,41);
 
 void setup()
 {

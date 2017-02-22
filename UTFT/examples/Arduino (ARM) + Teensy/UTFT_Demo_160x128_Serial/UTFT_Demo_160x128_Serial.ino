@@ -1,5 +1,6 @@
-// UTFT_Demo_160x128_Serial (C)2014 Henning Karlsen
-// web: http://www.henningkarlsen.com/electronics
+// UTFT_Demo_160x128_Serial 
+// Copyright (C)2015 Rinky-Dink Electronics, Henning Karlsen. All right reserved
+// web: http://www.RinkyDinkElectronics.com/
 //
 // This program is a demo of how to use most of the functions
 // of the library with a supported display modules.
@@ -20,7 +21,10 @@ extern uint8_t SmallFont[];
 // When using the DM-TFT18-101 and shield from DisplayModule you should use the following:
 //         UTFT myGLCD(DMTFT18101,2,3,4,6,5);
 //
-UTFT myGLCD(ITDB18SP,19,18,0,16,17);   // Remember to change the model parameter to suit your display module!
+// When using the TFT18SP shield from ElecFreaks you should use the following:
+//         UTFT myGLCD(TFT18SHLD,7,6,5,3,4);
+//
+UTFT myGLCD(ITDB18SP,11,10,9,12,8);   // Remember to change the model parameter to suit your display module!
 
 void setup()
 {
@@ -51,7 +55,7 @@ void loop()
   myGLCD.setBackColor(64, 64, 64);
   myGLCD.setColor(255,255,0);
   myGLCD.print("H.Karlsen", LEFT, 114);
-  myGLCD.print("(C)2014", RIGHT, 114);
+  myGLCD.print("(C)2015", RIGHT, 114);
 
   myGLCD.setColor(0, 0, 255);
   myGLCD.drawRect(0, 13, 159, 113);

@@ -45,13 +45,12 @@ Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 
 void setup(void) {
   Serial.begin(9600);
-  digitalWrite(35, HIGH);         //I use this on mega for LCD Backlight
-  progmemPrintln(PSTR("TFT LCD test"));
+  Serial.println(F("TFT LCD test"));
 
 #ifdef USE_ADAFRUIT_SHIELD_PINOUT
-  progmemPrintln(PSTR("Using Adafruit 2.8\" TFT Arduino Shield Pinout"));
+  Serial.println(F("Using Adafruit 2.8\" TFT Arduino Shield Pinout"));
 #else
-  progmemPrintln(PSTR("Using Adafruit 2.8\" TFT Breakout Board Pinout"));
+  Serial.println(F("Using Adafruit 2.8\" TFT Breakout Board Pinout"));
 #endif
 
   tft.reset();
@@ -59,20 +58,24 @@ void setup(void) {
   uint16_t identifier = tft.readID();
 
   if(identifier == 0x9325) {
-    progmemPrintln(PSTR("Found ILI9325 LCD driver"));
+    Serial.println(F("Found ILI9325 LCD driver"));
   } else if(identifier == 0x9328) {
-    progmemPrintln(PSTR("Found ILI9328 LCD driver"));
+    Serial.println(F("Found ILI9328 LCD driver"));
   } else if(identifier == 0x7575) {
-    progmemPrintln(PSTR("Found HX8347G LCD driver"));
+    Serial.println(F("Found HX8347G LCD driver"));
+  } else if(identifier == 0x9341) {
+    Serial.println(F("Found ILI9341 LCD driver"));
+  } else if(identifier == 0x8357) {
+    Serial.println(F("Found HX8357D LCD driver"));
   } else {
-    progmemPrint(PSTR("Unknown LCD driver chip: "));
+    Serial.print(F("Unknown LCD driver chip: "));
     Serial.println(identifier, HEX);
-    progmemPrintln(PSTR("If using the Adafruit 2.8\" TFT Arduino shield, the line:"));
-    progmemPrintln(PSTR("  #define USE_ADAFRUIT_SHIELD_PINOUT"));
-    progmemPrintln(PSTR("should appear in the library header (Adafruit_TFT.h)."));
-    progmemPrintln(PSTR("If using the breakout board, it should NOT be #defined!"));
-    progmemPrintln(PSTR("Also if using the breakout, double-check that all wiring"));
-    progmemPrintln(PSTR("matches the tutorial."));
+    Serial.println(F("If using the Adafruit 2.8\" TFT Arduino shield, the line:"));
+    Serial.println(F("  #define USE_ADAFRUIT_SHIELD_PINOUT"));
+    Serial.println(F("should appear in the library header (Adafruit_TFT.h)."));
+    Serial.println(F("If using the breakout board, it should NOT be #defined!"));
+    Serial.println(F("Also if using the breakout, double-check that all wiring"));
+    Serial.println(F("matches the tutorial."));
     return;
   }
 
@@ -80,8 +83,8 @@ void setup(void) {
 
   tft.fillScreen(BLACK);
 
-  progmemPrintln(PSTR("This is a test of the rotation capabilities of the TFT library!"));
-  progmemPrintln(PSTR("Press <SEND> (or type a character) to advance"));
+  Serial.println(F("This is a test of the rotation capabilities of the TFT library!"));
+  Serial.println(F("Press <SEND> (or type a character) to advance"));
 }
 
 void loop(void) {
@@ -216,18 +219,5 @@ void rotatePixel(void) {
 
     tft.setRotation(tft.getRotation()+1);
   }
-}
-
-// Copy string from flash to serial port
-// Source string MUST be inside a PSTR() declaration!
-void progmemPrint(const char *str) {
-  char c;
-  while(c = pgm_read_byte(str++)) Serial.print(c);
-}
-
-// Same as above, with trailing newline
-void progmemPrintln(const char *str) {
-  progmemPrint(str);
-  Serial.println();
 }
 

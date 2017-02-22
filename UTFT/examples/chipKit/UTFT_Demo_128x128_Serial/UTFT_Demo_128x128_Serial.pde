@@ -1,5 +1,6 @@
-// UTFT_Demo_128x128_Serial (C)2012 Henning Karlsen
-// web: http://www.henningkarlsen.com/electronics
+// UTFT_Demo_128x128_Serial 
+// Copyright (C)2015 Rinky-Dink Electronics, Henning Karlsen. All right reserved
+// web: http://www.RinkyDinkElectronics.com/
 //
 // This program is a demo of how to use most of the functions
 // of the library with a supported display modules.
@@ -48,7 +49,7 @@ void loop()
   myGLCD.setBackColor(64,64,64);
   myGLCD.setColor(255,255,0);
   myGLCD.print("H.Karlsen", LEFT, 116);
-  myGLCD.print("(C)2012", RIGHT, 116);
+  myGLCD.print("(C)2015", RIGHT, 116);
   myGLCD.setColor(0,255,0);
   myGLCD.drawRect(0,13,127,116);
 

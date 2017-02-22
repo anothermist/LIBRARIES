@@ -1,6 +1,6 @@
 /*
-  UTFT.h - Arduino/chipKit library support for Color TFT LCD Boards
-  Copyright (C)2010-2014 Henning Karlsen. All right reserved
+  UTFT.h - Multi-Platform library support for Color TFT LCD Boards
+  Copyright (C)2015 Rinky-Dink Electronics, Henning Karlsen. All right reserved
   
   This library is the continuation of my ITDB02_Graph, ITDB02_Graph16
   and RGB_GLCD libraries for Arduino and chipKit. As the number of 
@@ -13,22 +13,17 @@
   NKC Electronics (for the RGB GLCD module/shield).
 
   This library supports a number of 8bit, 16bit and serial graphic 
-  displays, and will work with both Arduino and chipKit boards. For a 
-  full list of tested display modules and controllers, see the 
-  document UTFT_Supported_display_modules_&_controllers.pdf.
+  displays, and will work with both Arduino, chipKit boards and select 
+  TI LaunchPads. For a full list of tested display modules and controllers,
+  see the document UTFT_Supported_display_modules_&_controllers.pdf.
 
   When using 8bit and 16bit display modules there are some 
   requirements you must adhere to. These requirements can be found 
   in the document UTFT_Requirements.pdf.
   There are no special requirements when using serial displays.
 
-  You can always find the latest version of the library at 
-  http://electronics.henningkarlsen.com/
-
-  If you make any modifications or improvements to the code, I would 
-  appreciate that you share the code with me so that I might include 
-  it in the next release. I can be contacted through 
-  http://electronics.henningkarlsen.com/contact.php.
+  You can find the latest version of the library at 
+  http://www.RinkyDinkElectronics.com/
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the CC BY-NC-SA 3.0 license.
@@ -45,7 +40,7 @@
 #ifndef UTFT_h
 #define UTFT_h
 
-#define UTFT_VERSION	277
+#define UTFT_VERSION	282
 
 #define LEFT 0
 #define RIGHT 9999
@@ -71,8 +66,8 @@
 #define S6D1121_8		14
 #define S6D1121_16		15
 #define	SSD1289LATCHED	16
-#define ILI9320_8		17
-#define ILI9320_16		18
+#define ILI9341_16		17
+//#define NOT_IN_USE	18
 #define SSD1289_8		19
 #define	SSD1963_800ALT	20
 #define ILI9481			21
@@ -85,6 +80,7 @@
 #define ILI9486			28
 #define CPLD			29
 #define HX8353C			30
+#define ST7735_ALT		31
 
 #define ITDB32			0	// HX8347-A (16bit)
 #define ITDB32WC		1	// ILI9327  (16bit)
@@ -92,7 +88,6 @@
 #define ITDB32S			2	// SSD1289  (16bit)
 #define TFT01_32		2	// SSD1289  (16bit)
 #define CTE32			2	// SSD1289  (16bit)
-#define GEEE32			2	// SSD1289  (16bit)
 #define ITDB24			3	// ILI9325C (8bit)
 #define ITDB24D			4	// ILI9325D (8bit)
 #define ITDB24DWOT		4	// ILI9325D (8bit)
@@ -102,7 +97,6 @@
 #define DMTFT28103      4   // ILI9325D (8bit)
 #define TFT01_24_16		5	// ILI9325D (16bit)
 #define ITDB22			6	// HX8340-B (8bit)
-#define GEEE22			6	// HX8340-B (8bit)
 #define ITDB22SP		7	// HX8340-B (Serial 4Pin)
 #define ITDB32WD		8	// HX8352-A (16bit)
 #define TFT01_32WD		8	// HX8352-A	(16bit)
@@ -121,8 +115,8 @@
 #define ITDB24E_16		15	// S6D1121	(16bit)
 #define INFINIT32		16	// SSD1289	(Latched 16bit) -- Legacy, will be removed later
 #define ELEE32_REVA		16	// SSD1289	(Latched 16bit)
-#define GEEE24			17	// ILI9320	(8bit)
-#define GEEE28			18	// ILI9320	(16bit)
+#define CTE32_R2		17	
+//#define NOT_IN_USE	18	
 #define ELEE32_REVB		19	// SSD1289	(8bit)
 #define TFT01_70		20	// SSD1963	(16bit) 800x480 Alternative Init
 #define CTE70			20	// SSD1963	(16bit) 800x480 Alternative Init
@@ -135,6 +129,8 @@
 #define DMTFT22102      23  // S6D0164  (8bit)
 #define TFT01_18SP		24	// ST7735S  (Serial 5Pin)
 #define TFT01_22SP		25	// ILI9341	(Serial 5Pin)
+#define TFT01_24SP		25	// ILI9341	(Serial 5Pin)
+#define TFT22SHLD		25	// ILI9341	(Serial 5Pin)
 #define DMTFT28105      25  // ILI9341  (Serial 5Pin)
 #define MI0283QT9		26  // ILI9341	(Serial 4Pin)
 #define CTE35IPS		27	// R61581	(16bit)
@@ -143,7 +139,7 @@
 #define CTE50CPLD		29	// CPLD		(16bit)
 #define CTE70CPLD		29	// CPLD		(16bit)
 #define DMTFT18101      30  // HX8353C  (Serial 5Pin)
-
+#define TFT18SHLD		31	// ST7735	(Serial 5Pin) Alternative Init
 
 #define SERIAL_4PIN		4
 #define SERIAL_5PIN		5
@@ -180,7 +176,7 @@
 	#include "WProgram.h"
 	#include "hardware/pic32/HW_PIC32_defines.h"
 #elif defined(__arm__)
-	#include "Arduino.h"
+	#include "Arduino.h" // This will include energia.h where appropriate
 	#include "hardware/arm/HW_ARM_defines.h"
 #endif
 
@@ -270,6 +266,10 @@ class UTFT
 		void _fast_fill_16(int ch, int cl, long pix);
 		void _fast_fill_8(int ch, long pix);
 		void _convert_float(char *buf, double num, int width, byte prec);
+
+#if defined(ENERGIA)
+		volatile uint32_t* portOutputRegister(int value);
+#endif
 };
 
 #endif

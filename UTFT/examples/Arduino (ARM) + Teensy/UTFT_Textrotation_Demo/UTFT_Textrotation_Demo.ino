@@ -1,5 +1,6 @@
-// UTFT_Textrotation_Demo (C)2014 Henning Karlsen
-// web: http://www.henningkarlsen.com/electronics
+// UTFT_Textrotation_Demo 
+// Copyright (C)2015 Rinky-Dink Electronics, Henning Karlsen. All right reserved
+// web: http://www.RinkyDinkElectronics.com/
 //
 // This program is a demo of the textrotation-functions.
 //

@@ -1,17 +1,18 @@
-// UTFT_Demo_320x240_Serial (C)2014 Henning Karlsen
-// web: http://www.henningkarlsen.com/electronics
+// UTFT_Demo_320x240_Serial 
+// Copyright (C)2015 Rinky-Dink Electronics, Henning Karlsen. All right reserved
+// web: http://www.RinkyDinkElectronics.com/
 //
 // This program is a demo of how to use most of the functions
 // of the library with a supported display modules.
 //
-// This demo was made for modules with a screen resolution 
-// of 320x240 pixels.
+// This demo was made for serial modules with a screen 
+// resolution of 320x240 pixels.
 //
 // This program requires the UTFT library.
 //
 // ********************************************************************
 // * IMPORTANT: Read the comments in the setup() function when        *
-// * using the DisplayModule DM-TFT28-105.                            *
+// * using the Watterott MI0283QT9 or the DisplayModule DM-TFT28-105. *
 // ********************************************************************
 //
 
@@ -20,12 +21,25 @@
 // Declare which fonts we will be using
 extern uint8_t SmallFont[];
 
-// Usage: myGLCD(<model code>, SDA, SCL, CS, RST[, RS]);
+// Uncomment the line for your display:
+//UTFT myGLCD(MI0283QT9,11,13,7,8);                // Watterott MI0283QT9
+//UTFT myGLCD(DMTFT28105,MOSI,SCK,10,NOTINUSE,9);  // DisplayModule DM-TFT28-105
 //UTFT myGLCD(TFT01_22SP,9,8,12,11,10);            // ElecFreaks TFT01-2.2SP
-UTFT myGLCD(DMTFT28105,MOSI,SCK,10,NOTINUSE,9);  // DisplayModule DM-TFT28-105
+//UTFT myGLCD(TFT01_24SP,9,8,12,11,10);            // ElecFreaks TFT01-2.4SP
+UTFT myGLCD(TFT22SHLD,3,4,7,5,6);                  // ElecFreaks TFT2.2SP Shield
 
 void setup()
 {
+// Watterott
+// ---------
+// The following two lines are needed for the MI0283QT9 display
+// module to enable the backlight. If you are using any other 
+// display module these lines should be commented out.
+// -------------------------------------------------------------
+//  pinMode(9, OUTPUT);
+//  digitalWrite(9, HIGH);
+// -------------------------------------------------------------
+
 // DisplayModule
 // -------------
 // The following 4 lines are needed for the DM-TFT28-105 display
@@ -33,10 +47,10 @@ void setup()
 // to the Arduino SPI pins. If you are using any other display
 // module these lines should be commented out.
 // -------------------------------------------------------------
-  pinMode(10,OUTPUT); digitalWrite(10,HIGH);  // TFT SS/CE
-  pinMode(8, OUTPUT); digitalWrite(8, HIGH);  // SD card SS/CE
-  pinMode(6, OUTPUT); digitalWrite(6, HIGH);  // Flash chip SS/CE
-  pinMode(4, OUTPUT); digitalWrite(4, HIGH);  // Touch controller SS/CE
+//  pinMode(10,OUTPUT); digitalWrite(10,HIGH);  // TFT SS/CE
+//  pinMode(8, OUTPUT); digitalWrite(8, HIGH);  // SD card SS/CE
+//  pinMode(6, OUTPUT); digitalWrite(6, HIGH);  // Flash chip SS/CE
+//  pinMode(4, OUTPUT); digitalWrite(4, HIGH);  // Touch controller SS/CE
 // -------------------------------------------------------------
 
 
@@ -46,6 +60,7 @@ void setup()
 // Setup the LCD
   myGLCD.InitLCD();
   myGLCD.setFont(SmallFont);
+
 }
 
 void loop()
@@ -67,7 +82,7 @@ void loop()
   myGLCD.print("* Universal Color TFT Display Library *", CENTER, 1);
   myGLCD.setBackColor(64, 64, 64);
   myGLCD.setColor(255,255,0);
-  myGLCD.print("<http://electronics.henningkarlsen.com>", CENTER, 227);
+  myGLCD.print("<http://www.RinkyDinkElectronics.com/>", CENTER, 227);
 
   myGLCD.setColor(0, 0, 255);
   myGLCD.drawRect(0, 14, 319, 225);
@@ -340,4 +355,3 @@ void loop()
   
   delay (10000);
 }
-

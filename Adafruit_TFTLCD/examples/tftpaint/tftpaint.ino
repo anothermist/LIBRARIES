@@ -6,6 +6,11 @@
 #include <Adafruit_TFTLCD.h> // Hardware-specific library
 #include <TouchScreen.h>
 
+#if defined(__SAM3X8E__)
+    #undef __FlashStringHelper::F(string_literal)
+    #define F(string_literal) string_literal
+#endif
+
 // When using the BREAKOUT BOARD only, use these 8 data lines to the LCD:
 // For the Arduino Uno, Duemilanove, Diecimila, etc.:
 //   D0 connects to digital pin 8  (Notice these are
@@ -16,13 +21,33 @@
 //   D5 connects to digital pin 5
 //   D6 connects to digital pin 6
 //   D7 connects to digital pin 7
+
 // For the Arduino Mega, use digital pins 22 through 29
 // (on the 2-row header at the end of the board).
+//   D0 connects to digital pin 22
+//   D1 connects to digital pin 23
+//   D2 connects to digital pin 24
+//   D3 connects to digital pin 25
+//   D4 connects to digital pin 26
+//   D5 connects to digital pin 27
+//   D6 connects to digital pin 28
+//   D7 connects to digital pin 29
+
+// For the Arduino Due, use digital pins 33 through 40
+// (on the 2-row header at the end of the board).
+//   D0 connects to digital pin 33
+//   D1 connects to digital pin 34
+//   D2 connects to digital pin 35
+//   D3 connects to digital pin 36
+//   D4 connects to digital pin 37
+//   D5 connects to digital pin 38
+//   D6 connects to digital pin 39
+//   D7 connects to digital pin 40
 
 #define YP A3  // must be an analog pin, use "An" notation!
 #define XM A2  // must be an analog pin, use "An" notation!
-#define YM 23   // can be a digital pin  (9 uno)(pin 23 Mega)
-#define XP 22   // can be a digital pin  (8 uno)(pin 22 Mega)
+#define YM 9   // can be a digital pin
+#define XP 8   // can be a digital pin
 
 #define TS_MINX 150
 #define TS_MINY 120
@@ -60,21 +85,31 @@ int oldcolor, currentcolor;
 
 void setup(void) {
   Serial.begin(9600);
-  progmemPrintln(PSTR("Paint!"));
-  digitalWrite(35, HIGH);         //I use this on mega for LCD Backlight
+  Serial.println(F("Paint!"));
+  
   tft.reset();
   
   uint16_t identifier = tft.readID();
 
   if(identifier == 0x9325) {
-    progmemPrintln(PSTR("Found ILI9325 LCD driver"));
+    Serial.println(F("Found ILI9325 LCD driver"));
   } else if(identifier == 0x9328) {
-    progmemPrintln(PSTR("Found ILI9328 LCD driver"));
+    Serial.println(F("Found ILI9328 LCD driver"));
   } else if(identifier == 0x7575) {
-    progmemPrintln(PSTR("Found HX8347G LCD driver"));
+    Serial.println(F("Found HX8347G LCD driver"));
+  } else if(identifier == 0x9341) {
+    Serial.println(F("Found ILI9341 LCD driver"));
+  } else if(identifier == 0x8357) {
+    Serial.println(F("Found HX8357D LCD driver"));
   } else {
-    progmemPrint(PSTR("Unknown LCD driver chip: "));
+    Serial.print(F("Unknown LCD driver chip: "));
     Serial.println(identifier, HEX);
+    Serial.println(F("If using the Adafruit 2.8\" TFT Arduino shield, the line:"));
+    Serial.println(F("  #define USE_ADAFRUIT_SHIELD_PINOUT"));
+    Serial.println(F("should appear in the library header (Adafruit_TFT.h)."));
+    Serial.println(F("If using the breakout board, it should NOT be #defined!"));
+    Serial.println(F("Also if using the breakout, double-check that all wiring"));
+    Serial.println(F("matches the tutorial."));
     return;
   }
 
@@ -102,7 +137,7 @@ void setup(void) {
 void loop()
 {
   digitalWrite(13, HIGH);
-  Point p = ts.getPoint();
+  TSPoint p = ts.getPoint();
   digitalWrite(13, LOW);
 
   // if sharing pins, you'll need to fix the directions of the touchscreen pins
@@ -170,18 +205,5 @@ void loop()
       tft.fillCircle(p.x, p.y, PENRADIUS, currentcolor);
     }
   }
-}
-
-// Copy string from flash to serial port
-// Source string MUST be inside a PSTR() declaration!
-void progmemPrint(const char *str) {
-  char c;
-  while(c = pgm_read_byte(str++)) Serial.print(c);
-}
-
-// Same as above, with trailing newline
-void progmemPrintln(const char *str) {
-  progmemPrint(str);
-  Serial.println();
 }
 
