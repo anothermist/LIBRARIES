@@ -1,0 +1,170 @@
+CHANGELOG
+----------------------
+
+[v1.0rc3]
+
+[v1.0rc3]
+ * added custom sed1520 init routine to fully initialize sed1520 chips
+ * raw avr pins changed from PIN_Pb to AVRPIN_Pb , backlight control now uses active level
+ * corrected some typos in pin define names
+ * verify that all data line pins are defined and none duplicate pins
+ * doxygen updates for new Teensy 3.4
+ * Add support for 4 sed1520 E signals & EADIP180-5 sample config file
+ * updated library.properties to use new IDE 1.6.10 includes field
+ * work around for Arduino 1.6.10 PIN_An defines that collide with avrio defines.
+ * GLCDdiags update to print revision 1.0.0 correctly
+ * removed silly warning from gText.cpp
+ * updates to support Teensy 3.4 & Teensy 3.5 boards
+ * removed GLCDv3 & MUCIO google code project links from additional resources
+ * GLCDdiags prints if delays are using CoreCode built in delay functions
+ * changed ARM delay support to work for any ARM MCU vs just specific ARM processors
+ * updated copyright year
+ * corrected config name for sed1520 mtb368 panel
+ * Auto changelog now specifies git version info for latest version rather than "Current"
+ * bmp2glcd fix. Newer versions of gcc requiring including unistd.h
+ * Documentation & Doxygen updates/corrections
+ * Diags reports more config options
+ * code turns on pullups during busy selftest to ensure busy failure when wired incorrectly.
+ * build script no longer has to be run in/from the directory where it lives
+ * doxygen updates for writeUTF8()
+ * create arduino library.properties file, move library name to build info parameter
+ * update troubleshooting to include looking for soldering issues
+ * updated doxygen cfg file to 1.8.7 and turn on ARDUINO define to always show 1.x APIs
+ * openGLCD ks0108 example updated for openGLCD and to support variable gemoetries
+ * Tweaks to avoid proto type parsing errors in IDE 1.6.7 and newer
+ * GLCD_EINVAL keyword added
+ * Correct typo/bug in 1284 mapping macros
+ * update to support ARDUINO rev format that changed after 1.5.8
+ * removed unnecessary include from diags sketch
+
+[v1.0rc2]
+ * Removed AVR specific enable pullup code. Will be addressed properly before 1.0
+ * doxygen ks0108 updates for Teensy LC
+ * diags prints pass/fail counts, smarter wait on USB based serial ports like Teensy
+ * Teensy LC updates; updates for Jack's 1284p core
+ * doxygen update for GLCD class GotoXY()
+ * License is now GPLv3 only vs GPLv3+
+ * added note about ST7920 to ks0108 wiring info
+
+[v1.0rc1]
+ * Correct avr progmem issues in 2 fonts
+ * updates for regession tests and internal build notes
+ * Added new fonts
+ * updated CharHeight example and doucmenation
+ * Added new area properties to return min an max character codes of font
+ * updates for utf8 support
+ * Added space character to Arial14 font
+ * added  utf8 10x16 font
+
+[v0.9.1a]
+ * auto generated changelog now included in distribution images
+ * added Internal debuging macro
+ * Fixed rendering bug with modulo 15 pt font sizes on odd pixel boundaries
+ * Added support for UTF8 character encoding
+ * add link to Jacks updated ManiacBug 1284 core to documentation
+ * Updates and fixes to support up to 9 chips with 9 chipselects
+ * fixes for sed1520 support
+ * alternate changelog script
+ * updates for new sed1520 support. streamlines all sed1520 devices into a single sed1520 device file. added support for devices with dual chipselects vs dual enables
+ * build script creates a change log since last tagged release.
+
+[v0.9a]
+ * Added Script to automate generating changelogs
+ * Initial support for sed1520 4GLM122232 panel
+ * Removed Streaming library header from openGLCD. In order to use Streaming, the Streaming library must be added.
+ * Corrected/updated documentation, mostly typos
+ * updated copyright dates
+ * version of MPIDE before 0023 2013-07-15 are no longer supported.
+ * update for readCoreTimer() no longer works on MPIDE version before 2013-07-15
+ * autoconfig vs manual config clarifications in the config file
+ * Added support for SleepingBeauty in mighty1284 core
+ * updated pic32 delay_cycles() function for non plib environment.
+ * 
+ * fixed error in glcdio_ReadByte() macro
+ * added notes for i2c and issue error if CSEL3 and CSEL4 not defined.
+ * added information about CSEL3
+ * added repo path to main readme
+ * added support for Teensy 3.1
+ * 
+ * updated backlight circuit comments in Off/On sketches.
+ * added digital clock. Clock sketches get initial date/time from compiled date/time
+ * corrected bug in restoring font in loop() and speed up overall demo.
+ * Print is inherited by gText instead of glcd_Device
+ * Added new GLCDCFG option to force corecode mode.
+ * updated comments for backlight control
+ * tweaked to fit text on smaller sed1520 display.
+ * Updates mostly for build script change to build 3 zip files in a revision subdirectory.
+ * mods to allow bigdemo to compile on teensy boards with newer AVR compilers.
+ * updated and renamed openGLCD glcd logo photo.
+ * updates to move the GLCDv3 header to the include directory.
+ * 
+ * include for arduino_io was wrong. Lucky anything worked. remove includes from openGLCD_config.h, updateds for bobuino. It had uneeded externs in its variant that required included it as C vs C, diag output tweak for AVR byte mode, added _BV() macro for systems that don't have it.
+ * pgmspace mods to allow code to run on stock MPIDE. Created glcd_types.h, modified openGLCD_config.h file to no longer include panel config file but instead to just create a define for it.
+ * moved untested/experimental fonts out of distribution until they are tested and become official.
+ * updated pinconfig comments to be clearer about what boards/chips use the file.
+ * updates to support chipKIT (delays, and digitalXXXFast() stuff)
+ * initial check in of pic32 digitalXXXFast() macros
+ * updated doxygen for new config file naming. Now reports error if Arduino IDE < 19
+
+[v0.8a]
+ * updates for new manualconfig file naming using _Panel
+ * renamed Manual Config files to end in _Panel
+ * more updates for config file relocation
+ * config file updates
+ * more updates for relocation of config files
+ * renamed ks0108 config files
+ * relocating config files to seperate directories for each chip
+ * updated master readme
+ * comment update
+ * changes to get pic32 (chipKIT) up and going, fall back core mode, and pre 1.x working.
+ * updated doxygen for bitmaps to reflect bmp2glcd moving to bitmaps/utils
+ * updated a few bitmap header files and data object names for consistency. updated readme for bitmap utils
+ * moved bmp2glcd to bitmaps/utils
+ * updated bmp2glcd readme
+ * re-write to use getopt, along with clean up and many bug fixes.
+ * fix READ_CACHE ifdefs. Cleaned up some other ifdefs
+ * removed old font drawing code. change all glcd config defines to use GLCDCFG.
+ * SCROLL references cleanup. updateded notes.
+ * added new text API examples. little doxygen and comment cleanup.
+ * rest of previous commit for Init and DefineArea API examples.
+ * added new API examples, fixed some typos updated doxygen for gText and DefineArea
+ * added cp437 example, removed BYTE from print example since it is gone in 1.x, doxygen cleanup in Printf example.
+ * small doxygen update for Printf
+ * renamed doxgen file and made some cleanups.
+ * updates to ensure scripts are run from the proper directory when using gnome GUI.
+ * added gText APIexample. updated a few comments.
+ * Added SetFontcolor APIexample. updated doxygen to match examples.
+ * Added SelectFont APIexample. updated doxygen examples to match
+
+[v0.7a]
+ * mega checkin. Modified how fonts and bitmaps are declared. Rippled through all fonts, bitmaps, and many sketches. Also added openGLCDFontCreator. bmp2glcd and glcdMakeBitmap were also modified for the new bitmap format. Many doxygen updates to reflect changes.
+ * oops. text area get prop function is now called GetAreaProp()
+
+[v0.6a]
+ * Corrected typo in gText. update GraphicsAPI demo for smaller display.
+ * added doxygen for gText constructors.
+ * remain files of previous commit.
+ * added new graphic APIexamples, and new 914 bitmap. Cleaned up a few comments and doxygen notes.
+ * Circle fixes. Doxygen PROJECT_NUMBER is now DevBuild. Bug fixes in openGLCD version of BigDemo for 192x64 displays. fixed config file references in debug config files.
+ * oops. GLCDv3 compability DrawVLine was wrong.
+ * added message to Window build script to indicate that it is not working yet.
+ * cleaned up a few warnings in the demos.
+ * build script updated to auto create/modify doxygen PROJECT_NAME PROJECT_NUMBER and build info defines based on tag. sketches updated to no longer put "v" in front of library version. Several bug fixes in BigDemo for openGLCD. Changed delays in Graphic API to be shorter. Default build string is DevBuild and default library rev is DevRev.
+ * build script now patches doxygen to ensure that doxygen PROJECT_NUMBER always matches the buildversion string.
+
+[v0.5a]
+ * Initial creation of Graphic API demo sketch. Runs through graphic APIexample stuff.
+ * Fixed some doxygen stuff
+ * Bug fix in FillRoundRect
+ * new FillRoundRect API example
+ * moved test code to create real FillRoundRect API example
+ * Added FillRoundRect function and cleanded up some misuse of GLCD object.
+ * converted most files to "normal" text files vs DOS format line endings.
+ * correction for clarity and fixed error in comment
+ * added readme to explain GLCDv3 vs openGLCD demos
+ * renamed *nix build script back to mkzip
+ * some cleanup of build instructions
+ * small change to readme.
+
+[Initial_Checkin]
+ * Initial check in of openGLCD.

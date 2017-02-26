@@ -1,0 +1,128 @@
+###########################################
+# Syntax Coloring Map For glcd library
+# STUPID IDE demands using <tab> vs <space>
+# as seperator
+###########################################
+
+###########################################
+# Datatypes (KEYWORD1)
+###########################################
+
+gText	KEYWORD1
+glcd	KEYWORD1
+
+
+###########################################
+# Methods and Functions (KEYWORD2)
+###########################################
+#glcd functions
+ClearScreen	KEYWORD2
+DrawVLine	KEYWORD2
+DrawHLine	KEYWORD2
+DrawLine	KEYWORD2
+DrawRect	KEYWORD2
+FillRect	KEYWORD2
+InvertRect	KEYWORD2
+DrawVBarGraph	KEYWORD2
+DrawHBarGraph	KEYWORD2
+DrawRoundRect	KEYWORD2
+FillRoundRect	KEYWORD2
+DrawTriangle	KEYWORD2
+FillTriangle	KEYWORD2
+DrawCircle	KEYWORD2
+FillCircle	KEYWORD2
+DrawEllipse	KEYWORD2
+FillEllipse	KEYWORD2
+DrawBitmap	KEYWORD2
+DrawBitmapXBM	KEYWORD2
+
+# gText functions
+DefineArea	KEYWORD2
+ClearArea	KEYWORD2
+GetAreaProp	KEYWORD2
+SetAreaMode	KEYWORD2
+ClearAreaMode	KEYWORD2
+SelectFont	KEYWORD2
+SetFontColor	KEYWORD2
+PutChar		KEYWORD2
+Puts		KEYWORD2
+DrawString	KEYWORD2
+write		KEYWORD2
+CursorTo	KEYWORD2
+CursorToXY	KEYWORD2
+CharWidth	KEYWORD2
+CharHeight	KEYWORD2
+StringWidth	KEYWORD2
+EraseTextLine	KEYWORD2
+PrintNumber	KEYWORD2
+printFlash	KEYWORD2
+printFlashln	KEYWORD2
+Printf		KEYWORD2
+#gText enumerations
+SCROLL_UP	LITERAL
+SCROLL_DOWN	LITERAL
+gTextMode_SCROLLDOWN	LITERAL1
+gTextMode_VARasFIXED	LITERAL1
+gTextMode_OVERSTRIKE	LITERAL1
+textAreaFULL	LITERAL1
+textAreaTOP	LITERAL1
+textAreaBOTTOM	LITERAL1
+textAreaLEFT	LITERAL1
+textAreaRIGHT	LITERAL1
+textAreaTOPLEFT	LITERAL1
+textAreaTOPRIGHT	LITERAL1
+textAreaBOTTOMLEFT	LITERAL1
+textAreaBOTTOMRIGHT	LITERAL1
+eraseTO_EOL	LITERAL1
+eraseFROM_BOL	LITERAL1
+eraseFULL_LINE	LITERAL1
+eraseNONE	LITERAL1
+gTextfmt_left	LITERAL1
+gTextfmt_right	LITERAL1
+gTextfmt_top	LITERAL1
+gTextfmt_bottom	LITERAL1
+gTextfmt_center	LITERAL1
+gTextfmt_current	LITERAL1
+gTextfmt_col	LITERAL1
+gTextfmt_row	LITERAL1
+
+# glcd_Device functions
+Init		KEYWORD2
+SetDot		KEYWORD2
+SetPixels	KEYWORD2
+ReadData	KEYWORD2
+WriteData	KEYWORD2
+SetBacklight	KEYWORD2
+OnBacklight	KEYWORD2
+OffBacklight	KEYWORD2
+OnDisplay		KEYWORD2
+OffDisplay	KEYWORD2
+On              KEYWORD2
+Off             KEYWORD2
+GotoXY		KEYWORD2
+# glcd_Device enumerations/Constants
+BLACK	LITERAL1
+WHITE	LITERAL1
+PIXEL_ON	LITERAL1
+PIXEL_OFF	LITERAL1
+NON_INVERTED	LITERAL1
+INVERTED	LITERAL1
+
+###########################################
+# Constants (LITERAL1)
+###########################################
+CHIP_WIDTH	LITERAL1
+CHIP_HEIGHT	LITERAL1
+DISPLAY_WIDTH	LITERAL1
+DISPLAY_HEIGHT	LITERAL1
+NON_INVERTED	LITERAL1
+INVERTED	LITERAL1
+
+###########################################
+#GLCD_ERRNO errors
+###########################################
+GLCD_ENOERR	LITERAL1
+GLCD_EBUSY	LITERAL1
+GLCD_ERESET	LITERAL1
+GLCD_EINVAL	LITERAL1
+GLCD_ENOTSUPPORTED	LITERAL1

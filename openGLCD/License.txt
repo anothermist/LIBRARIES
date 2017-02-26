@@ -1,0 +1,41 @@
+All of the files supplied with and comprising the Arduino openGLCD library are
+either licensed under the terms of the GNU General Public License
+or are compatible with this license.
+
+Files should have explicit licensing ageement statements in them.
+In the absence of of any licensing agreement statement,
+the license below shall apply.
+
+==============================================================================
+
+  openGLCD is free software: you can redistribute it and/or modify
+  it under the terms of version 3 of the GNU General Public License
+  as published by the Free Software Foundation.
+
+  openGLCD is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with openGLCD.  If not, see <http://www.gnu.org/licenses/>.
+
+==============================================================================
+
+Full copies of the GPL license materials can be found in
+the GPLdocs dicectory included in this project.
+
+While openGLCD shares a common ancestry with GLCDv3,
+openGLCD is a separate derivative work,
+licensed under GPLv3 whereas GLCDv3 was licensed as LGPL v2.1 or later.
+As such, projects that use openGLCD that are conveyed (shared/distributed)
+to others must be open source licensed under the same terms
+and may only use other libraries that are fully compatible with GPLv3.
+
+For a full GPL/LGPL compatibilty matrix see:
+http://www.gnu.org/licenses/gpl-faq.html#AllCompatibility
+
+Furthermore, none of the code, including any additions and improvements in
+openGLCD over GLCDv3 can be moved back into GLCDv3 or into any other LGPL, BSD,
+or closed source compatible licensed project or library
+without violating the GPLv3 licensing terms.
