@@ -1,0 +1,17 @@
+{
+    "dashBoards" :
+        [
+            {
+             "id":555,
+             "name":"MSecond",
+             "isActive" : true,
+             "createdAt" : 1,
+             "widgets"  : [
+                {"id":1, "x":1, "y":1, "dashBoardId":1, "label":"Some Text", "type":"BUTTON",         "pinType":"DIGITAL", "pin":1, "value":"1"},
+                {"id":1, "x":1, "y":1, "dashBoardId":1, "type":"NOTIFICATION", "notifyWhenOffline":true, "androidTokens":{"uid":"token"}, "iOSTokens":{"uid":"token"}},
+                {"id":1, "x":1, "y":1, "dashBoardId":1, "token":"token", "secret":"secret", "type":"TWITTER"          }
+             ],
+             "boardType":"MEGA"
+            }
+        ]
+}

@@ -1,0 +1,11 @@
+alter table reporting_average_minute add column device_id int4 default 0;
+alter table reporting_average_minute drop CONSTRAINT reporting_average_minute_pkey;
+alter table reporting_average_minute add primary key (username, project_id, device_id, pin, pinType, ts);
+
+alter table reporting_average_hourly add column device_id int4 default 0;
+alter table reporting_average_hourly drop CONSTRAINT reporting_average_hourly_pkey;
+alter table reporting_average_hourly add primary key (username, project_id, device_id, pin, pinType, ts);
+
+alter table reporting_average_daily add column device_id int4 default 0;
+alter table reporting_average_daily drop CONSTRAINT reporting_average_daily_pkey;
+alter table reporting_average_daily add primary key (username, project_id, device_id, pin, pinType, ts);

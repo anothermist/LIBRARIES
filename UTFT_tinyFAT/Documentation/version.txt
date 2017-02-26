@@ -1,0 +1,6 @@
+Version:
+	1.0	03 Jun 2011  -  initial release
+	2.0	22 Jun 2013  -  updated to the new add-on format
+				changed license to CC BY-NC-SA 3.0
+	2.1	26 Jun 2013  -  loadBitmap() now accepts a String object as filename
+

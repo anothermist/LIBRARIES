@@ -1,0 +1,20 @@
+language: java
+
+addons:
+  apt:
+    packages:
+      - oracle-java8-installer
+
+jdk:
+  - oraclejdk8
+
+services:
+  - redis
+  - postgresql
+
+before_script:
+  - redis-server --port 6378 --requirepass 123 &
+  - psql -f $TRAVIS_BUILD_DIR/server/core/src/main/resources/create_schema.sql -U postgres
+
+script:
+  - mvn clean test

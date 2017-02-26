@@ -1,0 +1,14 @@
+View number of open connections : netstat -an | awk '/^tcp/ {print $NF}' | sort | uniq -c | sort -rn
+Number of files : find -maxdepth 1 -type f | wc -l
+
+Delete files older than 90 days : find ./data/data/ -type f -mtime +90 -delete
+Delete hourly files older than 7 days : find ./data/data/ -type f -name '*_hourly.bin' -mtime +7 -delete
+Delete minute files older than 1 day : find ./data/data/ -type f -name '*_minute.bin' -mtime +1 -delete
+Delete empty (size < 800 bytes) profiles : find ./data/ -maxdepth 1 -type f -name '*.user' -size -850c -delete
+
+View top traffic : iftop -n
+View tcp dump : tcpdump -n host x.x.x.x
+Ban IP manually  : iptables -A INPUT -s IP -j DROP
+                 : iptables -A OUTPUT -d IP -j DROP
+Ban IP manually, otpion 2 : ipset add blacklist IP
+Dump java heap : jmap -dump:format=b,file=heap.bin <pid>

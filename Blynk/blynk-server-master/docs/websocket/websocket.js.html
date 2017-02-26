@@ -1,0 +1,124 @@
+<html>
+<head>
+    <title>Web Socket Performance Test</title>
+</head>
+<body>
+
+<label>Connection Status:</label>
+<label id="connectionLabel"></label><br />
+
+<form onsubmit="return false;">
+    Command : <input type="text" id="command" value="login 7038b715824d45269a3662c9648ffb9f" style="width:500px;"/><br>
+    <input type="button" value="Send"
+           onclick="send(command.value)" />
+
+    <h3>Output</h3>
+    <textarea id="output" style="width:500px;height:300px;"></textarea>
+    <br>
+    <input type="button" value="Clear" onclick="clearText()">
+</form>
+
+<script src="Command.js"></script>
+
+<script type="text/javascript">
+    const PING_INTERVAL_MILLIS = 5000;
+    var isRunning = false;
+
+    var command = document.getElementById('command');
+    var output = document.getElementById('output');
+    var connectionLabel = document.getElementById('connectionLabel');
+
+    if (!window.WebSocket) {
+        window.WebSocket = window.MozWebSocket;
+    }
+
+    if (window.WebSocket) {
+        socket = new WebSocket("ws://127.0.0.1:8082/websocket");
+        socket.binaryType = 'arraybuffer';
+        socket.onmessage = function(event) {
+            if (event.data instanceof ArrayBuffer) {
+                console.log(">>>", event.data);
+                output.value += "Receive : " +  messageToDebugString(event.data) + "\r\n";
+            } else {
+                output.value = "unexpected type : " + event.data + "\r\n";
+            }
+        };
+        socket.onopen = function(event) {
+            isRunning = true;
+            connectionLabel.innerHTML = "Connected";
+        };
+        socket.onclose = function(event) {
+            isRunning = false;
+            connectionLabel.innerHTML = "Disconnected";
+        };
+        socket.onerror = function(event) {
+            connectionLabel.innerHTML = "Error";
+        };
+    } else {
+        alert("Your browser does not support Web Socket.");
+    }
+
+    window.setInterval(function() {
+        send("ping");
+    }, PING_INTERVAL_MILLIS);
+
+    function messageToDebugString(bufArray) {
+        var dataview = new DataView(bufArray);
+        var cmdString = getStringByCommandCode(dataview.getInt8(0));
+        var msgId = dataview.getUint16(1);
+        var responseCode = getStatusByCode(dataview.getUint16(3));
+
+        return "Command : " + cmdString + ", msgId : " + msgId + ", responseCode : " + responseCode;
+    }
+
+    function send(data) {
+        if (!window.WebSocket || !isRunning) {
+            return;
+        }
+
+        if (socket.readyState == WebSocket.OPEN) {
+            var commandAndBody = data.split(" ");
+            var message = createMessage(commandAndBody);
+            output.value += 'sending : ' + data + '\r\n';
+            socket.send(message);
+        } else {
+            alert("The socket is not open.");
+        }
+    }
+
+    function createMessage(commandAndBody) {
+        var cmdString = commandAndBody[0];
+        var cmdBody = commandAndBody.length > 1 ? commandAndBody.slice(1).join('\0') : null;
+        var cmd = getCommandByString(cmdString);
+        return buildBlynkMessage(cmd, 1, cmdBody);
+    }
+
+    function buildBlynkMessage(cmd, msgId, cmdBody) {
+        const BLYNK_HEADER_SIZE = 5;
+        var bodyLength = (cmdBody ? cmdBody.length : 0);
+
+        var bufArray = new ArrayBuffer(BLYNK_HEADER_SIZE + bodyLength);
+        var dataview = new DataView(bufArray);
+        dataview.setInt8(0, cmd);
+        dataview.setInt16(1, msgId);
+        dataview.setInt16(3, bodyLength);
+
+        if (bodyLength > 0) {
+            //todo optimize. should be better way
+            var buf = new ArrayBuffer(bodyLength); // 2 bytes for each char
+            var bufView = new Uint8Array(buf);
+            for (var i = 0, offset =  5; i < cmdBody.length; i++, offset += 1) {
+                dataview.setInt8(offset, cmdBody.charCodeAt(i));
+            }
+        }
+
+        return new Uint8Array(bufArray);
+    }
+
+    function clearText() {
+        output.value="";
+    }
+</script>
+
+</body>
+</html>

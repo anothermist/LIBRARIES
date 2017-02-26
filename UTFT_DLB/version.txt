@@ -1,0 +1,4 @@
+Version:
+	1.0	24 Sep 2013  -  initial release
+	1.01	29 Nov 2013  -  handle character value 255 in ttf converter
+                         include microsoft redistributable dlls for ttf converter in zip

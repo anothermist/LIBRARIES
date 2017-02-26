@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <name>Blynk Server</name>
+    <url>http://www.blynk.cc/</url>
+    <description>
+        Blynk - platform with iOs and Android apps to control Arduino,
+        Raspberry Pi and similar micro-controllers boards over Internet.
+    </description>
+    <organization>
+        <name>Blynk</name>
+        <url>http://www.blynk.cc/</url>
+    </organization>
+    <issueManagement>
+        <system>github</system>
+        <url>https://github.com/blynkkk/blynk-server/issues</url>
+    </issueManagement>
+
+    <groupId>cc.blynk</groupId>
+    <artifactId>blynk</artifactId>
+    <version>0.23.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <scm>
+        <url>https://github.com/blynkkk/blynk-server.git</url>
+        <connection>scm:git:ssh://git@github.com/blynkkk/blynk-server.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/blynkkk/blynk-server.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
+    <developers>
+        <developer>
+            <id>Dmitriy Dumanskiy</id>
+            <email>dmitriy@blynk.cc</email>
+        </developer>
+    </developers>
+
+    <modules>
+        <module>server</module>
+        <module>client</module>
+        <module>integration-tests</module>
+    </modules>
+
+    <!-- for QR gen tool -->
+    <distributionManagement>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+            <layout>default</layout>
+        </repository>
+    </distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+            <layout>default</layout>
+        </repository>
+    </repositories>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>${maven-release-plugin.version}</version>
+                <configuration>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <tagNameFormat>v@{project.version}</tagNameFormat>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.surefire.plugin.version}</version>
+                <configuration>
+                    <argLine>-Xmx1024m</argLine>
+                </configuration>
+            </plugin>
+
+        </plugins>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <excludes>
+                    <exclude>*.sql</exclude>
+                    <exclude>*.temp</exclude>
+                </excludes>
+            </resource>
+        </resources>
+    </build>
+
+    <profiles>
+
+        <profile>
+            <id>win</id>
+            <activation>
+                <os>
+                    <family>Windows</family>
+                </os>
+            </activation>
+            <properties>
+                <script.extension>.bat</script.extension>
+                <!--Just to enable build under windows. EPOLL CODE SHOULD NOT BE USED UNDER WINDOWS-->
+                <epoll.os>linux-x86_64</epoll.os>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>unix</id>
+            <activation>
+                <os>
+                    <family>unix</family>
+                </os>
+            </activation>
+            <properties>
+                <script.extension>.sh</script.extension>
+                <epoll.os>linux-x86_64</epoll.os>
+            </properties>
+        </profile>
+
+    </profiles>
+
+    <properties>
+        <!-- maven plugins -->
+        <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
+        <maven-compiler-plugin.version>3.3</maven-compiler-plugin.version>
+        <maven.assembly.plugin.version>2.6</maven.assembly.plugin.version>
+        <maven.surefire.plugin.version>2.19.1</maven.surefire.plugin.version>
+
+        <!-- dependencies -->
+        <netty.version>4.1.8.Final</netty.version>
+        <netty.tcnative.version>1.1.33.Fork26</netty.tcnative.version>
+        <log4j2.version>2.7</log4j2.version>
+        <jackson-databind.version>2.8.5</jackson-databind.version>
+        <disruptor.version>3.3.6</disruptor.version>
+        <commons-cli.version>1.2</commons-cli.version>
+        <async-http-client.version>2.1.0-alpha5</async-http-client.version>
+        <twitter4j-core.version>4.0.2</twitter4j-core.version>
+        <javax.mail.version>1.5.5</javax.mail.version>
+        <commons-validator.version>1.5.0</commons-validator.version>
+        <postgresql.version>9.4.1208</postgresql.version>
+        <HikariCP.version>2.6.0</HikariCP.version>
+        <qrgen.version>2.2.0</qrgen.version>
+
+        <!-- test dependencies -->
+        <httpclient.version>4.5.2</httpclient.version>
+        <commons-lang3.version>3.4</commons-lang3.version>
+        <junit.version>4.12</junit.version>
+        <mockito-all.version>1.10.19</mockito-all.version>
+        <commons-io.version>2.5</commons-io.version>
+        <commons-lang.version>2.6</commons-lang.version>
+        <jmh-core.version>1.13</jmh-core.version>
+
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+
+        <!-- Netty specific dependencies -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-common</artifactId>
+            <version>${netty.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler</artifactId>
+            <version>${netty.version}</version>
+        </dependency>
+
+
+        <!-- Log4j2 dependencies -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${log4j2.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>${log4j2.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>${mockito-all.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+
+</project>

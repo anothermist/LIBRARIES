@@ -1,0 +1,129 @@
+{
+    "dashBoards" :
+        [
+            {
+             "id":1,
+             "name":"My Dashboard",
+             "isActive" : true,
+             "isShared" : true,
+             "createdAt" : 1,
+             "widgets"  : [
+                {"id":1, "x":1, "y":1, "label":"Some Text", "type":"BUTTON",         "pinType":"DIGITAL", "pin":1, "value":"1"},
+                {"id":2, "x":1, "y":1, "label":"Some Text", "type":"SLIDER",  "pinType":"DIGITAL", "pin":2, "value":"1", "state":"ON"},
+                {"id":3, "x":1, "y":1, "label":"Some Text", "type":"SLIDER",  "pinType":"ANALOG", "pin":3, "value":"0", "state":"OFF"},
+                {"id":4, "x":1, "y":1, "label":"Some Text", "type":"SLIDER",         "pinType":"VIRTUAL", "pin":4, "value":"244" },
+                {"id":5, "x":1, "y":1, "label":"Some Text", "type":"TIMER",          "pinType":"DIGITAL", "pin":5, "value":"dw\u00005\u00001", "startTime":0},
+                {"id":6, "x":1, "y":1, "label":"Some Text", "type":"LED",            "pinType":"ANALOG", "pin":6},
+                {"id":7, "x":1, "y":1, "label":"Some Text", "type":"DIGIT4_DISPLAY", "pinType":"ANALOG", "pin":7, "frequency" : 5000, "value":"3"},
+                {"id":30, "x":1, "y":1, "label":"Some Text", "type":"DIGIT4_DISPLAY", "pinType":"ANALOG", "pin":30, "frequency" : 100, "value":"3"},
+                {"id":8, "x":1, "y":1, "label":"Some Text", "type":"GRAPH",          "pinType":"ANALOG", "pin":8},
+                {"id":9, "x":1, "y":1, "type":"NOTIFICATION", "notifyWhenOffline":true, "androidTokens":{"uid":"token"}},
+                {"id":10, "x":1, "y":1, "token":"token", "secret":"secret", "type":"TWITTER"},
+                {"id":11, "x":1, "y":1, "type":"RTC", "pinType":"VIRTUAL", "pin":9},
+                {"id":12, "x":0, "y":0, "color":-1, "width":8, "height":2,
+                    "type":"LCD",
+                    "pins": [
+                                {
+                                    "pin":0,
+                                    "pwmMode":false,
+                                    "rangeMappingOn":false,
+                                    "pinType":"VIRTUAL",
+                                    "value":"89.888037459418",
+                                    "min":-100,
+                                    "max":100
+                                },
+                                {   "pin":1,
+                                    "pwmMode":false,
+                                    "rangeMappingOn":false,
+                                    "pinType":"VIRTUAL",
+                                    "value":"-58.74774244674501",
+                                    "min":-100,
+                                    "max":100
+                                }
+                            ],
+                    "advancedMode":false,
+                    "textFormatLine1":"pin1 : /pin0/",
+                    "textFormatLine2":"pin2 : /pin1/",
+                    "textLight":false,
+                    "frequency":1000
+                },
+                {
+                    "type":"RGB",
+                    "id":13,"x":2,"y":3,"color":616861439,"width":4,"height":3,"tabId":0,
+                    "splitMode":false,
+                    "sendOnReleaseOn":true,
+                    "pins":[
+                            {
+                                "pin":13,
+                                "pwmMode":false,
+                                "rangeMappingOn":false,
+                                "pinType":"VIRTUAL",
+                                "value":"60\u0000143\u0000158",
+                                "min":0,
+                                "max":255
+                            },
+                            {
+                                "pin":13,
+                                "pwmMode":false,
+                                "rangeMappingOn":false,
+                                "pinType":"VIRTUAL",
+                                "value":"60\u0000143\u0000158",
+                                "min":0,
+                                "max":255
+                            },
+                            {
+                                "pin":13,
+                                "pwmMode":false,
+                                "rangeMappingOn":false,
+                                "pinType":"VIRTUAL",
+                                "value":"60\u0000143\u0000158",
+                                "min":0,
+                                "max":255
+                            }
+                           ]
+                },
+                {
+                    "type":"LOGGER",
+                    "id":14,
+                    "x":0,
+                    "y":6,
+                    "color":0,
+                    "width":8,
+                    "height":3,
+                    "tabId":0,
+                    "pins":
+                        [
+                            {"pinType":"ANALOG", "pin":7,"pwmMode":false,"rangeMappingOn":false,"min":0,"max":255},
+                            {"pin":-1,"pwmMode":false,"rangeMappingOn":false,"min":0,"max":0},
+                            {"pin":-1,"pwmMode":false,"rangeMappingOn":false,"min":0,"max":0},
+                            {"pin":-1,"pwmMode":false,"rangeMappingOn":false,"min":0,"max":0}
+                        ],
+                    "period":"THREE_MONTHS",
+                    "showLegends":true
+                },
+                {"type":"LCD","id":15,"x":0,"y":6,"color":600084223,"width":8,"height":2,"tabId":0,
+                "pins":
+                [
+                {"pin":20,
+                "pwmMode":false,
+                "rangeMappingOn":false,
+                "pinType":"VIRTUAL",
+                "min":0,
+                "max":1023
+                },
+                {
+                "pin":20,
+                "pwmMode":false,
+                "rangeMappingOn":false,
+                "pinType":"VIRTUAL",
+                "min":0,
+                "max":1023
+                }
+                ],
+                "advancedMode":true,"textLight":false,"textLightOn":false,"frequency":0
+                }
+             ],
+             "boardType":"UNO"
+            }
+        ]
+}

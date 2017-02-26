@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<p>Canvas:</p>
+<canvas id="myCanvas" style="border:1px solid #d3d3d3;">
+Your browser does not support the HTML5 canvas tag.
+</canvas>
+
+<script>
+var WIDTH = 8;
+var HEIGHT = 9;
+var WIDGET_TEXT_PADDING = 20;
+var WIDGET_FONT_SIZE = 12;
+var DASHBOARD_LAYOUT_PADDING = 10;
+
+var bg = createImage("bg.png");
+
+var cellOverlay = createImage("bg_pins_default.png");
+var widgetBG = createImage("widgets/widget_bg.9.png");
+
+var buttonBG = createImage("widgets/button/wdgt_button_bg_off.png");
+var buttonCircle = createImage("widgets/button/wdgt_button_circle_on_color.png");
+
+var ledBG = createImage("widgets/led/diode_off.png");
+var ledAlpha = createImage("widgets/led/diode_color_alpha.png");
+var ledGlass = createImage("widgets/led/diode_glass_overlay.png");
+
+var sliderDragBG = createImage("widgets/slider/wdgt_slider_handle.png");
+var sliderDragOverlay = createImage("widgets/slider/wdgt_slider_handle_color.9.png");
+
+function createImage(src) {
+    var img = new Image();
+    img.src = src;
+    return img;
+}
+
+window.onload = function() {
+    var c = document.getElementById("myCanvas");
+    var ctx = c.getContext("2d");
+
+    c.width = WIDTH * bg.width + 2 * DASHBOARD_LAYOUT_PADDING;
+    c.height = HEIGHT * bg.height + 2 * DASHBOARD_LAYOUT_PADDING;
+    
+    draw(ctx, bg, DASHBOARD_LAYOUT_PADDING);
+    draw(ctx, cellOverlay, DASHBOARD_LAYOUT_PADDING);
+    
+    var button = {x : 0, y : 0, label : "BUTTON", width : 2, height : 2, type : "BUTTON"};
+    var led = {x : 2, y : 2, label : "LED", width : 1, height : 1, type : "LED"};
+    var slider = {x : 3, y : 0, label : "SLIDER", width : 4, height : 1, type : "SLIDER"};
+    var sliderBig = {x : 0, y : 3, label : "SLIDER", width : 8, height : 1, type : "SLIDER"};
+
+    drawButton(ctx, button, DASHBOARD_LAYOUT_PADDING);
+    drawLED(ctx, led, DASHBOARD_LAYOUT_PADDING);
+    drawSlider(ctx, slider, DASHBOARD_LAYOUT_PADDING);
+    drawSlider(ctx, sliderBig, DASHBOARD_LAYOUT_PADDING);
+};
+
+function draw(ctx, img, padding) {
+    for (var x = 0; x < WIDTH; x++) {
+        for (var y = 0; y < HEIGHT; y++) {
+            ctx.drawImage(img, padding + x * img.width, padding + y * img.height);
+	}
+    }
+}
+
+function drawButton(ctx, widget, padding) {
+    var d = calcDimensions(widget.x, widget.y, widget.width, widget.height, padding);
+    ctx.drawImage(widgetBG, d.startX, d.startY, d.width, d.height);
+
+    ctx.drawImage(buttonBG, d.startX + (d.width - buttonBG.width) / 2, (d.startY + WIDGET_FONT_SIZE) + (d.height - buttonBG.height) / 2);
+    ctx.drawImage(buttonCircle, d.startX + (d.width - buttonCircle.width) / 2, (d.startY + WIDGET_FONT_SIZE) + (d.height - buttonCircle.height) / 2);
+    
+    drawWidgetLabel(ctx, d.startX, d.startY, widget.label, padding);
+}
+
+function drawLED(ctx, widget, padding) {
+    var d = calcDimensions(widget.x, widget.y, widget.width, widget.height, padding);
+    ctx.drawImage(widgetBG, d.startX, d.startY, d.width, d.height);
+
+    ctx.drawImage(ledBG, d.startX + (d.width - ledBG.width) / 2, (d.startY + WIDGET_FONT_SIZE) + (d.height - ledBG.height) / 2);
+//    ctx.drawImage(ledAlpha, d.startX + (d.width - ledAlpha.width) / 2, (d.startY + WIDGET_FONT_SIZE) + (d.height - ledAlpha.height) / 2 + 2);
+    //+2 - don't know why
+    ctx.drawImage(ledGlass, d.startX + (d.width - ledGlass.width) / 2, (d.startY + WIDGET_FONT_SIZE) + (d.height - ledGlass.height) / 2 + 2);
+    
+    drawWidgetLabel(ctx, d.startX, d.startY, widget.label, padding);
+}
+
+function drawSlider(ctx, widget, padding) {
+    var d = calcDimensions(widget.x, widget.y, widget.width, widget.height, padding);
+    ctx.drawImage(widgetBG, d.startX, d.startY, d.width, d.height);
+
+
+    var width = d.width - 6 * padding;
+    roundRect(ctx, d.startX + padding * 3, d.startY + 70, width , 24, 3, "#171719");
+
+    width = d.width - 8 * padding;
+    roundRect(ctx, d.startX + padding * 4, d.startY + 80, width , 4, 3, "#040404");
+
+    ctx.drawImage(sliderDragBG, d.startX + padding * 2, d.startY + 70 - 12);
+    ctx.drawImage(sliderDragOverlay, d.startX + padding * 2, d.startY + 70 - 12);
+
+    drawWidgetLabel(ctx, d.startX, d.startY, widget.label, padding);
+}
+
+function calcDimensions(x, y, cell_width, cell_height, padding) {
+    //2 is padding between cells
+    var width = cellOverlay.width * cell_width + cell_width * 2;
+    var height = cellOverlay.height * cell_height + cell_height * 2;
+    var startX = padding + x * cellOverlay.width - 1;
+    var startY = padding + y * cellOverlay.height - 1;
+
+    return {startX : startX, startY : startY, width : width, height : height};
+}
+
+function drawWidgetLabel(ctx, startX, startY, txt, padding) {
+    ctx.font = "18px Arial";
+    ctx.fillStyle = "#b2b2b2";
+    ctx.fillText(txt, startX + WIDGET_TEXT_PADDING, startY + WIDGET_TEXT_PADDING + WIDGET_FONT_SIZE)
+}
+
+
+/**
+ * Draws a rounded rectangle using the current state of the canvas.
+ * If you omit the last three params, it will draw a rectangle
+ * outline with a 5 pixel border radius
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {Number} x The top left x coordinate
+ * @param {Number} y The top left y coordinate
+ * @param {Number} width The width of the rectangle
+ * @param {Number} height The height of the rectangle
+ * @param {Number} radius The corner radius. Defaults to 5;
+ */
+function roundRect(ctx, x, y, width, height, radius, color) {
+    if (typeof radius === "undefined") {
+        radius = 5;
+    }
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.fill();
+}
+
+</script>
+
+</body>
+</html>
+

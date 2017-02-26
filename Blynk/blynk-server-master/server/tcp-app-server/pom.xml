@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>server</artifactId>
+        <groupId>cc.blynk.server</groupId>
+        <version>0.23.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>cc.blynk.server.application</groupId>
+    <artifactId>tcp-app-server</artifactId>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>cc.blynk.server</groupId>
+            <artifactId>core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>cc.blynk.server.redis</groupId>
+            <artifactId>redis-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- used for email validation -->
+        <dependency>
+            <groupId>commons-validator</groupId>
+            <artifactId>commons-validator</artifactId>
+            <version>${commons-validator.version}</version>
+        </dependency>
+
+    </dependencies>
+
+</project>

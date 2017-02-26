@@ -1,0 +1,13 @@
+{
+    "dashBoards" :
+        [
+            {
+             "id":1,
+             "name":"My Dashboard",
+             "widgets"  : [
+                {"id":1, "x":1, "y":1, "dashBoardId":1, "label":"Some Text", "type":"RGB", "pins": [{"pinType":"DIGITAL", "pin":1, "value":"1"}, {"pinType":"DIGITAL", "pin":2, "value":"2", "pwmMode":true}]}
+                ],
+             "boardType":"UNO"
+            }
+        ]
+}
