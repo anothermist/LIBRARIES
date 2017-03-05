@@ -85,9 +85,7 @@ class TwoWire : public Stream
     using Print::write;
 };
 
-#if !defined(NO_GLOBAL_INSTANCES) && !defined(NO_GLOBAL_TWOWIRE)
 extern TwoWire Wire;
-#endif
 
 #endif
 

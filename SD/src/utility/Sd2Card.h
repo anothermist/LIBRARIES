@@ -25,12 +25,20 @@
  */
 #include "Sd2PinMap.h"
 #include "SdInfo.h"
+
+#ifdef ESP8266
+#include "SPI.h"
+uint32_t const SPI_FULL_SPEED = 8000000;
+uint32_t const SPI_HALF_SPEED = 4000000;
+uint32_t const SPI_QUARTER_SPEED = 2000000;
+#else
 /** Set SCK to max rate of F_CPU/2. See Sd2Card::setSckRate(). */
 uint8_t const SPI_FULL_SPEED = 0;
 /** Set SCK rate to F_CPU/4. See Sd2Card::setSckRate(). */
 uint8_t const SPI_HALF_SPEED = 1;
 /** Set SCK rate to F_CPU/8. Sd2Card::setSckRate(). */
 uint8_t const SPI_QUARTER_SPEED = 2;
+#endif
 /**
  * USE_SPI_LIB: if set, use the SPI library bundled with Arduino IDE, otherwise
  * run with a standalone driver for AVR.
@@ -54,10 +62,6 @@ uint8_t const SPI_QUARTER_SPEED = 2;
 //
 #ifndef SOFTWARE_SPI
 // hardware pin defs
-
-// include pins_arduino.h or variant.h depending on architecture, via Arduino.h
-#include <Arduino.h>
-
 /**
  * SD Chip Select pin
  *
@@ -65,28 +69,15 @@ uint8_t const SPI_QUARTER_SPEED = 2;
  * as an output by init().  An avr processor will not function as an SPI
  * master unless SS is set to output mode.
  */
-#ifndef SDCARD_SS_PIN
 /** The default chip select pin for the SD card is SS. */
-uint8_t const  SD_CHIP_SELECT_PIN = SS;
-#else
-uint8_t const  SD_CHIP_SELECT_PIN = SDCARD_SS_PIN;
-#endif
-
-// The following three pins must not be redefined for hardware SPI,
-// so ensure that they are taken from pins_arduino.h or variant.h, depending on architecture.
-#ifndef SDCARD_MOSI_PIN
+uint8_t const  SD_CHIP_SELECT_PIN = SS_PIN;
+// The following three pins must not be redefined for hardware SPI.
 /** SPI Master Out Slave In pin */
-uint8_t const  SPI_MOSI_PIN = MOSI;
+uint8_t const  SPI_MOSI_PIN = MOSI_PIN;
 /** SPI Master In Slave Out pin */
-uint8_t const  SPI_MISO_PIN = MISO;
+uint8_t const  SPI_MISO_PIN = MISO_PIN;
 /** SPI Clock pin */
-uint8_t const  SPI_SCK_PIN = SCK;
-#else
-uint8_t const  SPI_MOSI_PIN = SDCARD_MOSI_PIN;
-uint8_t const  SPI_MISO_PIN = SDCARD_MISO_PIN;
-uint8_t const  SPI_SCK_PIN = SDCARD_SCK_PIN;
-#endif
-
+uint8_t const  SPI_SCK_PIN = SCK_PIN;
 /** optimize loops for hardware SPI */
 #ifndef USE_SPI_LIB
 #define OPTIMIZE_HARDWARE_SPI
@@ -198,10 +189,17 @@ class Sd2Card {
    * and the default SD chip select pin.
    * See sd2Card::init(uint8_t sckRateID, uint8_t chipSelectPin).
    */
+  #ifdef ESP8266
+  uint8_t init(uint32_t sckRateID) {
+    return init(sckRateID, SD_CHIP_SELECT_PIN);
+  }
+  uint8_t init(uint32_t sckRateID, uint8_t chipSelectPin);
+  #else
   uint8_t init(uint8_t sckRateID) {
     return init(sckRateID, SD_CHIP_SELECT_PIN);
   }
   uint8_t init(uint8_t sckRateID, uint8_t chipSelectPin);
+  #endif
   void partialBlockRead(uint8_t value);
   /** Returns the current value, true or false, for partial block read. */
   uint8_t partialBlockRead(void) const {return partialBlockRead_;}
@@ -222,10 +220,11 @@ class Sd2Card {
     return readRegister(CMD9, csd);
   }
   void readEnd(void);
+  #ifdef ESP8266
+  uint8_t setSckRate(uint32_t sckRateID);
+  #else
   uint8_t setSckRate(uint8_t sckRateID);
-#ifdef USE_SPI_LIB
-  uint8_t setSpiClock(uint32_t clock);
-#endif
+  #endif
   /** Return the card type: SD V1, SD V2 or SDHC */
   uint8_t type(void) const {return type_;}
   uint8_t writeBlock(uint32_t blockNumber, const uint8_t* src);

@@ -23,8 +23,6 @@
 #define FILE_READ O_READ
 #define FILE_WRITE (O_READ | O_WRITE | O_CREAT)
 
-namespace SDLib {
-
 class File : public Stream {
  private:
   char _name[13]; // our name
@@ -50,6 +48,28 @@ public:
   boolean isDirectory(void);
   File openNextFile(uint8_t mode = O_RDONLY);
   void rewindDirectory(void);
+
+  template<typename T> size_t write(T &src){
+    uint8_t obuf[512];
+    size_t doneLen = 0;
+    size_t sentLen;
+    int i;
+
+    while (src.available() > 512){
+      src.read(obuf, 512);
+      sentLen = write(obuf, 512);
+      doneLen = doneLen + sentLen;
+      if(sentLen != 512){
+        return doneLen;
+      }
+    }
+  
+    size_t leftLen = src.available();
+    src.read(obuf, leftLen);
+    sentLen = write(obuf, leftLen);
+    doneLen = doneLen + sentLen;
+    return doneLen;
+  }
   
   using Print::write;
 };
@@ -67,9 +87,8 @@ private:
 public:
   // This needs to be called to set up the connection to the SD card
   // before other methods are used.
-  boolean begin(uint8_t csPin = SD_CHIP_SELECT_PIN);
-  boolean begin(uint32_t clock, uint8_t csPin);
-  
+  boolean begin(uint8_t csPin = SD_CHIP_SELECT_PIN, uint32_t speed = SPI_HALF_SPEED);
+
   // Open the specified file/directory with the supplied mode (e.g. read or
   // write, etc). Returns a File object for interacting with the file.
   // Note that currently only one file can be open at a time.
@@ -77,21 +96,29 @@ public:
   File open(const String &filename, uint8_t mode = FILE_READ) { return open( filename.c_str(), mode ); }
 
   // Methods to determine if the requested file path exists.
-  boolean exists(const char *filepath);
+  boolean exists(char *filepath);
   boolean exists(const String &filepath) { return exists(filepath.c_str()); }
 
   // Create the requested directory heirarchy--if intermediate directories
   // do not exist they will be created.
-  boolean mkdir(const char *filepath);
+  boolean mkdir(char *filepath);
   boolean mkdir(const String &filepath) { return mkdir(filepath.c_str()); }
   
   // Delete the file.
-  boolean remove(const char *filepath);
+  boolean remove(char *filepath);
   boolean remove(const String &filepath) { return remove(filepath.c_str()); }
   
-  boolean rmdir(const char *filepath);
+  boolean rmdir(char *filepath);
   boolean rmdir(const String &filepath) { return rmdir(filepath.c_str()); }
 
+  uint8_t type(){ return card.type(); }
+  uint8_t fatType(){ return volume.fatType(); }
+  size_t blocksPerCluster(){ return volume.blocksPerCluster(); }
+  size_t totalClusters(){ return volume.clusterCount(); }
+  size_t blockSize(){ return (size_t)0x200; }
+  size_t totalBlocks(){ return (totalClusters() / blocksPerCluster()); }
+  size_t clusterSize(){ return blocksPerCluster() * blockSize(); }
+  size_t size(){ return (clusterSize() * totalClusters()); }
 private:
 
   // This is used to determine the mode used to open a file
@@ -102,23 +129,9 @@ private:
   int fileOpenMode;
   
   friend class File;
-  friend boolean callback_openPath(SdFile&, const char *, boolean, void *); 
+  friend boolean callback_openPath(SdFile&, char *, boolean, void *); 
 };
 
 extern SDClass SD;
-
-};
-
-// We enclose File and SD classes in namespace SDLib to avoid conflicts
-// with others legacy libraries that redefines File class.
-
-// This ensure compatibility with sketches that uses only SD library
-using namespace SDLib;
-
-// This allows sketches to use SDLib::File with other libraries (in the
-// sketch you must use SDFile instead of File to disambiguate)
-typedef SDLib::File    SDFile;
-typedef SDLib::SDClass SDFileSystemClass;
-#define SDFileSystem   SDLib::SD
 
 #endif

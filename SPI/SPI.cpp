@@ -33,6 +33,8 @@ typedef union {
         };
 } spiClk_t;
 
+SPIClass SPI;
+
 SPIClass::SPIClass() {
     useHwCs = false;
 }
@@ -484,6 +486,3 @@ void SPIClass::transferBytes_(uint8_t * out, uint8_t * in, uint8_t size) {
     }
 }
 
-#if !defined(NO_GLOBAL_INSTANCES) && !defined(NO_GLOBAL_SPI)
-SPIClass SPI;
-#endif
