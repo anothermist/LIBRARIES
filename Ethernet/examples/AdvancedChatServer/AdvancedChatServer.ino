@@ -1,14 +1,15 @@
 /*
  Advanced Chat Server
 
- A more advanced server that distributes any incoming messages
+ A more advanced server that distributes any incoming messages 
  to all connected clients but the client the message comes from.
- To use, telnet to your device's IP address and type.
+ To use telnet to  your device's IP address and type.
  You can see the client's input in the serial monitor as well.
  Using an Arduino Wiznet Ethernet shield.
 
  Circuit:
  * Ethernet shield attached to pins 10, 11, 12, 13
+ * Analog inputs attached to pins A0 through A5 (optional)
 
  created 18 Dec 2009
  by David A. Mellis
@@ -25,12 +26,10 @@
 // Enter a MAC address and IP address for your controller below.
 // The IP address will be dependent on your local network.
 // gateway and subnet are optional:
-byte mac[] = {
-  0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
-};
-IPAddress ip(192, 168, 1, 177);
-IPAddress myDns(192, 168, 1, 1);
-IPAddress gateway(192, 168, 1, 1);
+byte mac[] = { 
+  0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+IPAddress ip(192,168,1, 177);
+IPAddress gateway(192,168,1, 1);
 IPAddress subnet(255, 255, 0, 0);
 
 
@@ -40,14 +39,14 @@ EthernetServer server(23);
 EthernetClient clients[4];
 
 void setup() {
-  // initialize the Ethernet device
-  Ethernet.begin(mac, ip, myDns, gateway, subnet);
+  // initialize the ethernet device
+  Ethernet.begin(mac, ip, gateway, subnet);
   // start listening for clients
   server.begin();
-  // Open serial communications and wait for port to open:
+ // Open serial communications and wait for port to open:
   Serial.begin(9600);
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB port only
+   while (!Serial) {
+    ; // wait for serial port to connect. Needed for Leonardo only
   }
 
 
@@ -63,9 +62,9 @@ void loop() {
   if (client) {
 
     boolean newClient = true;
-    for (byte i = 0; i < 4; i++) {
+    for (byte i=0;i<4;i++) {
       //check whether this client refers to the same socket as one of the existing instances:
-      if (clients[i] == client) {
+      if (clients[i]==client) {
         newClient = false;
         break;
       }
@@ -73,10 +72,10 @@ void loop() {
 
     if (newClient) {
       //check which of the existing clients can be overridden:
-      for (byte i = 0; i < 4; i++) {
-        if (!clients[i] && clients[i] != client) {
+      for (byte i=0;i<4;i++) {
+        if (!clients[i] && clients[i]!=client) {
           clients[i] = client;
-          // clear out the input buffer:
+          // clead out the input buffer:
           client.flush();
           Serial.println("We have a new client");
           client.print("Hello, client number: ");
@@ -91,8 +90,8 @@ void loop() {
       // read the bytes incoming from the client:
       char thisChar = client.read();
       // echo the bytes back to all other connected clients:
-      for (byte i = 0; i < 4; i++) {
-        if (clients[i] && (clients[i] != client)) {
+      for (byte i=0;i<4;i++) {
+        if (clients[i] && (clients[i]!=client)) {
           clients[i].write(thisChar);
         }
       }
@@ -100,7 +99,7 @@ void loop() {
       Serial.write(thisChar);
     }
   }
-  for (byte i = 0; i < 4; i++) {
+  for (byte i=0;i<4;i++) {
     if (!(clients[i].connected())) {
       // client.stop() invalidates the internal socket-descriptor, so next use of == will allways return false;
       clients[i].stop();

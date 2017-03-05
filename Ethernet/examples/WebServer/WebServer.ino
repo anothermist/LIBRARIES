@@ -12,8 +12,6 @@
  by David A. Mellis
  modified 9 Apr 2012
  by Tom Igoe
- modified 02 Sept 2015
- by Arturo Guadalupi
 
  */
 
@@ -36,7 +34,7 @@ void setup() {
   // Open serial communications and wait for port to open:
   Serial.begin(9600);
   while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB port only
+    ; // wait for serial port to connect. Needed for Leonardo only
   }
 
 
@@ -86,7 +84,8 @@ void loop() {
         if (c == '\n') {
           // you're starting a new line
           currentLineIsBlank = true;
-        } else if (c != '\r') {
+        }
+        else if (c != '\r') {
           // you've gotten a character on the current line
           currentLineIsBlank = false;
         }
