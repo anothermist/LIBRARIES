@@ -1,1 +1,0 @@
-sudo -u postgres /usr/lib/postgresql/9.5/bin/pg_ctl -D /etc/postgresql/9.5/main start

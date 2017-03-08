@@ -1,0 +1,16 @@
+#######################################
+# Syntax Coloring Map For WireData
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+WireData	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+wireWriteData	KEYWORD2
+wireReadData	KEYWORD2

@@ -5,6 +5,7 @@
   projects by simply dragging and dropping widgets.
 
     Downloads, docs, tutorials: http://www.blynk.cc
+    Sketch generator:           http://examples.blynk.cc
     Blynk community:            http://community.blynk.cc
     Social networks:            http://www.fb.com/blynkapp
                                 http://twitter.com/blynk_app
@@ -29,7 +30,7 @@
 char auth[] = "YourAuthToken";
 
 BLYNK_WRITE(V1) {
-  int startTimeInSecs = param[0].asInt();
+  long startTimeInSecs = param[0].asLong();
   Serial.println(startTimeInSecs);
   Serial.println();
 }

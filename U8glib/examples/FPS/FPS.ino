@@ -121,6 +121,8 @@
 
 #include "U8glib.h"
 
+U8GLIB_ST7920_128X64 u8g(10, 11, 12, U8G_PIN_NONE);
+
 // setup u8g object, please remove comment from one of the following constructor calls
 // IMPORTANT NOTE: The following list is incomplete. The complete list of supported 
 // devices with all constructor calls is here: https://github.com/olikraus/u8glib/wiki/device
