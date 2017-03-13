@@ -9,12 +9,12 @@
 
 #include <TimeLib.h>
 #include <Wire.h>
-#include <DS3231.h>  // a basic DS1307 library that returns time as a time_t
+#include <DS1307RTC.h>  // a basic DS1307 library that returns time as a time_t
 
 
 void setup()  {
   Serial.begin(9600);
-//  while (!Serial) ; // Needed for Leonardo only
+  while (!Serial) ; // Needed for Leonardo only
   setSyncProvider(RTC.get);   // the function to get the time from the RTC
   if (timeStatus() != timeSet) 
      Serial.println("Unable to sync with the RTC");

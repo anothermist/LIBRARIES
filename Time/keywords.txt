@@ -1,25 +1,33 @@
 #######################################
-# Syntax Coloring Map Servo
+# Syntax Coloring Map For Time
 #######################################
 
 #######################################
 # Datatypes (KEYWORD1)
 #######################################
-Timer	KEYWORD1
-DeltaTimer	KEYWORD1
-
+time_t	KEYWORD1
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
-setDelay	KEYWORD2
-getDelay	KEYWORD2
-update	KEYWORD2
-reset	KEYWORD2
-clear	KEYWORD2
-addDelay	KEYWORD2
-isTriggered	KEYWORD2
-getTimeRemaining	KEYWORD2
-updateDt	KEYWORD2
+now	KEYWORD2
+second	KEYWORD2
+minute	KEYWORD2
+hour	KEYWORD2
+day	KEYWORD2
+month	KEYWORD2
+year	KEYWORD2
+isAM	KEYWORD2
+isPM	KEYWORD2
+weekday	KEYWORD2
+setTime	KEYWORD2
+adjustTime	KEYWORD2
+setSyncProvider	KEYWORD2
+setSyncInterval	KEYWORD2
+timeStatus	KEYWORD2
+TimeLib	KEYWORD2
+#######################################
+# Instances (KEYWORD2)
+#######################################
 
 #######################################
 # Constants (LITERAL1)
