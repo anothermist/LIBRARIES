@@ -5,7 +5,7 @@
 */
 
 #include <Arduino.h>
-#include <MFRC522.h>
+#include "MFRC522.h"
 
 /////////////////////////////////////////////////////////////////////////////////////
 // Functions for setting up the Arduino
@@ -214,6 +214,12 @@ void MFRC522::PCD_Init() {
 		PCD_Reset();
 	}
 	
+	// Reset baud rates
+	PCD_WriteRegister(TxModeReg, 0x00);
+	PCD_WriteRegister(RxModeReg, 0x00);
+	// Reset ModWidthReg
+	PCD_WriteRegister(ModWidthReg, 0x26);
+
 	// When communicating with a PICC we need a timeout if something goes wrong.
 	// f_timer = 13.56 MHz / (2*TPreScaler+1) where TPreScaler = [TPrescaler_Hi:TPrescaler_Lo].
 	// TPrescaler_Hi are the four low bits in TModeReg. TPrescaler_Lo is TPrescalerReg.
@@ -466,7 +472,7 @@ MFRC522::StatusCode MFRC522::PCD_CommunicateWithPICC(	byte command,		///< The co
   
 	byte _validBits = 0;
 	
-  // If the caller wants data back, get it from the MFRC522.
+	// If the caller wants data back, get it from the MFRC522.
 	if (backData && backLen) {
 		byte n = PCD_ReadRegister(FIFOLevelReg);	// Number of bytes in the FIFO
 		if (n > *backLen) {
@@ -784,7 +790,7 @@ MFRC522::StatusCode MFRC522::PICC_Select(	Uid *uid,			///< Pointer to Uid struct
 	
 	// Set correct uid->size
 	uid->size = 3 * cascadeLevel + 1;
-	
+
 	return STATUS_OK;
 } // End PICC_Select()
 
@@ -820,7 +826,6 @@ MFRC522::StatusCode MFRC522::PICC_HaltA() {
 	}
 	return result;
 } // End PICC_HaltA()
-
 
 /////////////////////////////////////////////////////////////////////////////////////
 // Functions for communicating with MIFARE PICCs
@@ -1295,6 +1300,7 @@ const __FlashStringHelper *MFRC522::PICC_GetTypeName(PICC_Type piccType	///< One
 		case PICC_TYPE_MIFARE_4K:		return F("MIFARE 4KB");
 		case PICC_TYPE_MIFARE_UL:		return F("MIFARE Ultralight or Ultralight C");
 		case PICC_TYPE_MIFARE_PLUS:		return F("MIFARE Plus");
+		case PICC_TYPE_MIFARE_DESFIRE:	return F("MIFARE DESFire");
 		case PICC_TYPE_TNP3XXX:			return F("MIFARE TNP3XXX");
 		case PICC_TYPE_NOT_COMPLETE:	return F("SAK indicates UID is not complete.");
 		case PICC_TYPE_UNKNOWN:
@@ -1327,7 +1333,9 @@ void MFRC522::PCD_DumpVersionToSerial() {
 /**
  * Dumps debug info about the selected PICC to Serial.
  * On success the PICC is halted after dumping the data.
- * For MIFARE Classic the factory default key of 0xFFFFFFFFFFFF is tried. 
+ * For MIFARE Classic the factory default key of 0xFFFFFFFFFFFF is tried.  
+ *
+ * @DEPRECATED Kept for bakward compatibility
  */
 void MFRC522::PICC_DumpToSerial(Uid *uid	///< Pointer to Uid struct returned from a successful PICC_Select().
 								) {
@@ -1354,6 +1362,7 @@ void MFRC522::PICC_DumpToSerial(Uid *uid	///< Pointer to Uid struct returned fro
 			break;
 			
 		case PICC_TYPE_ISO_14443_4:
+		case PICC_TYPE_MIFARE_DESFIRE:
 		case PICC_TYPE_ISO_18092:
 		case PICC_TYPE_MIFARE_PLUS:
 		case PICC_TYPE_TNP3XXX:
@@ -1372,6 +1381,8 @@ void MFRC522::PICC_DumpToSerial(Uid *uid	///< Pointer to Uid struct returned fro
 
 /**
  * Dumps card info (UID,SAK,Type) about the selected PICC to Serial.
+ *
+ * @DEPRECATED kept for backward compatibility
  */
 void MFRC522::PICC_DumpDetailsToSerial(Uid *uid	///< Pointer to Uid struct returned from a successful PICC_Select().
 									) {
@@ -1862,6 +1873,13 @@ bool MFRC522::MIFARE_UnbrickUidSector(bool logErrors) {
 bool MFRC522::PICC_IsNewCardPresent() {
 	byte bufferATQA[2];
 	byte bufferSize = sizeof(bufferATQA);
+
+	// Reset baud rates
+	PCD_WriteRegister(TxModeReg, 0x00);
+	PCD_WriteRegister(RxModeReg, 0x00);
+	// Reset ModWidthReg
+	PCD_WriteRegister(ModWidthReg, 0x26);
+
 	MFRC522::StatusCode result = PICC_RequestA(bufferATQA, &bufferSize);
 	return (result == STATUS_OK || result == STATUS_COLLISION);
 } // End PICC_IsNewCardPresent()

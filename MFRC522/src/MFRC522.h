@@ -77,6 +77,7 @@
 
 #include <Arduino.h>
 #include <SPI.h>
+#include <stdint.h>
 
 #define MFRC522_SPICLOCK SPI_CLOCK_DIV4			// MFRC522 accept upto 10MHz
 
@@ -135,6 +136,9 @@ const byte FM17522_firmware_reference[] PROGMEM = {
 
 class MFRC522 {
 public:
+	// Size of the MFRC522 FIFO
+	static const byte FIFO_SIZE = 64;		// The FIFO is 64 bytes.
+
 	// MFRC522 registers. Described in chapter 9 of the datasheet.
 	// When using SPI all addresses are shifted one bit left in the "SPI address byte" (section 8.1.2.3)
 	enum PCD_Register : byte {
@@ -251,6 +255,7 @@ public:
 		PICC_CMD_SEL_CL2		= 0x95,		// Anti collision/Select, Cascade Level 2
 		PICC_CMD_SEL_CL3		= 0x97,		// Anti collision/Select, Cascade Level 3
 		PICC_CMD_HLTA			= 0x50,		// HaLT command, Type A. Instructs an ACTIVE PICC to go to state HALT.
+		PICC_CMD_RATS           = 0xE0,     // Request command for Answer To Reset.
 		// The commands used for MIFARE Classic (from http://www.mouser.com/ds/2/302/MF1S503x-89574.pdf, Section 9)
 		// Use PCD_MFAuthent to authenticate access to a sector, then use these commands to read/write/modify the blocks on the sector.
 		// The read/write commands can also be used for MIFARE Ultralight.
@@ -284,6 +289,7 @@ public:
 		PICC_TYPE_MIFARE_4K		,	// MIFARE Classic protocol, 4KB
 		PICC_TYPE_MIFARE_UL		,	// MIFARE Ultralight or Ultralight C
 		PICC_TYPE_MIFARE_PLUS	,	// MIFARE Plus
+		PICC_TYPE_MIFARE_DESFIRE,	// MIFARE DESFire
 		PICC_TYPE_TNP3XXX		,	// Only mentioned in NXP AN 10833 MIFARE Type Identification Procedure
 		PICC_TYPE_NOT_COMPLETE	= 0xff	// SAK indicates UID is not complete.
 	};
@@ -308,7 +314,7 @@ public:
 		byte		uidByte[10];
 		byte		sak;			// The SAK (Select acknowledge) byte returned from the PICC after successful selection.
 	} Uid;
-	
+
 	// A struct used for passing a MIFARE Crypto1 key
 	typedef struct {
 		byte		keyByte[MF_KEY_SIZE];
@@ -316,9 +322,6 @@ public:
 	
 	// Member variables
 	Uid uid;								// Used by PICC_ReadCardSerial().
-	
-	// Size of the MFRC522 FIFO
-	static const byte FIFO_SIZE = 64;		// The FIFO is 64 bytes.
 	
 	/////////////////////////////////////////////////////////////////////////////////////
 	// Functions for setting up the Arduino
@@ -334,7 +337,6 @@ public:
 	void PCD_WriteRegister(PCD_Register reg, byte count, byte *values);
 	byte PCD_ReadRegister(PCD_Register reg);
 	void PCD_ReadRegister(PCD_Register reg, byte count, byte *values, byte rxAlign = 0);
-	void setBitMask(unsigned char reg, unsigned char mask);
 	void PCD_SetRegisterBitMask(PCD_Register reg, byte mask);
 	void PCD_ClearRegisterBitMask(PCD_Register reg, byte mask);
 	StatusCode PCD_CalculateCRC(byte *data, byte length, byte *result);
@@ -360,9 +362,9 @@ public:
 	StatusCode PICC_RequestA(byte *bufferATQA, byte *bufferSize);
 	StatusCode PICC_WakeupA(byte *bufferATQA, byte *bufferSize);
 	StatusCode PICC_REQA_or_WUPA(byte command, byte *bufferATQA, byte *bufferSize);
-	StatusCode PICC_Select(Uid *uid, byte validBits = 0);
+	virtual StatusCode PICC_Select(Uid *uid, byte validBits = 0);
 	StatusCode PICC_HaltA();
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////
 	// Functions for communicating with MIFARE PICCs
 	/////////////////////////////////////////////////////////////////////////////////////
@@ -408,10 +410,10 @@ public:
 	/////////////////////////////////////////////////////////////////////////////////////
 	// Convenience functions - does not add extra functionality
 	/////////////////////////////////////////////////////////////////////////////////////
-	bool PICC_IsNewCardPresent();
-	bool PICC_ReadCardSerial();
+	virtual bool PICC_IsNewCardPresent();
+	virtual bool PICC_ReadCardSerial();
 	
-private:
+protected:
 	byte _chipSelectPin;		// Arduino pin connected to MFRC522's SPI slave select input (Pin 24, NSS, active low)
 	byte _resetPowerDownPin;	// Arduino pin connected to MFRC522's reset and power down input (Pin 6, NRSTPD, active low)
 	StatusCode MIFARE_TwoStepHelper(byte command, byte blockAddr, int32_t data);
