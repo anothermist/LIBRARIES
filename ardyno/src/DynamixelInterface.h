@@ -15,6 +15,7 @@ class DynamixelInterface
 	virtual void begin(unsigned long aBaud)=0;
 	virtual void sendPacket(const DynamixelPacket &aPacket)=0;
 	virtual void receivePacket(DynamixelPacket &aPacket)=0;
+	virtual void end()=0;
 	
 	void transaction(bool aExpectStatus);
 	
@@ -57,17 +58,10 @@ DynamixelStatus DynamixelInterface::regWrite(uint8_t aID, uint8_t aAddress, cons
 }
 
 
-// Arduino constructors
-
-class HardwareSerial;
-
-/** \brief Create dynamixel interface from hardware uart */
-DynamixelInterface *createSerialInterface(HardwareSerial &aSerial);
-/** \brief Create dynamixel interface from hardware uart with direction port connected to a 3-state buffer */
-DynamixelInterface *createSerialInterface(HardwareSerial &aSerial, uint8_t aDirectionPin);
-/** \brief Create dynamixel interface from software uart (need SoftwareSerial) */
-DynamixelInterface *createSoftSerialInterface(uint8_t aRxPin, uint8_t aTxPin);
-/** \brief Create dynamixel interface from software uart with direction port connected to a 3-state buffer (need SoftwareSerial) */
-DynamixelInterface *createSoftSerialInterface(uint8_t aRxPin, uint8_t aTxPin, uint8_t aDirectionPin);
+#if defined(ARDUINO)
+#include "DynamixelInterfaceArduinoImpl.h"
+#else
+#error "Your platform is not supported"
+#endif
 
 #endif
