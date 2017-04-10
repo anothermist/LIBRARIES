@@ -1,0 +1,10 @@
+float Temperature = bme.getTemperature_C();
+float Humidity = bme.getHumidity();
+float AbsoluteHumidity = (6.112 * pow(2.71828,((17.67 * Temperature)/(Temperature + 243.5))) * Humidity * 2.1674) / (273.15 + Temperature);
+Serial.print(AbsoluteHumidity); 
+Serial.print("\t"); 
+Serial.print(Temperature); 
+Serial.print("\t"); 
+Serial.println(Humidity); 
+Serial.print("\t"); 
+Serial.println(bme.getPressure_MB());

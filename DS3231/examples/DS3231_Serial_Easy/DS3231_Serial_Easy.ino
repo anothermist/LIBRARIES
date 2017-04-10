@@ -43,8 +43,17 @@
 // Init the DS3231 using the hardware interface
 DS3231  rtc(SDA, SCL);
 
+const int GND = A0;
+const int VCC = A1;
+
+
 void setup()
 {
+   pinMode(GND, OUTPUT);
+   digitalWrite(GND, LOW);
+ pinMode(VCC, OUTPUT);
+   digitalWrite(VCC, HIGH);
+  
   // Setup Serial connection
   Serial.begin(115200);
   // Uncomment the next line if you are using an Arduino Leonardo

@@ -103,12 +103,16 @@ void Adafruit_DotStar::hw_spi_init(void) { // Initialize hardware SPI
 #ifdef __AVR_ATtiny85__
   PORTB &= ~(_BV(PORTB1) | _BV(PORTB2)); // Outputs
   DDRB  |=   _BV(PORTB1) | _BV(PORTB2);  // DO (NOT MOSI) + SCK
-#else
+#elif (SPI_INTERFACES_COUNT > 0) || !defined(SPI_INTERFACES_COUNT)
   SPI.begin();
- #if defined(__AVR__) || defined(CORE_TEENSY)
+ #if defined(__AVR__) || defined(CORE_TEENSY) || defined(__ARDUINO_ARC__) || defined(__ARDUINO_X86__)
   SPI.setClockDivider(SPI_CLOCK_DIV2); // 8 MHz (6 MHz on Pro Trinket 3V)
  #else
-  SPI.setClockDivider((F_CPU + 4000000L) / 8000000L); // 8-ish MHz on Due
+  #ifdef ESP8266
+    SPI.setFrequency(8000000L);
+  #else
+    SPI.setClockDivider((F_CPU + 4000000L) / 8000000L); // 8-ish MHz on Due
+  #endif
  #endif
   SPI.setBitOrder(MSBFIRST);
   SPI.setDataMode(SPI_MODE0);
@@ -118,7 +122,7 @@ void Adafruit_DotStar::hw_spi_init(void) { // Initialize hardware SPI
 void Adafruit_DotStar::hw_spi_end(void) { // Stop hardware SPI
 #ifdef __AVR_ATtiny85__
   DDRB &= ~(_BV(PORTB1) | _BV(PORTB2)); // Inputs
-#else
+#elif (SPI_INTERFACES_COUNT > 0) || !defined(SPI_INTERFACES_COUNT)
   SPI.end();
 #endif
 }
@@ -157,7 +161,7 @@ static void spi_out(uint8_t n) { // Clock out one byte
   SPIBIT SPIBIT SPIBIT SPIBIT SPIBIT SPIBIT SPIBIT SPIBIT
 }
 
-#else
+#elif (SPI_INTERFACES_COUNT > 0) || !defined(SPI_INTERFACES_COUNT)
 
 // All other boards have full-featured hardware support for SPI
 
@@ -166,6 +170,9 @@ static void spi_out(uint8_t n) { // Clock out one byte
 #if (defined(__AVR__) && !defined(__AVR_ATtiny85__)) || defined(CORE_TEENSY)
  #define SPI_PIPELINE
 #endif
+
+#else // no hardware spi
+#define spi_out(n) sw_spi_out(n)
 
 #endif
 
@@ -240,8 +247,11 @@ void Adafruit_DotStar::show(void) {
     // pixel, and empirical testing suggests it can be left out...but it's
     // always a good idea to follow the datasheet, in case future hardware
     // revisions are more strict (e.g. might mandate use of end-frame
-    // before start-frame marker).  i.e. let's not remove this.
-    for(i=0; i<4; i++) spi_out(0xFF);
+    // before start-frame marker).  i.e. let's not remove this. But after
+    // testing a bit more the suggestion is to use at least (numLeds+1)/2
+    // high values (1) or (numLeds+15)/16 full bytes as EndFrame. For details see also:
+    // https://cpldcpu.wordpress.com/2014/11/30/understanding-the-apa102-superled/
+    for(i=0; i<((numLEDs + 15) / 16); i++) spi_out(0xFF);
 
   } else {                               // Soft (bitbang) SPI
 
@@ -257,7 +267,7 @@ void Adafruit_DotStar::show(void) {
         for(i=0; i<3; i++) sw_spi_out(*ptr++); // R,G,B
       } while(--n);
     }
-    for(i=0; i<4; i++) sw_spi_out(0xFF); // End-frame marker (see note above)
+    for(i=0; i<((numLEDs + 15) / 16); i++) sw_spi_out(0xFF); // End-frame marker (see note above)
   }
 }
 
