@@ -34,7 +34,9 @@ static const int HTTP_ERROR_INVALID_RESPONSE =-4;
 #define HTTP_HEADER_CONTENT_LENGTH "Content-Length"
 #define HTTP_HEADER_CONTENT_TYPE   "Content-Type"
 #define HTTP_HEADER_CONNECTION     "Connection"
+#define HTTP_HEADER_TRANSFER_ENCODING "Transfer-Encoding"
 #define HTTP_HEADER_USER_AGENT     "User-Agent"
+#define HTTP_HEADER_VALUE_CHUNKED  "chunked"
 
 class HttpClient : public Client
 {
@@ -61,6 +63,13 @@ public:
         but you will also need to call beginRequest() at the start.
     */
     void endRequest();
+
+    /** Start the body of a more complex request.
+        Use this when you need to send the body after additional headers
+        in the request, but can optionally call endRequest() when
+        you are finished.
+    */
+    void beginBody();
 
     /** Connect to the server and start to send a GET request.
       @param aURLPath     Url to request
@@ -247,7 +256,7 @@ public:
     /** Test whether all of the response headers have been consumed.
       @return true if we are now processing the response body, else false
     */
-    bool endOfHeadersReached() { return (iState == eReadingBody); };
+    bool endOfHeadersReached();
 
     /** Test whether the end of the body has been reached.
       Only works if the Content-Length header was returned by the server
@@ -264,6 +273,11 @@ public:
       Content-Length header was returned by the server
     */
     int contentLength();
+
+    /** Returns if the response body is chunked
+      @return true if response body is chunked, false otherwise
+    */
+    int isResponseChunked() { return iIsChunked; }
 
     /** Return the response body as a String
       Also skips response headers if they have not been read already
@@ -286,7 +300,7 @@ public:
     virtual size_t write(uint8_t aByte) { if (iState < eRequestSent) { finishHeaders(); }; return iClient-> write(aByte); };
     virtual size_t write(const uint8_t *aBuffer, size_t aSize) { if (iState < eRequestSent) { finishHeaders(); }; return iClient->write(aBuffer, aSize); };
     // Inherited from Stream
-    virtual int available() { return iClient->available(); };
+    virtual int available();
     /** Read the next byte from the server.
       @return Byte read or -1 if there are no bytes available.
     */
@@ -332,6 +346,7 @@ protected:
     // processing)
     static const int kHttpResponseTimeout = 30*1000;
     static const char* kContentLengthPrefix;
+    static const char* kTransferEncodingChunked;
     typedef enum {
         eIdle,
         eRequestStarted,
@@ -341,7 +356,9 @@ protected:
         eReadingContentLength,
         eSkipToEndOfHeader,
         eLineStartingCRFound,
-        eReadingBody
+        eReadingBody,
+        eReadingChunkLength,
+        eReadingBodyChunk
     } tHttpState;
     // Client we're using
     Client* iClient;
@@ -360,6 +377,12 @@ protected:
     int iBodyLengthConsumed;
     // How far through a Content-Length header prefix we are
     const char* iContentLengthPtr;
+    // How far through a Transfer-Encoding chunked header we are
+    const char* iTransferEncodingChunkedPtr;
+    // Stores if the response body is chunked
+    bool iIsChunked;
+    // Stores the value of the current chunk length, if present
+    int iChunkLength;
     uint32_t iHttpResponseTimeout;
     bool iConnectionClose;
     bool iSendDefaultRequestHeaders;

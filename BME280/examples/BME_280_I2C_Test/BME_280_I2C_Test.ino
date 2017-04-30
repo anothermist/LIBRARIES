@@ -58,6 +58,7 @@ void printBME280CalculatedData(Stream* client);
 void setup() {
   Serial.begin(SERIAL_BAUD);
   while(!Serial) {} // Wait
+    Serial.print("OK");
   while(!bme.begin()){
     Serial.println("Could not find BME280 sensor!");
     delay(1000);

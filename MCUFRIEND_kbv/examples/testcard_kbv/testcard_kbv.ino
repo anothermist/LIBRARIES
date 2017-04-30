@@ -42,8 +42,8 @@ void setup(void)
     ID = tft.readID();
     Serial.print("TFT ID = 0x");
     Serial.println(ID, HEX);
-    //    if (ID == 0x00D3) ID = 0x9481; // write-only shield
-    if (ID == 0x00D3) ID = 0x9486; // write-only shield
+    //    if (ID == 0xD3D3) ID = 0x9481; // write-only shield
+    if (ID == 0xD3D3) ID = 0x9486; // write-only shield
     tft.begin(ID);
     tft.setRotation(1);
     tft.fillScreen(BLACK);

@@ -20,6 +20,7 @@ put	KEYWORD2
 patch	KEYWORD2
 startRequest	KEYWORD2
 beginRequest	KEYWORD2
+beginBody	KEYWORD2
 sendHeader	KEYWORD2
 sendBasicAuth	KEYWORD2
 endRequest	KEYWORD2
@@ -30,6 +31,7 @@ endOfHeadersReached	KEYWORD2
 endOfBodyReached	KEYWORD2
 completed	KEYWORD2
 contentLength	KEYWORD2
+isResponseChunked	KEYWORD2
 connectionKeepAlive	KEYWORD2
 noDefaultRequestHeaders	KEYWORD2
 headerAvailable	KEYWORD2
