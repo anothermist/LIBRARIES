@@ -71,6 +71,8 @@
 #define LIS3DH_REG_TIMELIMIT     0x3B
 #define LIS3DH_REG_TIMELATENCY   0x3C
 #define LIS3DH_REG_TIMEWINDOW    0x3D
+#define LIS3DH_REG_ACTTHS        0x3E
+#define LIS3DH_REG_ACTDUR        0x3F
 
 typedef enum
 {
@@ -107,11 +109,12 @@ typedef enum
 class Adafruit_LIS3DH : public Adafruit_Sensor {
  public:
   Adafruit_LIS3DH(void);
+  Adafruit_LIS3DH(TwoWire *Wi);
   Adafruit_LIS3DH(int8_t cspin);
   Adafruit_LIS3DH(int8_t cspin, int8_t mosipin, int8_t misopin, int8_t sckpin);
   
   bool       begin(uint8_t addr = LIS3DH_DEFAULT_ADDRESS);
-
+ 
   void read();
   int16_t readADC(uint8_t a);
 
@@ -133,7 +136,8 @@ class Adafruit_LIS3DH : public Adafruit_Sensor {
   float x_g, y_g, z_g;
 
  private:
-  
+  TwoWire *I2Cinterface;
+
   uint8_t readRegister8(uint8_t reg);
   void writeRegister8(uint8_t reg, uint8_t value);
   uint8_t spixfer(uint8_t x = 0xFF);
