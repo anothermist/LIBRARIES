@@ -1,0 +1,34 @@
+RTC4543	KEYWORD1
+
+set	KEYWORD2
+isRunning	KEYWORD2
+now	KEYWORD2
+getHours	KEYWORD2
+getMinutes	KEYWORD2
+getSeconds	KEYWORD2
+getYear	KEYWORD2
+getMonth	KEYWORD2
+getDate	KEYWORD2
+getDay	KEYWORD2
+private:	KEYWORD2
+_bcdHours	KEYWORD2
+_bcdMinutes	KEYWORD2
+_bcdSeconds	KEYWORD2
+_bcdYear	KEYWORD2
+_bcdMonth	KEYWORD2
+_bcdDate	KEYWORD2
+_bcdDay	KEYWORD2
+
+_dataPin	KEYWORD2
+_clkPin	KEYWORD2
+_wrPin	KEYWORD2
+_cePin	KEYWORD2
+
+open	KEYWORD2
+readBits	KEYWORD2
+writeBits	KEYWORD2
+close	KEYWORD2
+
+IN_BIT	LITERAL1
+IN_BCD	LITERAL1
+

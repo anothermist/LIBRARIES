@@ -1,0 +1,29 @@
+#########################################
+# Syntax Coloring Map For SmartCardReader
+#########################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+IS24C02A	KEYWORD1
+IS24C16A	KEYWORD1
+IS23SC4442	KEYWORD1
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+IsCardDetected	KEYWORD2
+IsDevicePresent	KEYWORD2
+Initialize	KEYWORD2
+Read	KEYWORD2
+Write	KEYWORD2
+ReadString	KEYWORD2
+WriteString	KEYWORD2
+ClearString	KEYWORD2
+Authenticate	KEYWORD2
+#######################################
+# Strcutures and Classes (KEYWORD3)
+#######################################
+SmartCardReader	KEYWORD3
+#######################################
+# Constants And Literals (KEYWORD2)
+#######################################
