@@ -36,13 +36,22 @@ void loop()
   float humd = myHumidity.readHumidity();
   float temp = myHumidity.readTemperature();
 
+//  Serial.print("Time:");
+//  Serial.print(millis());
+//  Serial.print(" Temperature:");
+//  Serial.print(temp, 1);
+//  Serial.print("C");
+//  Serial.print(" Humidity:");
+//  Serial.print(humd, 1);
+//  Serial.print("%");
+
   Serial.print("Time:");
   Serial.print(millis());
   Serial.print(" Temperature:");
-  Serial.print(temp, 1);
+  Serial.print(temp);
   Serial.print("C");
   Serial.print(" Humidity:");
-  Serial.print(humd, 1);
+  Serial.print(humd);
   Serial.print("%");
 
   Serial.println();

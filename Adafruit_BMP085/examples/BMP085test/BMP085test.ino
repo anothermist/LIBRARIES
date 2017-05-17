@@ -1,4 +1,4 @@
-#include <Wire.h>
+//#include <Wire.h>
 #include <Adafruit_BMP085.h>
 
 /*************************************************** 
@@ -27,10 +27,7 @@
 Adafruit_BMP085 bmp;
   
 void setup() {
-  Serial.begin(115200);
-  pinMode(12, OUTPUT);
-  digitalWrite(12, HIGH);
-  delay(10);
+  Serial.begin(9600);
   if (!bmp.begin()) {
 	Serial.println("Could not find a valid BMP085 sensor, check wiring!");
 	while (1) {}

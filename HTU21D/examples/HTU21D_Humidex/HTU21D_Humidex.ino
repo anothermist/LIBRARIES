@@ -62,7 +62,7 @@ HTU21D myHTU21D;
 
 void setup()
 {
-  Serial.begin(115200);
+  Serial.begin(9600);
   Serial.println("");
   
  #if defined(ARDUINO_ARCH_ESP8266) || (ESP8266_NODEMCU)
