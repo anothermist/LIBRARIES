@@ -23,7 +23,7 @@ HX8347-D 240x320  ID=0x4747 #define SUPPORT_8347D
 HX8347-G 240x320  ID=0x7575 #define SUPPORT_8347D
 HX8347-I 240x320  ID=0x9595 #define SUPPORT_8347D
 HX8352-A 240x400  ID=0x5252 #define SUPPORT_8352A
-HX8357-B 320x480  ID=0x8357 (needs testing)
+HX8357-B 320x480  ID=0x8357 (shares init with 8357-D)
 HX8357-D 320x480  ID=0x9090 (ID has changed from 0x8357)
 HX8367-A 240x320  ID=0x6767 #define SUPPORT_8347D
 ILI9302  240x320  ID=0x9302 
@@ -41,7 +41,7 @@ ILI9341  240x320  ID=0x9341
 ILI9481  320x480  ID=0x9481  
 ILI9486  320x480  ID=0x9486
 ILI9487  320x480  ID=0x9488
-ILI9488  320x480  ID=0x9488
+ILI9488  320x480  ID=0x9488 (weird 555 display :#define SUPPORT_9488_555) 
 LGDP4532 240x320  ID=0x4532 #define SUPPORT_4532
 LGDP4535 240x320  ID=0x4535 #define SUPPORT_4535
 NT35310  320x480  ID=0x5310 (hardware must be set for 8-bit parallel)
@@ -71,7 +71,7 @@ UNKNOWN  240x320  ID=0x1602
 UNKNOWN  240x320  ID=0xAC11
 
 Most of these controllers are #define SUPPORT_xxxx by default.
-You can save Flash memory on a Uno by commenting out the macro(s).
+You can save Flash memory on a Uno by commenting out the macro(s) in MCUFRIEND_kbv.cpp
 
 11. It should run on a UNO, MEGA2560, LEONARDO, DUE, ZERO, M0-PRO, 
 It also runs on NUCLEO-F103 and TEENSY3.2 with Sparkfun Adapter
@@ -82,8 +82,12 @@ Run the TouchScreen_Calibr_kbv.ino sketch to diagnose your model and then scale 
 The Resistive TouchScreen does not work on the Due.   It seems to be upset by sharing pins.  I have discovered why.   
 (You need a new Touch library.)
 
-13. The aspect_kbv.ino sketch should show the 4 different rotations.   Please report the results for an ILI9335, ILI9327. 
-
+13. The graphictest_kbv.ino sketch runs the standard Adafruit tests and reports the execution time.
+    The Scroll tests show each screen rotation, colours, scroll directions, colour inversion.
+    Vertical scroll is up/down in Portrait modes.  Left/right in Landscape
+    Band Scroll should just move the coloured Band.   ILI9320 style will always move the whole screen.	
+    The text "SOFTWARE SCROLL" should move horizontally across the screen or report a readPixel() ERROR.
+	
 14. The scroll_kbv.ino sketch should scroll a window or subwindow for most chips.   Not all chips can scroll.
 
 15. The readpixel_kbv.ino sketch should display memory in each aspect. 

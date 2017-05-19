@@ -21,9 +21,10 @@ class DynamixelInterfaceImpl:public DynamixelInterface
 	/**
 	 * \brief Constructor
 	 * \param[in] aStreamController : stream controller that abstract real stream
-	 * \param[in] aDirectionPin : direction pin, use NO_DIR_PORT if you do not one (default)
+	 * \param[in] aTxPin : pin number of the tx pin
+	 * \param[in] aDirectionPin : direction pin, use NO_DIR_PORT if you do not use one (default)
 	*/
-	DynamixelInterfaceImpl(T &aStream, uint8_t aDirectionPin);
+	DynamixelInterfaceImpl(T &aStream, uint8_t aTxPin, uint8_t aDirectionPin);
 	
 	/**
 	 * \brief Destructor
@@ -50,11 +51,12 @@ class DynamixelInterfaceImpl:public DynamixelInterface
 	/**
 	 * \brief Receive a packet on bus
 	 * \param[out] aPacket : Received packet. mData field must be previously allocated
+	 * \param[in] answerSize : the size of the memory allocated to the mData field
 	 *
 	 * The function wait for a new packet on the bus. Timeout depends of timeout of the underlying stream.
 	 * Return error code in case of communication error (timeout, checksum error, ...)
 	*/
-	void receivePacket(DynamixelPacket &aPacket);
+	void receivePacket(DynamixelPacket &aPacket, uint8_t answerSize = 0);
 
 	/**
          * \brief Stop interface
@@ -67,6 +69,9 @@ class DynamixelInterfaceImpl:public DynamixelInterface
 	
 	T &mStream;
 	const uint8_t mDirectionPin;
+
+	protected:
+	const uint8_t mTxPin;
 };
 
 class HardwareDynamixelInterface:public DynamixelInterfaceImpl<HardwareSerial>
@@ -76,28 +81,13 @@ class HardwareDynamixelInterface:public DynamixelInterfaceImpl<HardwareSerial>
 	~HardwareDynamixelInterface();
 };
 
-
-class DynSoftwareSerial:public SoftwareSerial
-{
-	public:
-	DynSoftwareSerial(uint8_t aRxPin, uint8_t aTxPin):
-		SoftwareSerial(aRxPin, aTxPin), mTxPin(aTxPin)
-	{}
-	
-	void enableTx(){pinMode(mTxPin, OUTPUT);}
-	void disableTx(){pinMode(mTxPin, INPUT);}
-	
-	private:
-	uint8_t mTxPin;
-};
-
-class SoftwareDynamixelInterface:public DynamixelInterfaceImpl<DynSoftwareSerial>
+class SoftwareDynamixelInterface:public DynamixelInterfaceImpl<SoftwareSerial>
 {
 	public:
 	SoftwareDynamixelInterface(uint8_t aRxPin, uint8_t aTxPin, uint8_t aDirectionPin=NO_DIR_PORT);
 	~SoftwareDynamixelInterface();
 	private:
-	DynSoftwareSerial mSoftSerial;
+	SoftwareSerial mSoftSerial;
 };
 
 
