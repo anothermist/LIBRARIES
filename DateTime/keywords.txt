@@ -1,0 +1,31 @@
+#######################################
+# Syntax Coloring Map For DateTime
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+Hour	KEYWORD2
+Minute	KEYWORD2
+Second	KEYWORD2
+Day	KEYWORD2
+DayofWeek	KEYWORD2
+Month	KEYWORD2
+Year	KEYWORD2
+localTime	KEYWORD2
+makeTime	KEYWORD2
+sync	KEYWORD2
+now	KEYWORD2
+available	KEYWORD2
+status	KEYWORD2
+#######################################
+# Instances (KEYWORD2)
+#######################################
+DateTime KEYWORD2
+#######################################
+# Constants (LITERAL1)
+#######################################

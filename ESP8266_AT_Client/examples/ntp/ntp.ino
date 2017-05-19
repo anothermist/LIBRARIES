@@ -1,8 +1,8 @@
 #include <ESP8266_AT_Client.h>
 #include <Time.h>
 
-#define NETWORK_SSID     "YOUR NETWORK NAME"
-#define NETWORK_PASSWORD "YOUR NETWORK PASSWORD"
+#define NETWORK_SSID     "NETWORK"
+#define NETWORK_PASSWORD "PASSWORD"
 char npt_server[32] = "pool.ntp.org";  
 int esp8266_enable_pin = 23; // Arduino digital the pin that is used to reset/enable the ESP8266 module
 Stream * at_command_interface = &Serial1;  // Serial1 is the 'stream' the AT command interface is on

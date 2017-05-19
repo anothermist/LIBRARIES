@@ -9,8 +9,8 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 
-const char ssid[] = "*************";  //  your network SSID (name)
-const char pass[] = "********";       // your network password
+const char ssid[] = "NETWORK";  //  your network SSID (name)
+const char pass[] = "PASSWORD";       // your network password
 
 // NTP Servers:
 static const char ntpServerName[] = "us.pool.ntp.org";
@@ -36,7 +36,7 @@ void sendNTPpacket(IPAddress &address);
 
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(4800);
   while (!Serial) ; // Needed for Leonardo only
   delay(250);
   Serial.println("TimeNTP Example");
