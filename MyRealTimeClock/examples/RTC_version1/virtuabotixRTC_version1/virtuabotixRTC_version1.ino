@@ -1,7 +1,7 @@
 
 #include <MyRealTimeClock.h>
 
-MyRealTimeClock myRTC(D7, D6, D5); // Assign Digital Pins
+MyRealTimeClock myRTC(D5, D6, D7); // Assign Digital Pins
 
 void setup() {
   Serial.begin(9600);
@@ -11,7 +11,7 @@ void setup() {
     | Second 00 | Minute 59 | Hour 10 | Day 12 |  Month 07 | Year 2015 |
   */
 
-  myRTC.setDS1302Time(00, 59, 10, 12 , 10, 07, 2015);
+//  myRTC.setDS1302Time(00, 59, 10, 12 , 10, 07, 2015);
 }
 
 void loop() {
