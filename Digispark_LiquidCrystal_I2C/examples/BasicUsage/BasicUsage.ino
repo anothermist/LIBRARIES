@@ -1,4 +1,4 @@
-/* ATtiny85 as an I2C Master   Ex2        BroHogan                           1/21/11
+DigisparkLCD/* ATtiny85 as an I2C Master   Ex2        BroHogan                           1/21/11
  * Modified for Digistump - Digispark LCD Shield by Erik Kettenburg 11/2012
  * SETUP:
  * ATtiny Pin 1 = (RESET) N/U                      ATtiny Pin 2 = (D3) N/U
@@ -14,7 +14,7 @@
 
 //#define DEBUG
 #include <TinyWireM.h>                  // I2C Master lib for ATTinys which use USI - comment this out to use with standard arduinos
-#include <LiquidCrystal_I2C.h>          // for LCD w/ GPIO MODIFIED for the ATtiny85
+#include <Digispark_LiquidCrystal_I2C.h>          // for LCD w/ GPIO MODIFIED for the ATtiny85
 
 #define GPIO_ADDR     0x27             // (PCA8574A A0-A2 @5V) typ. A0-A3 Gnd 0x20 / 0x38 for A - 0x27 is the address of the Digispark LCD modules.
 

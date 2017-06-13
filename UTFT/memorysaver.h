@@ -18,7 +18,7 @@
 //#define DISABLE_HX8352A			1	// ITDB32WD / TFT01_32WD / CTE32W
 //#define DISABLE_HX8353C           1	// DMTFT18101
 
-//#define DISABLE_ILI9325D  		1	// ITDB24D / ITDB24DWOT / ITDB28 / TFT01_24_8 / TFT01_24_16 / DMTFT24104 / DMTFT28103	- This single define will disable both 8bit and 16bit mode for this controller
+//#define DISABLE_ILI9325D  		1	// ITDB24D / ITDB24DWOT / ITDB28 / TFT01_24_8 / TFT01_24_16 / //DMTFT24104 / DMTFT28103	- This single define will disable both 8bit and 16bit mode for this controller
 //#define DISABLE_ILI9325D_ALT 		1	// CTE28
 //#define DISABLE_ILI9341_S4P		1	// MI0283QT9
 //#define DISABLE_ILI9341_S5P		1	// TFT01_22SP / TFT01_24SP / TFT22SHLD / DMTFT28105
@@ -47,8 +47,8 @@
 // by default to save flash memory. To use them you must enable support for 
 // them by commenting them out here.
 
-#define DISABLE_HX8340B_S 			1	// ITDB22 Serial mode
-#define DISABLE_HX8347A				1	// ITDB32
-#define DISABLE_ILI9325C			1	// ITDB24
-#define DISABLE_ILI9327				1	// ITDB32WC / TFT01_32W
-#define DISABLE_S1D19122  			1	// ITDB25H
+//#define DISABLE_HX8340B_S 			1	// ITDB22 Serial mode
+//#define DISABLE_HX8347A				1	// ITDB32
+//#define DISABLE_ILI9325C			1	// ITDB24
+//#define DISABLE_ILI9327				1	// ITDB32WC / TFT01_32W
+//#define DISABLE_S1D19122  			1	// ITDB25H
