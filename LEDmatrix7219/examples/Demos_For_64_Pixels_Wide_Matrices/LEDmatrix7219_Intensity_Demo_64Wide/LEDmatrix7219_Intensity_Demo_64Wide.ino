@@ -16,7 +16,7 @@
 
 #include <LEDmatrix7219.h>
 
-LEDmatrix7219 myMatrix(5, 6, 7);
+LEDmatrix7219 myMatrix(A5, A6, A7);
 
 extern uint8_t TextFont[];
 
