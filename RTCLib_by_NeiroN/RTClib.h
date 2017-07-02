@@ -4,6 +4,18 @@
 #ifndef _RTCLIB_H_
 #define _RTCLIB_H_
 
+struct alarm_flags {
+  char minute;
+  char hour;
+  char day;
+  char wday;
+};
+
+#define AE_M 1
+#define AE_H 1
+#define AE_D 1
+#define AE_W 1
+
 // TimeDelta which can represent changes in time with seconds accuracy.
 class TimeDelta {
 public:
@@ -137,7 +149,7 @@ class PCF8563 {
 	void off_alarm(void);
 	void on_alarm(void);
 	DateTime get_alarm();
-	void set_alarm(const DateTime& dt);
+  void set_alarm(const DateTime& dt, struct alarm_flags flags);
 };
 
 // RTC using the internal millis() clock, has to be initialized before use

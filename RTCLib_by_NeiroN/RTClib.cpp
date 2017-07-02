@@ -16,7 +16,7 @@
 #define PCF8563_ADDRESS			 0xA3
 #define PCF8583_ADDRESS			 0xA0
 
-#define PCF8563_ALARM			   0x80
+#define PCF8563_ALARM_REG_OFF  0x80
 #define PCF8563_ALARM_AIE		   0x02
 #define PCF8563_ALARM_AF			0x08 // 0x08 : not 0x04!!!!
 /* optional val for no alarm setting */
@@ -214,7 +214,7 @@ unsigned char DateTime::operator>=(const DateTime &date) const
 	return unixtime() >= date.unixtime();
 }
 
-uint8_t DateTime::dayOfWeek() const {	
+uint8_t DateTime::dayOfWeek() const {
 	uint16_t day = date2days(yOff, m, d);
 	return (day + 6) % 7; // Jan 1, 2000 is a Saturday, i.e. returns 6
 }
@@ -476,7 +476,7 @@ double DS3231::getTemp() {
   WIRE.endTransmission();
   WIRE.requestFrom(DS3231_ADDRESS, 2);
   temp = (double)WIRE.read();
-  temp += (double)0.25*WIRE.read();
+  temp += (double)0.25*(WIRE.read() >> 6);
   return temp;
 }
 
@@ -692,16 +692,34 @@ DateTime PCF8563::get_alarm()
 }
 
 //Set a daily alarm
-void PCF8563::set_alarm(const DateTime& dt)
+void PCF8563::set_alarm(const DateTime &dt, struct alarm_flags flags)
 {
+  byte minute    = bin2bcd(dt.minute());
+  byte hour      = bin2bcd(dt.hour());
+  byte day       = bin2bcd(dt.day());
+  byte dayOfWeek = bin2bcd(dt.month());
+
+  if( !flags.minute)
+    minute |= PCF8563_ALARM_REG_OFF;
+
+  if( !flags.hour)
+    hour |= PCF8563_ALARM_REG_OFF;
+
+  if( !flags.day)
+    day |= PCF8563_ALARM_REG_OFF;
+
+  if( !flags.wday)
+    dayOfWeek |= PCF8563_ALARM_REG_OFF;
+
   Wire.beginTransmission(address);
   Wire.write(0x09); // Set the register pointer to (0x09)
-  Wire.write(bin2bcd(dt.minute()));
-  Wire.write(bin2bcd(dt.hour()));
-  Wire.write(bin2bcd(dt.day()));
-  Wire.write(bin2bcd(dt.month())); // Set 00 at day
+  Wire.write(minute);
+  Wire.write(hour);
+  Wire.write(day);
+  Wire.write(dayOfWeek);
   Wire.endTransmission();
 }
+
 void PCF8563::off_alarm()
 {
 	//set status2 AF val to zero to reset alarm
