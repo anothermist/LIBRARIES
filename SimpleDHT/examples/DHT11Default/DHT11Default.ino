@@ -21,14 +21,14 @@ void loop() {
   byte humidity = 0;
   int err = SimpleDHTErrSuccess;
   if ((err = dht11.read(pinDHT11, &temperature, &humidity, NULL)) != SimpleDHTErrSuccess) {
-    Serial.print("Read DHT11 failed, err="); Serial.print(err);
+    Serial.print("Read DHT11 failed, err="); Serial.println(err);delay(1000);
     return;
   }
   
   Serial.print("Sample OK: ");
   Serial.print((int)temperature); Serial.print(" *C, "); 
-  Serial.print((int)humidity); Serial.println(" %");
+  Serial.print((int)humidity); Serial.println(" H");
   
   // DHT11 sampling rate is 1HZ.
-  delay(1000);
+  delay(1500);
 }

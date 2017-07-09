@@ -1,0 +1,94 @@
+###########################################
+# Syntax Coloring Map For DigoleSerialDisp
+###########################################
+
+###########################################
+# Datatypes (KEYWORD1)
+###########################################
+
+DigoleSerialDisp KEYWORD1
+###########################################
+# Methods and Functions (KEYWORD2)
+###########################################
+write KEYWORD2
+begin KEYWORD2
+read1 KEYWORD2
+cleanBuffer  KEYWORD2
+writeStr KEYWORD2
+disableCursor KEYWORD2
+enableCursor KEYWORD2
+clearScreen KEYWORD2
+setI2CAddress KEYWORD2
+displayConfig KEYWORD2
+println KEYWORD2
+print KEYWORD2
+readInt KEYWORD2
+drawBitmap KEYWORD2
+drawBitmap256 KEYWORD2
+drawBitmap16K KEYWORD2
+drawBitmap262K KEYWORD2
+setTrueColor KEYWORD2
+setRot90 KEYWORD2
+setRot180 KEYWORD2
+setRot270 KEYWORD2
+undoRotation KEYWORD2
+setRotation KEYWORD2
+setContrast KEYWORD2
+drawBox KEYWORD2
+drawCircle KEYWORD2
+drawDisc KEYWORD2
+drawFrame KEYWORD2
+drawPixel KEYWORD2
+drawLine KEYWORD2
+drawLineTo KEYWORD2
+drawHLine KEYWORD2
+drawVLine KEYWORD2
+setFont KEYWORD2
+setColor KEYWORD2
+backLightOn KEYWORD2
+backLightOff KEYWORD2
+screenOnOff KEYWORD2
+cpuOff KEYWORD2
+moduleOff KEYWORD2
+backLightBrightness KEYWORD2
+directCommand KEYWORD2
+directData KEYWORD2
+moveArea KEYWORD2
+drawStr KEYWORD2
+setPrintPos KEYWORD2
+setLCDColRow KEYWORD2
+setTextPosAbs KEYWORD2
+calibrateTouchScreen KEYWORD2
+readTouchScreen KEYWORD2
+readClick KEYWORD2
+readBattery KEYWORD2
+readAux KEYWORD2
+readTemperature KEYWORD2
+flashErase KEYWORD2
+flashReadStart KEYWORD2
+setFlashFont KEYWORD2
+runCommandSet KEYWORD2
+write2B KEYWORD2
+writeE2prom KEYWORD2
+readE2prom KEYWORD2
+setBgColor KEYWORD2
+setDrawWindow KEYWORD2
+resetDrawWindow KEYWORD2
+cleanDrawWindow KEYWORD2
+displayStartScreen KEYWORD2
+setMode KEYWORD2
+setTextPosBack KEYWORD2
+setTextPosOffset KEYWORD2
+setLinePattern KEYWORD2
+setLCDChip KEYWORD2
+setBackLight KEYWORD2
+flushScreen KEYWORD2
+downloadStartScreen KEYWORD2
+downloadUserFont KEYWORD2
+flashWrite KEYWORD2
+manualCommand KEYWORD2
+manualData KEYWORD2
+setSPIMode KEYWORD2
+###########################################
+# Constants (LITERAL1)
+###########################################
