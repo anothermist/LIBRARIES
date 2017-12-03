@@ -1,2 +1,11 @@
-http://arduino.esp8266.com/versions/2.3.0/package_esp8266com_index.json
+http://arduino.esp8266.com/stable/package_esp8266com_index.json
 http://digistump.com/package_digistump_index.json
+https://github.com/stm32duino/BoardManagerFiles/raw/master/STM32/package_stm_index.json
+http://drazzy.com/package_drazzy.com_index.json
+https://raw.githubusercontent.com/stm32duino/BoardManagerFiles/master/STM32/package_stm_index.json
+https://mcudude.github.io/MightyCore/package_MCUdude_MightyCore_index.json
+https://mcudude.github.io/MiniCore/package_MCUdude_MiniCore_index.json
+
+more:
+https://github.com/arduino/Arduino/wiki/Unofficial-list-of-3rd-party-boards-support-urls
+

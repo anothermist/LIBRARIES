@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simPackage>
+ <file path="xlr8_float_mult2_sim/xlr8_float_mult2.vo" type="VERILOG" />
+ <topLevel name="xlr8_float_mult2" />
+ <deviceFamily name="max10" />
+</simPackage>

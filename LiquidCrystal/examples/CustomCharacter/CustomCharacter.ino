@@ -26,23 +26,27 @@
  by Tom Igoe
  modified 11 Nov 2013
  by Scott Fitzgerald
+ modified 7 Nov 2016
+ by Arturo Guadalupi
 
  Based on Adafruit's example at
  https://github.com/adafruit/SPI_VFD/blob/master/examples/createChar/createChar.pde
 
  This example code is in the public domain.
- http://www.arduino.cc/en/Tutorial/LiquidCrystal
+ http://www.arduino.cc/en/Tutorial/LiquidCrystalCustomCharacter
 
  Also useful:
  http://icontexto.com/charactercreator/
 
- */
+*/
 
 // include the library code:
 #include <LiquidCrystal.h>
 
-// initialize the library with the numbers of the interface pins
-LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+// initialize the library by associating any needed LCD interface pin
+// with the arduino pin number it is connected to
+const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 // make some custom characters:
 byte heart[8] = {
@@ -115,11 +119,14 @@ void setup() {
   // create a new character
   lcd.createChar(4, armsUp);
 
+  // set the cursor to the top left
+  lcd.setCursor(0, 0);
+
   // Print a message to the lcd.
   lcd.print("I ");
   lcd.write(byte(0)); // when calling lcd.write() '0' must be cast as a byte
   lcd.print(" Arduino! ");
-  lcd.write((byte) 1);
+  lcd.write((byte)1);
 
 }
 

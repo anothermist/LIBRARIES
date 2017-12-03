@@ -12,7 +12,7 @@ int protocol;
 long code;
 int bits;
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(38400);
   delay(2000);while(!Serial);//delay for Leonardo
 }
 

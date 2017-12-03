@@ -8,17 +8,15 @@ extern "C" {
 #include "lwmqtt/lwmqtt.h"
 };
 
-typedef struct { unsigned long end; } lwmqtt_arduino_timer_t;
+typedef struct { uint32_t end; } lwmqtt_arduino_timer_t;
 
-void lwmqtt_arduino_timer_set(lwmqtt_client_t *client, void *ref, unsigned int timeout);
+void lwmqtt_arduino_timer_set(void *ref, uint32_t timeout);
 
-unsigned int lwmqtt_arduino_timer_get(lwmqtt_client_t *client, void *ref);
+int32_t lwmqtt_arduino_timer_get(void *ref);
 
 typedef struct { Client *client; } lwmqtt_arduino_network_t;
 
-lwmqtt_err_t lwmqtt_arduino_network_read(lwmqtt_client_t *client, void *ref, unsigned char *buf, int len, int *read,
-                                         unsigned int timeout);
-lwmqtt_err_t lwmqtt_arduino_network_write(lwmqtt_client_t *client, void *ref, unsigned char *buf, int len, int *sent,
-                                          unsigned int timeout);
+lwmqtt_err_t lwmqtt_arduino_network_read(void *ref, uint8_t *buf, size_t len, size_t *read, uint32_t timeout);
+lwmqtt_err_t lwmqtt_arduino_network_write(void *ref, uint8_t *buf, size_t len, size_t *sent, uint32_t timeout);
 
 #endif  // LWMQTT_ARDUINO_H

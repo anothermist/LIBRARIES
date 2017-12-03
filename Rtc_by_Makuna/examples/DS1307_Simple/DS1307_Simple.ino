@@ -5,12 +5,6 @@
 // DS1307 VCC --> 5v
 // DS1307 GND --> GND
 
-#if defined(ESP8266)
-#include <pgmspace.h>
-#else
-#include <avr/pgmspace.h>
-#endif
-
 /* for software wire use below
 #include <SoftwareWire.h>  // must be included here so that Arduino library object file references work
 #include <RtcDS1307.h>
@@ -34,11 +28,11 @@ void setup ()
     Serial.println(__TIME__);
 
     //--------RTC SETUP ------------
-    Rtc.Begin();
-
     // if you are using ESP-01 then uncomment the line below to reset the pins to
     // the available pins for SDA, SCL
     // Wire.begin(0, 2); // due to limited pins, use pin 0 and 2 for SDA, SCL
+    
+    Rtc.Begin();
 
     RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
     printDateTime(compiled);

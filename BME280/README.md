@@ -1,35 +1,39 @@
-
-
-
 # BME280
-Provides an Arduino library for reading and interpreting Bosch BME280 data over I2C and SPI.
+Provides an Arduino library for reading and interpreting Bosch BME280 data over I2C, SPI or Sw SPI. Additional environment calculation functions are provided. ESP and BRZO are now supported.
 
 ## Table of Contents
 
-* [BME280](#bme280)
-* [Table of Contents](#table_of_contents)
-* [Summary](#summary)
-* [Installation](#installation)
-* [Usage](#usage)
-* [Methods](#methods)
+1. [BME280](#bme280)
+2. [Table of Contents](#table-of-contents)
+3. [Summary](#summary)
+4. [Installation](#installation)
+5. [Usage](#usage)
+6. [Enumerations](#enumerations)
+7. [Settings](#settings)
+      - [BME280I2C::Settings](#settings)
+      - [BME280Spi::Settings](#settings)
+      - [BME280SpiSw::Settings](#settings)
+8. [Methods](#methods)
+      - [BME280I2C(const BME280I2C::Settings& settings)](#methods)
+      - [BME280Spi(const BME280Spi::Settings& settings)](#methods)
+      - [BME280SpiSw(const BME280SpiSw::Settings& settings)](#methods)
+      - [bool  begin()](#methods)
+      - [void  setSettings(const Settings& settings)](#methods)
+      - [const Settings& getSettings() const](#methods)
+      - [float temp(TempUnit unit)](#methods)
+      - [float pres(PresUnit unit)](#methods)
+      - [float hum()](#methods)
+      - [void  read(float& pressure, float& temp, float& humidity, TempUnit tempUnit, PresUnit presUnit)](#methods)
+      - [ChipModel chipModel()](#methods)
 
- * [BME280I2C(uint8_t tosr = 0x1, uint8_t hosr = 0x1, uint8_t posr = 0x1, uint8_t mode = 0x3, uint8_t st = 0x5, uint8_t filter = 0x0, bool spiEnable = false, uint8_t bme_280_addr = 0x76)](#methods)
- * [BME280Spi(uint8_t spiCsPin, uint8_t tosr = 0x1, uint8_t hosr = 0x1, uint8_t posr = 0x1, uint8_t mode = 0x3, uint8_t st = 0x5, uint8_t filter = 0x0)](#methods)
- * [BME280SpiSw(uint8_t spiCsPin, uint8_t spiMosiPin, uint8_t spiMisoPin, uint8_t spiSckPin, uint8_t tosr = 0x1, uint8_t hosr = 0x1, uint8_t posr = 0x1, uint8_t mode = 0x3, uint8_t st = 0x5, uint8_t filter = 0x0)](#methods)
- * [bool  begin()](#methods)
- * [void  setMode(uint8_t mode)](#methods)
- * [float temp(bool celsius = true)](#methods)
- * [float pres(uint8_t unit = 0x0)](#methods)
- * [float hum()](#methods)
- * [void  read(float& pressure, float& temp, float& humidity, bool metric = true, uint8_t p_unit = 0x0)](#methods)
- * [float alt(bool metric = true, float seaLevelPressure = 101325)](#methods)
- * [float alt(float pressure, bool metric = true, float seaLevelPressure = 101325)](#methods)
- * [float dew(bool metric = true)](#methods)
- * [float dew(float temp, float hum, bool metric = true)](#methods)
-* [Contributing](#contributing)
-* [History](#history)
-* [Credits](#credits)
-* [License](#license)
+9. [Environment Calculations](#environment-calculations)
+      - [float Altitude(float pressure, bool metric = true, float seaLevelPressure = 101325)](#environment-calculations)
+      - [float EquivalentSeaLevelPressure(float altitude, float temp, float pres)](#environment-calculations)
+      - [float DewPoint(float temp, float hum, bool metric = true)](#environment-calculations)
+10. [Contributing](#contributing)
+11. [History](#history)
+12. [Credits](#credits)
+13. [License](#license)
 <snippet>
 <content>
 
@@ -57,143 +61,164 @@ or
 `hum = bme.hum()`
 `pres = bme.pres()`
 
-`float altitude, dewPoint`
-`altitude = bme.alt()`
-`dewPoint = bme.dew()`
+## Enumerations
+#### TempUnit Enum
+   * TempUnit_Celsius
+   * TempUnit_Fahrenheit
 
-Use `setMode(0x01)` to trigger a new measurement in forced mode. NOTE: It takes ~8ms to measure all values (temp, humidity & pressure) when using x1 oversampling (see datasheet 11.1). Thus a delay of >8ms should be used after triggering a measurement and before reading data to ensure that read values are the latest ones.
+#### PresUnit Enum
+   * PresUnit_Pa
+   * PresUnit_hPa
+   * PresUnit_inHg
+   * PresUnit_atm
+   * PresUnit_bar
+   * PresUnit_torr
+   * PresUnit_psi
 
+#### OSR Enum
+   * OSR_X1
+   * OSR_X2
+   * OSR_X4
+   * OSR_X8
+   * OSR_X16
+
+#### Mode Enum
+   * Mode_Sleep
+   * Mode_Forced
+   * Mode_Normal
+
+#### StandbyTime Enum
+   * StandbyTime_500us
+   * StandbyTime_62500us
+   * StandbyTime_125ms
+   * StandbyTime_250ms
+   * StandbyTime_50ms
+   * StandbyTime_1000ms
+   * StandbyTime_10ms
+   * StandbyTime_20ms
+
+#### Filter Enum
+   * Filter_Off
+   * Filter_1
+   * Filter_2
+   * Filter_4
+   * Filter_8
+   * Filter_16
+
+#### ChipModel Enum
+   * ChipModel_Unknown
+   * ChipModel_BME280
+   * ChipModel_BMP280
+
+## Settings
+
+#### BME280::Settings Struct
+```
+    * Temperature Oversampling Rate (tempOSR): OSR Enum, default = OSR_X1
+
+    * Humidity Oversampling Rate (humOSR): OSR Enum, default = OSR_X1
+
+    * Pressure Oversampling Rate (presOSR): OSR Enum, default = OSR_X1
+
+    * Mode (mode): Mode Enum, default = Mode_Forced
+
+    * Standby Time (standbyTime): StandbyTime Enum, default = StandbyTime_1000ms
+
+    * Filter (filter): Filter Enum, default = Filter_Off
+
+    * SPI Enable: SpiEnable Enum, default = false
+      values: true = enable, false = disable
+```
+
+#### BME280I2C::Settings Struct
+
+   * Includes all fields in BME280 settings.
+```
+   * BME 280 Address (bme280Addr): uint8_t, default = 0x76
+```
+#### BME280Spi::Settings Struct
+
+   * Includes all fields in BME280 settings.
+```
+   * SPI Chip Select Pin (spiCsPin): uint8_t
+      values: Any pin 0-31
+```
+
+#### BME280Spi::Settings Struct
+   * Includes all fields in BME280 settings.
+```
+   * SPI Chip Select Pin (spiCsPin): uint8_t
+     values: Any pin 0-31
+
+   * SPI Master Out Slave In Pin (spiMosiPin): uint8_t
+     values: Any pin 0-31
+
+   * SPI Master In Slave Out Pin (spiMisoPin): uint8_t
+     values: Any pin 0-31
+
+   * SPI Serial Clock Pin (spiSckPin): uint8_t
+     values: Any pin 0-31
+```
 ## Methods
 
 
-#### BME280I2C(uint8_t tosr = 0x1, uint8_t hosr = 0x1, uint8_t posr = 0x1, uint8_t mode = 0x3, uint8_t st = 0x5, uint8_t filter = 0x0, bool spiEnable = false, uint8_t bme_280_addr = 0x76)
+#### BME280I2C(const BME280I2C::Settings& settings)
 
   Constructor used to create the I2C Bme class. All parameters have default values.
-  Return: None
 
-    * Temperature Oversampling Rate (tosr): uint8_t, default = 0x1
-      values: B000 = Skipped, B001 = x1, B010 = x2, B011 = x4, B100 = x8, B101/other = x16
+#### BME280Spi(const BME280Spi::Settings& settings)
 
-    * Humidity Oversampling Rate (hosr): uint8_t, default = 0x1
-      values: B000 = Skipped, B001 = x1, B010 = x2, B011 = x4, B100 = x8, B101/other = x16
+  Constructor used to create the Spi Bme class. All parameters have default values except chip select.
 
-    * Pressure Oversampling Rate (posr): uint8_t, default = 0x1
-      values: B000 = Skipped, B001 = x1, B010 = x2, B011 = x4, B100 = x8, B101/other = x16
+#### BME280SpiSw(const BME280SpiSw::Settings& settings)
 
-    * Mode: uint8_t, default = Normal
-      values: Sleep = B00, Forced = B01 and B10, Normal = B11
-
-    * Standby Time (st): uint8_t, default = 1000ms
-      values: B000 = 0.5ms, B001 = 62.5ms, B010 = 125ms, B011 = 250ms, B100 = 250ms, B101 = 1000ms, B110 = 10ms, B111 = 20ms
-
-    * Filter: uint8_t, default = None
-      values: B000 = off, B001 = 2, B010 = 4, B011 = 8, B100/other = 16
-
-    * SPI Enable: bool, default = false
-      values: true = enable, false = disable
-
-    * BME280 Address: uint8_t, default = 0x76
-      values: any uint8_t
-
-#### BME280Spi(uint8_t spiCsPin, uint8_t tosr = 0x1, uint8_t hosr = 0x1, uint8_t posr = 0x1, uint8_t mode = 0x3, uint8_t st = 0x5, uint8_t filter = 0x0)
-
-  Constructor used to create the Spi Bme class. All parameters have default values.
-  Return: None
-
-    * SPI Chip Select Pin (spiCsPin): uint8_t
-      values: Any pin 0-31
-
-    * Temperature Oversampling Rate (tosr): uint8_t, default = 0x1
-      values: B000 = Skipped, B001 = x1, B010 = x2, B011 = x4, B100 = x8, B101/other = x16
-
-    * Humidity Oversampling Rate (hosr): uint8_t, default = 0x1
-      values: B000 = Skipped, B001 = x1, B010 = x2, B011 = x4, B100 = x8, B101/other = x16
-
-    * Pressure Oversampling Rate (posr): uint8_t, default = 0x1
-      values: B000 = Skipped, B001 = x1, B010 = x2, B011 = x4, B100 = x8, B101/other = x16
-
-    * Mode: uint8_t, default = Normal
-      values: Sleep = B00, Forced = B01 and B10, Normal = B11
-
-    * Standby Time (st): uint8_t, default = 1000ms
-      values: B000 = 0.5ms, B001 = 62.5ms, B010 = 125ms, B011 = 250ms, B100 = 250ms, B101 = 1000ms, B110 = 10ms, B111 = 20ms
-
-    * Filter: uint8_t, default = None
-      values: B000 = off, B001 = 2, B010 = 4, B011 = 8, B100/other = 16
-
-#### BME280SpiSw(uint8_t spiCsPin, uint8_t spiMosiPin, uint8_t spiMisoPin, uint8_t spiSckPin, uint8_t tosr = 0x1, uint8_t hosr = 0x1, uint8_t posr = 0x1, uint8_t mode = 0x3, uint8_t st = 0x5, uint8_t filter = 0x0)
-
-  Constructor used to create the software Spi Bme class. All parameters have default values.
-  Return: None
-
-    * SPI Chip Select Pin (spiCsPin): uint8_t
-      values: Any pin 0-31
-
-    * SPI Master Out Slave In Pin (spiMosiPin): uint8_t
-      values: Any pin 0-31
-
-    * SPI Master In Slave Out Pin (spiMisoPin): uint8_t
-      values: Any pin 0-31
-
-    * SPI Serial Clock Pin (spiSckPin): uint8_t
-      values: Any pin 0-31
-
-    * Temperature Oversampling Rate (tosr): uint8_t, default = 0x1
-      values: B000 = Skipped, B001 = x1, B010 = x2, B011 = x4, B100 = x8, B101/other = x16
-
-    * Humidity Oversampling Rate (hosr): uint8_t, default = 0x1
-      values: B000 = Skipped, B001 = x1, B010 = x2, B011 = x4, B100 = x8, B101/other = x16
-
-    * Pressure Oversampling Rate (posr): uint8_t, default = 0x1
-      values: B000 = Skipped, B001 = x1, B010 = x2, B011 = x4, B100 = x8, B101/other = x16
-
-    * Mode: uint8_t, default = Normal
-      values: Sleep = B00, Forced = B01 and B10, Normal = B11
-
-    * Standby Time (st): uint8_t, default = 1000ms
-      values: B000 = 0.5ms, B001 = 62.5ms, B010 = 125ms, B011 = 250ms, B100 = 250ms, B101 = 1000ms, B110 = 10ms, B111 = 20ms
-
-    * Filter: uint8_t, default = None
-      values: B000 = off, B001 = 2, B010 = 4, B011 = 8, B100/other = 16
-
+  Constructor used to create the software Spi Bme class. All parameters have default values except chip select, mosi, miso and sck.
 
 #### bool  begin()
 
-  Method used at start up to initialize the class. Starts the I2C or SPI interface.
-  Return: bool, true = success, false = failure (no device found)
+  Method used at start up to initialize the class. Starts the I2C or SPI interface. Can be called again to re-initialize the mode settings.
+ ```
+   * return: bool, true = success, false = failure (no device found)
+ ```
 
-#### void setMode(uint8_t mode)
+#### void setSettings(const Settings& settings)
 
-  Method to set the sensor mode. Sleep = B00, Forced = B01 and B10, Normal = B11. Set to B01 to trigger a new measurement when using forced mode.
+  Method to set the sensor settings.
 
-#### float temp(bool celsius = true)
+
+#### const Settings& getSettings() const
+
+  Method to get the sensor settings.
+
+#### float temp(TempUnit unit)
 
   Read the temperature from the BME280 and return a float.
-  Return: float = temperature
+```
+    return: float = temperature
 
-    * Celsius: bool, default = true
-      values: true = return temperature in degrees Celsius, false = return
-      temperature in degrees Fahrenheit
+    * unit: tempUnit, default = TempUnit_Celsius
+```
 
-
-#### float pres(uint8_t unit = 0x0)
+#### float pres(PresUnit unit)
 
   Read the pressure from the BME280 and return a float with the specified unit.
-  Return: float = pressure
+```
+    return: float = pressure
 
-    * Unit: uint8_t, default = 0x0
-      values: B000 = Pa, B001 = hPa, B010 = Hg, B011 = atm, B100 = bar,
-      B101 = torr, B110 = N/m^2, B111 = psi
+    * unit: uint8_t, default = PresUnit_Pa
+```
 
 #### float hum()
 
   Read the humidity from the BME280 and return a percentage as a float.
-  Return: float = percent relative humidity
-
-#### void  read(float& pressure, float& temp, float& humidity, bool metric = true, uint8_t p_unit = 0x0)
+```
+    * return: float = percent relative humidity
+```
+#### void  read(float& pressure, float& temp, float& humidity, TempUnit tempUnit, PresUnit presUnit)
 
   Read the data from the BME280 with the specified units.
-  Return: None, however, pressure, temp and humidity are changed.
+```
+    return: None, however, pressure, temp and humidity are changed.
 
     * Pressure: float, reference
       values: reference to storage float for pressure
@@ -204,30 +229,23 @@ Use `setMode(0x01)` to trigger a new measurement in forced mode. NOTE: It takes 
     * Humidity: float, reference
       values: reference to storage float for humidity
 
-    * Metric: bool, default = true
-      values: true = meters, false = feet
+    * tempUnit: tempUnit, default = TempUnit_Celsius
 
-    * Pressure Unit: uint8_t, default = 0x0
-        values: B000 = Pa, B001 = hPa, B010 = Hg, B011 = atm, B100 = bar,
-        B101 = torr, B110 = N/m^2, B111 = psi
+    * presUnit: uint8_t, default = PresUnit_Pa
+```
 
-#### float alt(bool metric = true, float seaLevelPressure = 101325)
+#### ChipModel chipModel()
+```
+    * return: [ChipModel](#chipmodel-enum) enum
+```
 
-  Read the data from the BME280 with the specified units and then calculate the altitude.
-  Return: float = altitude
+## Environment Calculations
 
-    * Metric: bool, default = true
-      values: true = meters, false = feet
-
-    * Sea Level Pressure: float, unit = Pa, default = 101325
-      values:  any float
-
-
-#### float alt(float pressure, bool metric = true, float seaLevelPressure = 101325)
+#### float Altitude(float pressure, bool metric = true, float seaLevelPressure = 101325)
 
   Calculate the altitude based on the pressure with the specified units.
   Return: float = altitude
-
+```
     * Pressure: float, unit = Pa
       values: any float
 
@@ -236,20 +254,30 @@ Use `setMode(0x01)` to trigger a new measurement in forced mode. NOTE: It takes 
 
     * Sea Level Pressure: float, unit = Pa, default = 101325
       values:  any float
+```
 
-#### float dew(bool metric = true)
+#### float EquivalentSeaLevelPressure(float altitude, float temp, float pres)
 
-  Read BME280 data and calculate the dew point with the specified units.
-  Return: float = dew point
+  Convert current pressure to equivalent sea-level pressure.
 
-    * Metric: bool, default = true
-      values: true = return temperature in degrees Celsius, false = return
-      temperature in degrees Fahrenheit
+```
+    return: The equivalent pressure at sea level.
 
-#### float dew(float temp, float hum, bool metric = true)
+    * altitude: float
+      values: meters
+
+    * temp: float
+      values: celsius
+
+    * pres: float
+      values: unit independent
+```
+
+#### float DewPoint(float temp, float hum, bool metric = true)
 
   Calculate the dew point based on the temperature and humidity with the specified units.
-  Return: float = dew point
+```
+    return: float = dew point
 
     * Temperature: float, unit = Celsius if metric is true, Fahrenheit if metric is false
       values: any float
@@ -259,6 +287,8 @@ Use `setMode(0x01)` to trigger a new measurement in forced mode. NOTE: It takes 
 
     * Metric: bool, default = true
       values: true = return degrees Celsius, false = return degrees Fahrenheit
+```
+
 
 ## Contributing
 
@@ -270,10 +300,17 @@ Use `setMode(0x01)` to trigger a new measurement in forced mode. NOTE: It takes 
 
 ## History
 
-- Jan 1, 2016 - Version 1.0.0 released.
-- Sep 19, 2016 - Version 2.0.0 released (restructure for I2C and SPI).
-- Dec 19, 2016 - Version 2.1.0 released (support for SPI)
-- Dec 21, 2016 - Version 2.1.1 released (Fixing compilation errors)
+- Jan  1, 2016   - Version 1.0.0 released
+- Sep  19, 2016  - Version 2.0.0 released (Restructure for I2C and SPI)
+- Nov 21,  2016  - Version 2.0.1 released (Set mode support)
+- Dec  19, 2016  - Version 2.1.0 released (Support for SPI)
+- Dec  21, 2016  - Version 2.1.1 released (Bugs)
+- Feb  17, 2017  - Version 2.1.2 released (Docs)
+- Sept  9, 2017  - Version 2.1.3 released (Formatting, reorg)
+- Sept 13, 2017  - Version 2.1.4 released (Examples update, bug fixes)
+- Oct   7, 2017  - Version 2.2.0 released (Enums, begin restructure)
+- Oct  10, 2017  - Version 2.2.1 released (Bug fixes)
+- Nov  21, 2017  - Version 2.3.0 released (Examples updates, env calc fixes, bugs)
 
 ## Credits
 

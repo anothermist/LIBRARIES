@@ -7,8 +7,8 @@
 
   Arduino Cloud -> https://cloud.arduino.cc/cloud
 
-  IMPORTANT: in order to establish the tls connection and use the BridgeSSL
-  the yun firmware version should be >=1.6.2, look at
+  IMPORTANT: in order to establish the TLS connection and use the BridgeSSL
+  the Yun firmware version should be >=1.6.2, look at
   https://www.arduino.cc/en/Tutorial/YunSysupgrade
 
   created May 2016
@@ -18,18 +18,19 @@
 
 #include <ArduinoCloud.h>
 #include <BridgeSSLClient.h>
-
+#include "arduino_secrets.h" 
 BridgeSSLClient sslClient;
 
 // build a new thing "cloudObject"
 ArduinoCloudThing cloudObject;
 
-// Arduino Cloud settings and credentials
-const char userName[] = "";
-const char thingName[]   = "";
-const char thingId[]   = "";
-const char thingPsw[]  = "";
 
+///////please enter your sensitive data in the Secret tab/arduino_secrets.h
+// Arduino Cloud settings and credentials
+const char userName[] = SECRET_USER_NAME;
+const char thingName[] = SECRET_THING_NAME;
+const char thingId[] = SECRET_THING_ID;
+const char thingPsw[]  = SECRET_THING_PSW;
 const int buttonPin = 6;
 
 void setup() {
@@ -61,6 +62,15 @@ void loop() {
     // button is released, write position as "off"
     cloudObject.writeProperty("position", "off");
   }
-  
+
   delay(1000);
+
+  if ( WiFi.status() != WL_CONNECTED) {
+    while (WiFi.begin(ssid, pass) != WL_CONNECTED) {
+      // unsuccessful, retry in 4 seconds
+      Serial.print("failed ... ");
+      delay(4000);
+      Serial.print("retrying ... ");
+    }
+  }
 }

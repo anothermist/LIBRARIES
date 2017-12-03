@@ -1,0 +1,10 @@
+SCL PB2
+SDA PB0
+
+ISP10PIN to ISP6PIN
+Pin 9 to 1 [MISO]
+Pin 2 to 2 [VCC]
+Pin 7 to 3 [SCK]
+Pin 1 to 4 [MOSI]
+Pin 5 to 5 [RST]
+Pin 2 to 6 [GND]

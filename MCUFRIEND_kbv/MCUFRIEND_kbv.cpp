@@ -11,11 +11,13 @@
 //#define SUPPORT_8347D             //HX8347-D, HX8347-G, HX8347-I +520 bytes, 0.27s
 //#define SUPPORT_8347A             //HX8347-A +500 bytes, 0.27s
 //#define SUPPORT_8352A             //HX8352A +486 bytes, 0.27s
+#define SUPPORT_9225              //ILI9225-B, ILI9225-G ID=0x9225, ID=0x9226
 //#define SUPPORT_9326_5420         //ILI9326, SPFD5420 +246 bytes
+//#define SUPPORT_9342              //costs +114 bytes
 //#define SUPPORT_9806
+#define SUPPORT_9488_555          //costs +230 bytes, 0.03s / 0.19s
 #define SUPPORT_B509_7793         //R61509, ST7793 +244 bytes
 #define OFFSET_9327 32            //costs about 103 bytes, 0.08s
-//#define SUPPORT_9488_555          //costs +230 bytes, 0.03s / 0.19s
 
 #include "MCUFRIEND_kbv.h"
 #if defined(USE_SERIAL)
@@ -215,6 +217,9 @@ uint16_t MCUFRIEND_kbv::readID(void)
     ret = readReg40(0xEF);      //ILI9327: [xx 02 04 93 27 FF] 
     if (ret == 0x9327)
         return 0x9327;
+    ret = readReg32(0xFE) >> 8; //weird unknown from BangGood [04 20 53] 
+    if (ret == 0x2053)
+        return 0x2053;
     uint32_t ret32 = readReg32(0x04);
     msb = ret32 >> 16;
     ret = ret32;	
@@ -321,6 +326,9 @@ int16_t MCUFRIEND_kbv::readGRAM(int16_t x, int16_t y, uint16_t * block, int16_t 
 
 void MCUFRIEND_kbv::setRotation(uint8_t r)
 {
+#if defined(STM32L476xx)
+#undef SS
+#endif
     uint16_t GS, SS, ORG, REV = _lcd_rev;
     uint8_t val, d[3];
     rotation = r & 3;           // just perform the operation ourselves on the protected variables
@@ -356,17 +364,13 @@ void MCUFRIEND_kbv::setRotation(uint8_t r)
             d[2] = 0x3B;
             WriteCmdParamN(0xB6, 3, d);
             goto common_MC;
-        } else if (_lcd_ID == 0x1963 || _lcd_ID == 0x9481 || _lcd_ID == 0x1511 || _lcd_ID == 0x1581) {
+        } else if (_lcd_ID == 0x1963 || _lcd_ID == 0x9481 || _lcd_ID == 0x1511) {
             if (val & 0x80)
                 val |= 0x01;    //GS
             if ((val & 0x40))
                 val |= 0x02;    //SS
-            if (_lcd_ID == 0x1581) { // no Horizontal Flip
-                d[0] = (val & 0x40) ? 0x13 : 0x12; //REV | BGR | SS
-                WriteCmdParamN(0xC0, 1, d);
-            }
             if (_lcd_ID == 0x1963) val &= ~0xC0;
-            if (_lcd_ID == 0x9481 || _lcd_ID == 0x1581) val &= ~0xD0;
+            if (_lcd_ID == 0x9481) val &= ~0xD0;
             if (_lcd_ID == 0x1511) {
                 val &= ~0x10;   //remove ML
                 val |= 0xC0;    //force penguin 180 rotation
@@ -391,6 +395,16 @@ void MCUFRIEND_kbv::setRotation(uint8_t r)
     // cope with 9320 variants
     else {
         switch (_lcd_ID) {
+#if defined(SUPPORT_9225)
+        case 0x9225:
+        case 0x9226:
+            _SC = 0x37, _EC = 0x36, _SP = 0x39, _EP = 0x38;
+            _MC = 0x20, _MP = 0x21, _MW = 0x22;
+            GS = (val & 0x80) ? (1 << 9) : 0;
+            SS = (val & 0x40) ? (1 << 8) : 0;
+            WriteCmdData(0x01, GS | SS | 0x001C);       // set Driver Output Control
+            goto common_ORG;
+#endif
 #if defined(SUPPORT_0139) || defined(SUPPORT_0154)
 #ifdef SUPPORT_0139
         case 0x0139:
@@ -723,8 +737,10 @@ void MCUFRIEND_kbv::vertScroll(int16_t top, int16_t scrollines, int16_t offset)
         WriteCmdData(0x43, vsp - top);  //SST
         break;
 #endif
-#ifdef SUPPORT_0154
-    case 0x0154:
+#if defined(SUPPORT_0154) || defined(SUPPORT_9225)  //thanks tongbajiel
+    case 0x9225:
+    case 0x9226:
+	case 0x0154:
         WriteCmdData(0x31, sea);        //SEA
         WriteCmdData(0x32, top);        //SSA
         WriteCmdData(0x33, vsp - top);  //SST
@@ -772,6 +788,8 @@ void MCUFRIEND_kbv::invertDisplay(boolean i)
 #ifdef SUPPORT_0139
     case 0x0139:
 #endif
+    case 0x9225:                                        //REV is in reg(0x07) like Samsung
+    case 0x9226:
     case 0x0154:
         WriteCmdData(0x07, 0x13 | (_lcd_rev << 2));     //.kbv kludge
         break;
@@ -840,8 +858,6 @@ void MCUFRIEND_kbv::begin(uint16_t ID)
     int16_t table_size;
     reset();
     _lcd_xor = 0;
-    if (ID == 0)
-        ID = 0x9341;
     switch (_lcd_ID = ID) {
 /*
 	static const uint16_t _regValues[] PROGMEM = {
@@ -1059,8 +1075,8 @@ void MCUFRIEND_kbv::begin(uint16_t ID)
 
 #ifdef SUPPORT_1580
     case 0x1580:
-        _lcd_capable = 0 | REV_SCREEN | READ_BGR | INVERT_GS; //thanks vanhan123
-        static const uint16_t R61580_regValues[] PROGMEM = {
+        _lcd_capable = 0 | REV_SCREEN | READ_BGR | INVERT_GS | READ_NODUMMY; //thanks vanhan123
+        static const uint16_t R61580_regValues[] PROGMEM = {  //from MCHIP Graphics Lib drvTFT001.c
             // Synchronization after reset
             TFTLCD_DELAY, 2,
             0x0000, 0x0000,
@@ -1116,7 +1132,68 @@ void MCUFRIEND_kbv::begin(uint16_t ID)
             0x0093, 0x0701,
             0x0007, 0x0100,
         };
-        init_table16(R61580_regValues, sizeof(R61580_regValues));
+        static const uint16_t R61580_DEM240320C[] PROGMEM = { //from DEM 240320C TMH-PW-N
+            0x00, 0x0000,
+            0x00, 0x0000,
+            TFTLCD_DELAY, 100,
+            0x00, 0x0000,
+            0x00, 0x0000,
+            0x00, 0x0000,
+            0x00, 0x0000,
+            0xA4, 0x0001,
+            TFTLCD_DELAY, 100,
+            0x60, 0xA700,
+            0x08, 0x0808,
+            /******************************************/
+            //Gamma Setting:
+            0x30, 0x0203,
+            0x31, 0x080F,
+            0x32, 0x0401,
+            0x33, 0x050B,
+            0x34, 0x3330,
+            0x35, 0x0B05,
+            0x36, 0x0005,
+            0x37, 0x0F08,
+            0x38, 0x0302,
+            0x39, 0x3033,
+            /******************************************/
+            //Power Setting:
+            0x90, 0x0018, //80Hz
+            0x10, 0x0530, //BT,AP
+            0x11, 0x0237, //DC1,DC0,VC
+            0x12, 0x01BF,
+            0x13, 0x1000, //VCOM
+            TFTLCD_DELAY, 200,
+            /******************************************/
+            0x01, 0x0100,
+            0x02, 0x0200,
+            0x03, 0x1030,
+            0x09, 0x0001,
+            0x0A, 0x0008,
+            0x0C, 0x0000,
+            0x0D, 0xD000,
+
+            0x0E, 0x0030,
+            0x0F, 0x0000,
+            0x20, 0x0000, //H Start
+            0x21, 0x0000, //V Start
+            0x29, 0x002E,
+            0x50, 0x0000,
+            0x51, 0x00EF,
+            0x52, 0x0000,
+            0x53, 0x013F,
+            0x61, 0x0001,
+            0x6A, 0x0000,
+            0x80, 0x0000,
+            0x81, 0x0000,
+            0x82, 0x005F,
+            0x93, 0x0701,
+            /******************************************/
+            0x07, 0x0100,
+            TFTLCD_DELAY, 100,
+        };
+        init_table16(R61580_DEM240320C, sizeof(R61580_DEM240320C));
+//        init_table16(R61580_regValues, sizeof(R61580_regValues));
         break;
 #endif
 
@@ -1843,10 +1920,125 @@ case 0x4532:    // thanks Leodino
         init_table16(UC8230_regValues, sizeof(UC8230_regValues));
         break;
 #endif
+
+#ifdef SUPPORT_9225
+#define ILI9225_DRIVER_OUTPUT_CTRL      (0x01u)  // Driver Output Control
+#define ILI9225_LCD_AC_DRIVING_CTRL     (0x02u)  // LCD AC Driving Control
+#define ILI9225_ENTRY_MODE                (0x03u)  // Entry Mode
+#define ILI9225_DISP_CTRL1              (0x07u)  // Display Control 1
+#define ILI9225_BLANK_PERIOD_CTRL1      (0x08u)  // Blank Period Control
+#define ILI9225_FRAME_CYCLE_CTRL        (0x0Bu)  // Frame Cycle Control
+#define ILI9225_INTERFACE_CTRL          (0x0Cu)  // Interface Control
+#define ILI9225_OSC_CTRL                (0x0Fu)  // Osc Control
+#define ILI9225_POWER_CTRL1             (0x10u)  // Power Control 1
+#define ILI9225_POWER_CTRL2             (0x11u)  // Power Control 2
+#define ILI9225_POWER_CTRL3             (0x12u)  // Power Control 3
+#define ILI9225_POWER_CTRL4             (0x13u)  // Power Control 4
+#define ILI9225_POWER_CTRL5             (0x14u)  // Power Control 5
+#define ILI9225_VCI_RECYCLING           (0x15u)  // VCI Recycling
+#define ILI9225_RAM_ADDR_SET1           (0x20u)  // Horizontal GRAM Address Set
+#define ILI9225_RAM_ADDR_SET2           (0x21u)  // Vertical GRAM Address Set
+#define ILI9225_GRAM_DATA_REG           (0x22u)  // GRAM Data Register
+#define ILI9225_GATE_SCAN_CTRL          (0x30u)  // Gate Scan Control Register
+#define ILI9225_VERTICAL_SCROLL_CTRL1   (0x31u)  // Vertical Scroll Control 1 Register
+#define ILI9225_VERTICAL_SCROLL_CTRL2   (0x32u)  // Vertical Scroll Control 2 Register
+#define ILI9225_VERTICAL_SCROLL_CTRL3   (0x33u)  // Vertical Scroll Control 3 Register
+#define ILI9225_PARTIAL_DRIVING_POS1    (0x34u)  // Partial Driving Position 1 Register
+#define ILI9225_PARTIAL_DRIVING_POS2    (0x35u)  // Partial Driving Position 2 Register
+#define ILI9225_HORIZONTAL_WINDOW_ADDR1 (0x36u)  // Horizontal Address END Position   HEA
+#define ILI9225_HORIZONTAL_WINDOW_ADDR2 (0x37u)  // Horizontal Address START Position HSA
+#define ILI9225_VERTICAL_WINDOW_ADDR1   (0x38u)  // Vertical Address END Position     VEA
+#define ILI9225_VERTICAL_WINDOW_ADDR2   (0x39u)  // Vertical Address START Position   VSA
+#define ILI9225_GAMMA_CTRL1             (0x50u)  // Gamma Control 1
+#define ILI9225_GAMMA_CTRL2             (0x51u)  // Gamma Control 2
+#define ILI9225_GAMMA_CTRL3             (0x52u)  // Gamma Control 3
+#define ILI9225_GAMMA_CTRL4             (0x53u)  // Gamma Control 4
+#define ILI9225_GAMMA_CTRL5             (0x54u)  // Gamma Control 5
+#define ILI9225_GAMMA_CTRL6             (0x55u)  // Gamma Control 6
+#define ILI9225_GAMMA_CTRL7             (0x56u)  // Gamma Control 7
+#define ILI9225_GAMMA_CTRL8             (0x57u)  // Gamma Control 8
+#define ILI9225_GAMMA_CTRL9             (0x58u)  // Gamma Control 9
+#define ILI9225_GAMMA_CTRL10            (0x59u)  // Gamma Control 10
+
+#define ILI9225C_INVOFF  0x20
+#define ILI9225C_INVON   0x21
+
+    case 0x9225:
+    case 0x9226:
+        _lcd_capable = REV_SCREEN | READ_BGR;     //thanks tongbajiel
+        static const uint16_t ILI9225_regValues[] PROGMEM = {
+            /* Start Initial Sequence */
+            /* Set SS bit and direction output from S528 to S1 */
+            ILI9225_POWER_CTRL1, 0x0000, // Set SAP,DSTB,STB
+            ILI9225_POWER_CTRL2, 0x0000, // Set APON,PON,AON,VCI1EN,VC
+            ILI9225_POWER_CTRL3, 0x0000, // Set BT,DC1,DC2,DC3
+            ILI9225_POWER_CTRL4, 0x0000, // Set GVDD
+            ILI9225_POWER_CTRL5, 0x0000, // Set VCOMH/VCOML voltage
+            TFTLCD_DELAY, 40,
+
+            // Power-on sequence
+            ILI9225_POWER_CTRL2, 0x0018, // Set APON,PON,AON,VCI1EN,VC
+            ILI9225_POWER_CTRL3, 0x6121, // Set BT,DC1,DC2,DC3
+            ILI9225_POWER_CTRL4, 0x006F, // Set GVDD   /*007F 0088 */
+            ILI9225_POWER_CTRL5, 0x495F, // Set VCOMH/VCOML voltage
+            ILI9225_POWER_CTRL1, 0x0800, // Set SAP,DSTB,STB
+            TFTLCD_DELAY, 10,
+            ILI9225_POWER_CTRL2, 0x103B, // Set APON,PON,AON,VCI1EN,VC
+            TFTLCD_DELAY, 50,
+
+            ILI9225_DRIVER_OUTPUT_CTRL, 0x011C, // set the display line number and display direction
+            ILI9225_LCD_AC_DRIVING_CTRL, 0x0100, // set 1 line inversion
+            ILI9225_ENTRY_MODE, 0x1030, // set GRAM write direction and BGR=1.
+            ILI9225_DISP_CTRL1, 0x0000, // Display off
+            ILI9225_BLANK_PERIOD_CTRL1, 0x0808, // set the back porch and front porch
+            ILI9225_FRAME_CYCLE_CTRL, 0x1100, // set the clocks number per line
+            ILI9225_INTERFACE_CTRL, 0x0000, // CPU interface
+            ILI9225_OSC_CTRL, 0x0D01, // Set Osc  /*0e01*/
+            ILI9225_VCI_RECYCLING, 0x0020, // Set VCI recycling
+            ILI9225_RAM_ADDR_SET1, 0x0000, // RAM Address
+            ILI9225_RAM_ADDR_SET2, 0x0000, // RAM Address
+
+            /* Set GRAM area */
+            ILI9225_GATE_SCAN_CTRL, 0x0000,
+            ILI9225_VERTICAL_SCROLL_CTRL1, 0x00DB,
+            ILI9225_VERTICAL_SCROLL_CTRL2, 0x0000,
+            ILI9225_VERTICAL_SCROLL_CTRL3, 0x0000,
+            ILI9225_PARTIAL_DRIVING_POS1, 0x00DB,
+            ILI9225_PARTIAL_DRIVING_POS2, 0x0000,
+            ILI9225_HORIZONTAL_WINDOW_ADDR1, 0x00AF,
+            ILI9225_HORIZONTAL_WINDOW_ADDR2, 0x0000,
+            ILI9225_VERTICAL_WINDOW_ADDR1, 0x00DB,
+            ILI9225_VERTICAL_WINDOW_ADDR2, 0x0000,
+
+            /* Set GAMMA curve */
+            ILI9225_GAMMA_CTRL1, 0x0000,
+            ILI9225_GAMMA_CTRL2, 0x0808,
+            ILI9225_GAMMA_CTRL3, 0x080A,
+            ILI9225_GAMMA_CTRL4, 0x000A,
+            ILI9225_GAMMA_CTRL5, 0x0A08,
+            ILI9225_GAMMA_CTRL6, 0x0808,
+            ILI9225_GAMMA_CTRL7, 0x0000,
+            ILI9225_GAMMA_CTRL8, 0x0A00,
+            ILI9225_GAMMA_CTRL9, 0x0710,
+            ILI9225_GAMMA_CTRL10, 0x0710,
+
+            ILI9225_DISP_CTRL1, 0x0012,
+            TFTLCD_DELAY, 50,
+            ILI9225_DISP_CTRL1, 0x1017,
+        };
+        init_table16(ILI9225_regValues, sizeof(ILI9225_regValues));
+        p16 = (int16_t *) & HEIGHT;
+        *p16 = 220;
+        p16 = (int16_t *) & WIDTH;
+        *p16 = 176;
+        break;
+#endif
+
 //        goto common_9320;
     case 0x5408:
         _lcd_capable = 0 | REV_SCREEN | READ_BGR | INVERT_GS;
         goto common_9320;
+    case 0x1505:                //R61505 thanks Ravi_kanchan2004. R61505V, R61505W different
     case 0x9320:
         _lcd_capable = 0 | REV_SCREEN | READ_BGR;
       common_9320:
@@ -2081,6 +2273,9 @@ case 0x4532:    // thanks Leodino
     case 0x1602:
         _lcd_capable = AUTO_READINC | MIPI_DCS_REV1 | MV_AXIS | INVERT_GS | READ_24BITS; //thanks Dumper
 		goto common_9329;
+    case 0x2053:    //weird from BangGood
+        _lcd_capable = AUTO_READINC | MIPI_DCS_REV1 | MV_AXIS | READ_24BITS | REV_SCREEN | READ_BGR;
+		goto common_9329;
     case 0xAC11:
         _lcd_capable = AUTO_READINC | MIPI_DCS_REV1 | MV_AXIS | READ_24BITS | REV_SCREEN; //thanks viliam
 		goto common_9329;
@@ -2101,8 +2296,11 @@ case 0x4532:    // thanks Leodino
         };
         table8_ads = ILI9329_regValues, table_size = sizeof(ILI9329_regValues);
         break;
-    case 0x9340:
-	case 0x9341:
+    case 0x9340:                //ILI9340 thanks Ravi_kanchan2004.
+        _lcd_capable = AUTO_READINC | MIPI_DCS_REV1 | MV_AXIS | READ_24BITS | REV_SCREEN;
+        goto common_9341;
+    case 0x9341:
+      common_9341:	
         _lcd_capable = AUTO_READINC | MIPI_DCS_REV1 | MV_AXIS | READ_24BITS;
         static const uint8_t ILI9341_regValues_2_4[] PROGMEM = {        // BOE 2.4"
             0xF6, 3, 0x01, 0x01, 0x00,  //Interface Control needs EXTC=1 MV_EOR=0, TM=0, RIM=0
@@ -2140,17 +2338,51 @@ case 0x4532:    // thanks Leodino
             0xB1, 2, 0x00, 0x1B,        //Frame Control [00 1B]
             0xB7, 1, 0x07,      //Entry Mode [00]
         };
-#if !defined(USE_SERIAL)
-        if (readReg32(0xD3) == 0x0000) {        //weird DealExtreme EXTC=0 shield
-            table8_ads = ILI9341_regValues_ada, table_size = sizeof(ILI9341_regValues_ada);
-            _lcd_capable |= REV_SCREEN | READ_BGR;
-        } else
-#endif
-        {
-            table8_ads = ILI9341_regValues_2_4, table_size = sizeof(ILI9341_regValues_2_4);   //
-        }
+        table8_ads = ILI9341_regValues_2_4, table_size = sizeof(ILI9341_regValues_2_4);   //
         break;
-    case 0x1581:
+#if defined(SUPPORT_9342)
+    case 0x9342:
+        _lcd_capable = AUTO_READINC | MIPI_DCS_REV1 | MV_AXIS | READ_24BITS | INVERT_GS | REV_SCREEN;
+        static const uint8_t ILI9342_regValues_CPT24[] PROGMEM = {     //CPT 2.4"
+            (0xB9), 3, 0xFF, 0x93, 0x42, //[00 00 00]
+            (0xC0), 2, 0x1D, 0x0A,    //[26 09]
+            (0xC1), 1, 0x02,          //[10]
+            (0xC5), 2, 0x2F, 0x2F,    //[31 3C]
+            (0xC7), 1, 0xC3,          //[C0]
+            (0xB8), 1, 0x0B,          //[07]
+            (0xE0), 15, 0x0F, 0x33, 0x30, 0x0C, 0x0F, 0x08, 0x5D, 0x66, 0x4A, 0x07, 0x13, 0x05, 0x1B, 0x0E, 0x08,
+            (0xE1), 15, 0x08, 0x0E, 0x11, 0x02, 0x0E, 0x02, 0x24, 0x33, 0x37, 0x03, 0x0A, 0x09, 0x26, 0x33, 0x0F,
+        };
+        static const uint8_t ILI9342_regValues_Tianma23[] PROGMEM = {     //Tianma 2.3"
+            (0xB9), 3, 0xFF, 0x93, 0x42,
+            (0xC0), 2, 0x1D, 0x0A,
+            (0xC1), 1, 0x01,
+            (0xC5), 2, 0x2C, 0x2C,
+            (0xC7), 1, 0xC6,
+            (0xB8), 1, 0x09,
+            (0xE0), 15, 0x0F, 0x26, 0x21, 0x07, 0x0A, 0x03, 0x4E, 0x62, 0x3E, 0x0B, 0x11, 0x00, 0x08, 0x02, 0x00,
+            (0xE1), 15, 0x00, 0x19, 0x1E, 0x03, 0x0E, 0x03, 0x30, 0x23, 0x41, 0x03, 0x0B, 0x07, 0x2F, 0x36, 0x0F,
+        };
+        static const uint8_t ILI9342_regValues_HSD23[] PROGMEM = {     //HSD 2.3"
+            (0xB9), 3, 0xFF, 0x93, 0x42,
+            (0xC0), 2, 0x1D, 0x0A,
+            (0xC1), 1, 0x02,
+            (0xC5), 2, 0x2F, 0x27,
+            (0xC7), 1, 0xA4,
+            (0xB8), 1, 0x0B,
+            (0xE0), 15, 0x0F, 0x24, 0x21, 0x0C, 0x0F, 0x06, 0x50, 0x75, 0x3F, 0x07, 0x12, 0x05, 0x11, 0x0B, 0x08,
+            (0xE1), 15, 0x08, 0x1D, 0x20, 0x02, 0x0E, 0x04, 0x31, 0x24, 0x42, 0x03, 0x0B, 0x09, 0x30, 0x36, 0x0F,
+        };
+        table8_ads = ILI9342_regValues_CPT24, table_size = sizeof(ILI9342_regValues_CPT24);   //
+        //        table8_ads = ILI9342_regValues_Tianma23, table_size = sizeof(ILI9342_regValues_Tianma23);   //
+        //        table8_ads = ILI9342_regValues_HSD23, table_size = sizeof(ILI9342_regValues_HSD23);   //
+        p16 = (int16_t *) & HEIGHT;
+        *p16 = 240;
+        p16 = (int16_t *) & WIDTH;
+        *p16 = 320;
+        break;
+#endif
+    case 0x1581:                        //no BGR in MADCTL.  set BGR in Panel Control
         _lcd_capable = AUTO_READINC | MIPI_DCS_REV1 | MV_AXIS | READ_24BITS; //thanks zdravke
 		goto common_9481;
     case 0x9481:
@@ -2165,7 +2397,7 @@ case 0x4532:    // thanks Leodino
             0xD2, 2, 0x01, 0x02,        // Set Power for Normal Mode [01 22]
             0xD3, 2, 0x01, 0x02,        // Set Power for Partial Mode [01 22]
             0xD4, 2, 0x01, 0x02,        // Set Power for Idle Mode [01 22]
-            0xC0, 5, 0x10, 0x3B, 0x00, 0x02, 0x11,      //Set Panel Driving [10 3B 00 02 11]
+            0xC0, 5, 0x12, 0x3B, 0x00, 0x02, 0x11, //Panel Driving BGR for 1581 [10 3B 00 02 11]
             0xC1, 3, 0x10, 0x10, 0x88,  // Display Timing Normal [10 10 88]
 			0xC5, 1, 0x03,      //Frame Rate [03]
 			0xC6, 1, 0x02,      //Interface Control [02]
@@ -2316,7 +2548,6 @@ case 0x4532:    // thanks Leodino
         p16 = (int16_t *) & WIDTH;
         *p16 = 320;
         break;
-    case 0x1505:                //R61505
     case 0xB505:                //R61505V
     case 0xC505:                //R61505W
         _lcd_capable = 0 | REV_SCREEN | READ_LOWHIGH;
@@ -2473,6 +2704,10 @@ case 0x4532:    // thanks Leodino
         *p16 = 854;
         break;
 #endif
+    default:
+        p16 = (int16_t *) & WIDTH;
+        *p16 = 0;       //error value for WIDTH
+        break;
     }
     _lcd_rev = ((_lcd_capable & REV_SCREEN) != 0);
     if (table8_ads != NULL) {

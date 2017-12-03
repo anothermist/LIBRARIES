@@ -99,7 +99,7 @@ class UTFTGLUE : public MCUFRIEND_kbv
 	void print(char *st, int x, int y, int deg=0)  {
 		 settextcursor(st, x, y); MCUFRIEND_kbv::print(st);}
 	void print(String st, int x, int y, int deg=0) {
-		 MCUFRIEND_kbv::print(st);}
+		 settextcursor(st.c_str(), x, y); MCUFRIEND_kbv::print(st);}
 	void printNumI(long num, int x, int y, int length=0, char filler=' ') {
 //		 char buf[17]; ltoa(num, buf, 10); 
 //		 settextcursor(buf, x, y); MCUFRIEND_kbv::print(buf);

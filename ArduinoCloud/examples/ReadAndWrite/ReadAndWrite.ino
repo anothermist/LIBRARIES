@@ -7,9 +7,10 @@
 
   Arduino Cloud -> https://cloud.arduino.cc/cloud
 
-  IMPORTANT: in order to establish the tls connection is necessary to add
-  the arduino.cc SSL cerificate to your board, look at
-  https://github.com/arduino-libraries/WiFi101-FirmwareUpdater#to-update-ssl-certificates
+  IMPORTANT: This sketch requires the arduino.cc root SSL certificate loaded on your board.
+             The board comes with this certificate preloaded. The procedure to change the 
+             preloaded set of root certificates can be found here:
+             https://www.arduino.cc/en/Tutorial/FirmwareUpdater
 
   created May 2016
   by Gilberto Conti and Sandeep Mistry
@@ -19,15 +20,19 @@
 #include <WiFi101.h>
 #include <ArduinoCloud.h>
 
+
+#include "arduino_secrets.h" 
+///////please enter your sensitive data in the Secret tab/arduino_secrets.h
 /////// Wifi Settings ///////
-char ssid[] = "";
-char pass[] = "";
+
+char ssid[] = SECRET_SSID;
+char pass[] = SECRET_PASS;
 
 // Arduino Cloud settings and credentials
-const char userName[] = "";
-const char thingName[]   = "";
-const char thingId[]   = "";
-const char thingPsw[]  = "";
+const char userName[] = SECRET_USER_NAME;
+const char thingName[] = SECRET_THING_NAME;
+const char thingId[] = SECRET_THING_ID;
+const char thingPsw[]  = SECRET_THING_PSW;
 
 WiFiSSLClient sslClient;
 
@@ -51,7 +56,7 @@ void setup() {
   }
 
   // setup the "cloudObject"
-  cloudObject.enableDebug(); // eneble the serial debug output
+  cloudObject.enableDebug(); // enable the serial debug output
   cloudObject.begin(thingName, userName, thingId, thingPsw, sslClient);
 
   // define the properties
@@ -61,6 +66,7 @@ void setup() {
 
 void loop() {
   // subscribes to RW properties and look at the connections status
+
   cloudObject.poll();
 
   // read the lamp switch "position", update "bulb" property accordingly
@@ -77,5 +83,15 @@ void loop() {
     digitalWrite(ledPin, LOW);
   }
 
+
+  if ( WiFi.status() != WL_CONNECTED) {
+    while (WiFi.begin(ssid, pass) != WL_CONNECTED) {
+      // unsuccessful, retry in 4 seconds
+      Serial.print("failed ... ");
+      delay(4000);
+      Serial.print("retrying ... ");
+    }
+  }
+  
   delay(1000);
 }

@@ -9,8 +9,8 @@ void SoftWire::setSdaLow(const SoftWire *p)
   uint8_t sda = p->getSda();
   // Disable interrupts whilst switching pin direction
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-    pinMode(sda, OUTPUT);
     digitalWrite(sda, LOW);
+    pinMode(sda, OUTPUT);
   }
 }
 
@@ -28,8 +28,8 @@ void SoftWire::setSclLow(const SoftWire *p)
   uint8_t scl = p->getScl();
   // Disable interrupts whilst switching pin direction
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-    pinMode(scl, OUTPUT);
     digitalWrite(scl, LOW);
+    pinMode(scl, OUTPUT);
   }
 }
 
@@ -226,7 +226,14 @@ SoftWire::result_t SoftWire::write(uint8_t data) const
       return timedOut;
     }
 
-  return (_readSda(this) == LOW ? ack : nack);
+  result_t res = (_readSda(this) == LOW ? ack : nack);
+
+  delayMicroseconds(_delay_us);
+
+  // Keep SCL low between bytes
+  _setSclLow(this);
+
+  return res;
 }
 
 
@@ -288,5 +295,9 @@ SoftWire::result_t SoftWire::read(uint8_t &data, bool sendAck) const
     }
   
   delayMicroseconds(_delay_us);
+
+  // Keep SCL low between bytes
+  _setSclLow(this);
+
   return ack;
 }

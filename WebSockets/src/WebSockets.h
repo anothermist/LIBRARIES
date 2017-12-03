@@ -32,7 +32,16 @@
 #include <Arduino.h>
 #endif
 
+#include <functional>
+
+#ifndef NODEBUG_WEBSOCKETS
+#ifdef DEBUG_ESP_PORT
+#define DEBUG_WEBSOCKETS(...) DEBUG_ESP_PORT.printf( __VA_ARGS__ )
+#else
 //#define DEBUG_WEBSOCKETS(...) os_printf( __VA_ARGS__ )
+#endif
+#endif
+
 
 #ifndef DEBUG_WEBSOCKETS
 #define DEBUG_WEBSOCKETS(...)
@@ -43,6 +52,8 @@
 #define WEBSOCKETS_MAX_DATA_SIZE  (15*1024)
 #define WEBSOCKETS_USE_BIG_MEM
 #define GET_FREE_HEAP ESP.getFreeHeap()
+// moves all Header strings to Flash (~300 Byte)
+//#define WEBSOCKETS_SAVE_RAM
 #else
 #ifdef STM32_DEVICE
 #define WEBSOCKETS_MAX_DATA_SIZE  (15*1024)
@@ -51,6 +62,8 @@
 #else
 //atmega328p has only 2KB ram!
 #define WEBSOCKETS_MAX_DATA_SIZE  (1024)
+// moves all Header strings to Flash
+#define WEBSOCKETS_SAVE_RAM
 #endif
 #endif
 
@@ -69,6 +82,7 @@
 #if defined(ESP8266) || defined(ESP31B)
 #define WEBSOCKETS_NETWORK_TYPE NETWORK_ESP8266
 //#define WEBSOCKETS_NETWORK_TYPE NETWORK_ESP8266_ASYNC
+//#define WEBSOCKETS_NETWORK_TYPE NETWORK_W5100
 #else
 #define WEBSOCKETS_NETWORK_TYPE NETWORK_W5100
 #endif
@@ -130,6 +144,12 @@
 #error "no network type selected!"
 #endif
 
+// moves all Header strings to Flash (~300 Byte)
+#ifdef WEBSOCKETS_SAVE_RAM
+#define WEBSOCKETS_STRING(var)  F(var)
+#else
+#define WEBSOCKETS_STRING(var)  var
+#endif
 
 typedef enum {
     WSC_NOT_CONNECTED,
@@ -142,7 +162,11 @@ typedef enum {
     WStype_DISCONNECTED,
     WStype_CONNECTED,
     WStype_TEXT,
-    WStype_BIN
+    WStype_BIN,
+	WStype_FRAGMENT_TEXT_START,
+	WStype_FRAGMENT_BIN_START,
+	WStype_FRAGMENT,
+	WStype_FRAGMENT_FIN,
 } WStype_t;
 
 typedef enum {
@@ -205,6 +229,8 @@ typedef struct {
         String base64Authorization; ///< Base64 encoded Auth request
         String plainAuthorization; ///< Base64 encoded Auth request
 
+        String extraHeaders;
+
         bool cHttpHeadersValid; ///< non-websocket http header validity indicator
         size_t cMandatoryHeadersCount; ///< non-websocket mandatory http headers present count
 
@@ -227,7 +253,7 @@ class WebSockets {
         virtual void clientDisconnect(WSclient_t * client);
         virtual bool clientIsConnected(WSclient_t * client);
 
-        virtual void messageReceived(WSclient_t * client, WSopcode_t opcode, uint8_t * payload, size_t length);
+        virtual void messageReceived(WSclient_t * client, WSopcode_t opcode, uint8_t * payload, size_t length, bool fin);
 
         void clientDisconnect(WSclient_t * client, uint16_t code, char * reason = NULL, size_t reasonLen = 0);
         bool sendFrame(WSclient_t * client, WSopcode_t opcode, uint8_t * payload = NULL, size_t length = 0, bool mask = false, bool fin = true, bool headerToPayload = false);
@@ -244,6 +270,8 @@ class WebSockets {
         String base64_encode(uint8_t * data, size_t length);
 
         bool readCb(WSclient_t * client, uint8_t *out, size_t n, WSreadWaitCb cb);
+        virtual size_t write(WSclient_t * client, uint8_t *out, size_t n);
+        size_t write(WSclient_t * client, const char *out);
 
 
 };

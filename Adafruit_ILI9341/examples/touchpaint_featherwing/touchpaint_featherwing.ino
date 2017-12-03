@@ -25,13 +25,13 @@
    #define TFT_DC   15
    #define SD_CS    2
 #endif
-#ifdef __AVR_ATmega32U4__
-   #define STMPE_CS 6
-   #define TFT_CS   9
-   #define TFT_DC   10
-   #define SD_CS    5
+#ifdef ESP32
+   #define STMPE_CS 32
+   #define TFT_CS   15
+   #define TFT_DC   33
+   #define SD_CS    14
 #endif
-#ifdef ARDUINO_SAMD_FEATHER_M0
+#if defined (__AVR_ATmega32U4__) || defined(ARDUINO_SAMD_FEATHER_M0) || defined (__AVR_ATmega328P__) 
    #define STMPE_CS 6
    #define TFT_CS   9
    #define TFT_DC   10
@@ -48,6 +48,12 @@
    #define TFT_CS   PA15
    #define STMPE_CS PC7
    #define SD_CS    PC5
+#endif
+#ifdef ARDUINO_NRF52_FEATHER /* BSP 0.6.5 and higher! */
+   #define TFT_DC   11
+   #define TFT_CS   31
+   #define STMPE_CS 30
+   #define SD_CS    27
 #endif
 
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);

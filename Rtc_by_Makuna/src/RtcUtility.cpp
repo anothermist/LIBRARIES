@@ -1,11 +1,5 @@
 
 #include <Arduino.h>
-
-#if defined(ESP8266)
-#include <pgmspace.h>
-#else
-#include <avr/pgmspace.h>
-#endif
 #include "RtcUtility.h"
 
 uint8_t BcdToUint8(uint8_t val)
@@ -38,4 +32,3 @@ uint8_t BcdToBin24Hour(uint8_t bcdHour)
     }
     return hour;
 }
-

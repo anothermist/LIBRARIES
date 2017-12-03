@@ -468,21 +468,24 @@ bool WebSocketsServer::newClient(WEBSOCKETS_NETWORK_CLASS * TCPclient) {
  * @param client WSclient_t *  ptr to the client struct
  * @param opcode WSopcode_t
  * @param payload  uint8_t *
- * @param lenght size_t
+ * @param length size_t
  */
-void WebSocketsServer::messageReceived(WSclient_t * client, WSopcode_t opcode, uint8_t * payload, size_t lenght) {
+void WebSocketsServer::messageReceived(WSclient_t * client, WSopcode_t opcode, uint8_t * payload, size_t length, bool fin) {
     WStype_t type = WStype_ERROR;
 
     switch(opcode) {
         case WSop_text:
-            type = WStype_TEXT;
+            type = fin ? WStype_TEXT : WStype_FRAGMENT_TEXT_START;
             break;
         case WSop_binary:
-            type = WStype_BIN;
+            type = fin ? WStype_BIN : WStype_FRAGMENT_BIN_START;
+            break;
+        case WSop_continuation:
+            type = fin ? WStype_FRAGMENT_FIN : WStype_FRAGMENT;
             break;
     }
 
-    runCbEvent(client->num, type, payload, lenght);
+    runCbEvent(client->num, type, payload, length);
 
 }
 
@@ -664,12 +667,15 @@ bool WebSocketsServer::hasMandatoryHeader(String headerName) {
 	return false;
 }
 
+
 /**
  * handles http header reading for WebSocket upgrade
  * @param client WSclient_t * ///< pointer to the client struct
  * @param headerLine String ///< the header being read / processed
  */
 void WebSocketsServer::handleHeader(WSclient_t * client, String * headerLine) {
+
+	static const char * NEW_LINE = "\r\n";
 
     headerLine->trim(); // remove \r
 
@@ -690,25 +696,25 @@ void WebSocketsServer::handleHeader(WSclient_t * client, String * headerLine) {
             String headerName = headerLine->substring(0, headerLine->indexOf(':'));
             String headerValue = headerLine->substring(headerLine->indexOf(':') + 2);
 
-            if(headerName.equalsIgnoreCase("Connection")) {
+            if(headerName.equalsIgnoreCase(WEBSOCKETS_STRING("Connection"))) {
                 headerValue.toLowerCase();
-            	if(headerValue.indexOf("upgrade") >= 0) {
+            	if(headerValue.indexOf(WEBSOCKETS_STRING("upgrade")) >= 0) {
                     client->cIsUpgrade = true;
                 }
-            } else if(headerName.equalsIgnoreCase("Upgrade")) {
-                if(headerValue.equalsIgnoreCase("websocket")) {
+            } else if(headerName.equalsIgnoreCase(WEBSOCKETS_STRING("Upgrade"))) {
+                if(headerValue.equalsIgnoreCase(WEBSOCKETS_STRING("websocket"))) {
                     client->cIsWebsocket = true;
                 }
-            } else if(headerName.equalsIgnoreCase("Sec-WebSocket-Version")) {
+            } else if(headerName.equalsIgnoreCase(WEBSOCKETS_STRING("Sec-WebSocket-Version"))) {
                 client->cVersion = headerValue.toInt();
-            } else if(headerName.equalsIgnoreCase("Sec-WebSocket-Key")) {
+            } else if(headerName.equalsIgnoreCase(WEBSOCKETS_STRING("Sec-WebSocket-Key"))) {
                 client->cKey = headerValue;
                 client->cKey.trim(); // see rfc6455
-            } else if(headerName.equalsIgnoreCase("Sec-WebSocket-Protocol")) {
+            } else if(headerName.equalsIgnoreCase(WEBSOCKETS_STRING("Sec-WebSocket-Protocol"))) {
                 client->cProtocol = headerValue;
-            } else if(headerName.equalsIgnoreCase("Sec-WebSocket-Extensions")) {
+            } else if(headerName.equalsIgnoreCase(WEBSOCKETS_STRING("Sec-WebSocket-Extensions"))) {
                 client->cExtensions = headerValue;
-            } else if(headerName.equalsIgnoreCase("Authorization")) {
+            } else if(headerName.equalsIgnoreCase(WEBSOCKETS_STRING("Authorization"))) {
                 client->base64Authorization = headerValue;
             } else {
             	client->cHttpHeadersValid &= execHttpHeaderValidation(headerName, headerValue);
@@ -760,17 +766,13 @@ void WebSocketsServer::handleHeader(WSclient_t * client, String * headerLine) {
         }
 
         if(_base64Authorization.length() > 0) {
-            if(client->base64Authorization.length() > 0) {
-                String auth = "Basic ";
-                auth += _base64Authorization;
-                if(auth != client->base64Authorization) {
-                    DEBUG_WEBSOCKETS("[WS-Server][%d][handleHeader] HTTP Authorization failed!\n", client->num);
-                    handleAuthorizationFailed(client);
-                    return;
-                }
-            } else {
-                ok = false;
-            }
+			String auth = WEBSOCKETS_STRING("Basic ");
+			auth += _base64Authorization;
+			if(auth != client->base64Authorization) {
+				DEBUG_WEBSOCKETS("[WS-Server][%d][handleHeader] HTTP Authorization failed!\n", client->num);
+				handleAuthorizationFailed(client);
+				return;
+			}
         }
 
         if(ok) {
@@ -784,32 +786,30 @@ void WebSocketsServer::handleHeader(WSclient_t * client, String * headerLine) {
 
             client->status = WSC_CONNECTED;
 
-            client->tcp->write("HTTP/1.1 101 Switching Protocols\r\n"
+            String handshake = WEBSOCKETS_STRING("HTTP/1.1 101 Switching Protocols\r\n"
                     "Server: arduino-WebSocketsServer\r\n"
                     "Upgrade: websocket\r\n"
                     "Connection: Upgrade\r\n"
                     "Sec-WebSocket-Version: 13\r\n"
                     "Sec-WebSocket-Accept: ");
-            client->tcp->write((uint8_t*)sKey.c_str(), sKey.length());
+			handshake += sKey + NEW_LINE;
 
             if(_origin.length() > 0) {
-                String origin = "\r\nAccess-Control-Allow-Origin: ";
-                origin += _origin;
-                origin += "\r\n";
-                client->tcp->write((uint8_t*)origin.c_str(), origin.length());
+                handshake += WEBSOCKETS_STRING("Access-Control-Allow-Origin: ");
+                handshake +=_origin + NEW_LINE;
             }
 
             if(client->cProtocol.length() > 0) {
-                String protocol = "\r\nSec-WebSocket-Protocol: ";
-                protocol += _protocol;
-                protocol += "\r\n";
-                client->tcp->write((uint8_t*)protocol.c_str(), protocol.length());
-            } else {
-                client->tcp->write("\r\n");
+            	handshake += WEBSOCKETS_STRING("Sec-WebSocket-Protocol: ");
+            	handshake +=_protocol + NEW_LINE;
             }
 
             // header end
-            client->tcp->write("\r\n");
+            handshake += NEW_LINE;
+
+            DEBUG_WEBSOCKETS("[WS-Server][%d][handleHeader] handshake %s",  client->num, (uint8_t*)handshake.c_str());
+
+            write(client, (uint8_t*)handshake.c_str(), handshake.length());
 
             headerDone(client);
 

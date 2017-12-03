@@ -1,8 +1,7 @@
 # arduino-mqtt
 
 [![Build Status](https://travis-ci.org/256dpi/arduino-mqtt.svg?branch=master)](https://travis-ci.org/256dpi/arduino-mqtt)
-
-**MQTT library for Arduino based on the lwmqtt project**
+[![GitHub release](https://img.shields.io/github/release/256dpi/arduino-mqtt.svg)](https://github.com/256dpi/arduino-mqtt/releases)
 
 This library bundles the [lwmqtt](https://github.com/256dpi/lwmqtt) client and adds a thin wrapper to get an Arduino like API.
 
@@ -89,7 +88,7 @@ void loop() {
   }
 }
 
-void messageReceived(String topic, String payload) {
+void messageReceived(String &topic, String &payload) {
   Serial.println("incoming: " + topic + " - " + payload);
 }
 ```
@@ -129,15 +128,26 @@ void onMessage(MQTTClientCallbackSimple);
 // Callback signature: void messageReceived(String &topic, String &payload) {}
 
 void onMessageAdvanced(MQTTClientCallbackAdvanced);
-// Callback signature: void messageReceived(MQTTClient *client, char topic[], unsigned int length) {}
+// Callback signature: void messageReceived(MQTTClient *client, char[] topic, char payload[], int payload_length) {}
 ```
 
 - The set callback is mostly called during a call to `loop()` but may also be called during a call to `subscribe()`, `unsubscribe()` or `publish() // QoS > 0` if messages have been received before receiving the required acknowledgement. Therefore, it is strongly recommended to not call `subscribe()`, `unsubscribe()` or `publish() // QoS > 0` directly in the callback.
+
+Set more advanced options:
+
+```c++
+void setOptions(int keepAlive, bool cleanSession, int timeout);
+```
+
+- The `keepAlive` option controls the keep alive interval (default: 10).
+- The `cleanSession` option controls the session retention on the broker side (default: true).
+- The `timeout` option controls the default timeout for all commands in milliseconds (default: 1000). 
 
 Connect to broker using the supplied client id and an optional username and password:
 
 ```c++
 boolean connect(const char clientId[]);
+boolean connect(const char clientId[], const char username[]);
 boolean connect(const char clientId[], const char username[], const char password[]);
 ```
 
@@ -154,8 +164,8 @@ boolean publish(const char topic[], const String &payload);
 boolean publish(const char topic[], const String &payload, bool retained, int qos);
 boolean publish(const char topic[], const char payload[]);
 boolean publish(const char topic[], const char payload[], bool retained, int qos);
-boolean publish(const char topic[], const char payload[], unsigned int length);
-boolean publish(const char topic[], const char payload[], unsigned int length, bool retained, int qos);
+boolean publish(const char topic[], const char payload[], int length);
+boolean publish(const char topic[], const char payload[], int length, bool retained, int qos);
 ```
 
 Subscribe to a topic:

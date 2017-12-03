@@ -20,7 +20,9 @@
 #include "hal/hal_aci_tl.h"
 #include "hal/hal_io.h"
 #include "ble_system.h"
-#include <avr/sleep.h>
+#if defined(__AVR__)
+  #include <avr/sleep.h>
+#endif
 
 extern int8_t HAL_IO_RADIO_RESET, HAL_IO_RADIO_REQN, HAL_IO_RADIO_RDY, HAL_IO_RADIO_IRQ;
 
@@ -191,8 +193,11 @@ void m_print_aci_data(hal_aci_data_t *p_data)
   Serial.println(F(""));
 }
 
+void m_rdy_line_handle(void);  //forward declaration
+
 void toggle_eimsk(bool state)
 {
+#if defined (__AVR__)
   /* ToDo: This will currently only work with the UNO/ATMega48/88/128/328 */
   /*       due to EIMSK. Abstract this away to something MCU nuetral! */
   uint8_t eimsk_bit = 0xFF;
@@ -212,14 +217,23 @@ void toggle_eimsk(bool state)
   {
     /* RDY isn't a valid HW INT pin! */
     while(1);
-  }         
+  }
+#else
+    if(state)
+        attachInterrupt(HAL_IO_RADIO_IRQ, m_rdy_line_handle, LOW);
+    else
+        detachInterrupt(HAL_IO_RADIO_IRQ);
+#endif
+    
 }
 
 void m_rdy_line_handle(void)
 {
   hal_aci_data_t *p_aci_data;
   
+#if defined(__AVR__)
   sleep_disable();
+#endif
   detachInterrupt(HAL_IO_RADIO_IRQ);
   
   // Receive or transmit data
@@ -274,10 +288,12 @@ void hal_aci_tl_init()
 {
   received_data.buffer[0] = 0;
 
+  
   SPI.begin();
-  SPI.setBitOrder(LSBFIRST);
-  SPI.setClockDivider(SPI_CLOCK_DIV8);
-  SPI.setDataMode(SPI_MODE0);
+  
+  //SPI.setBitOrder(LSBFIRST);
+  //SPI.setClockDivider(SPI_CLOCK_DIV8);
+  //SPI.setDataMode(SPI_MODE0);
 
 
   
@@ -304,14 +320,20 @@ void hal_aci_tl_init()
   digitalWrite(SCK,  0);  
   
   HAL_IO_RADIO_IRQ = 0xFF;
+    
+#if defined(__AVR__)
   for (uint8_t i=0; i<sizeof(dreqinttable); i+=2) {
     if (HAL_IO_RADIO_RDY == dreqinttable[i]) {
       HAL_IO_RADIO_IRQ = dreqinttable[i+1];
     }
   }
-
+#else
+    HAL_IO_RADIO_IRQ = digitalPinToInterrupt(HAL_IO_RADIO_RDY);
+#endif
+    
   delay(30); //Wait for the nRF8001 to get hold of its lines - the lines float for a few ms after the reset
-  if (HAL_IO_RADIO_IRQ != 0xFF) 
+  if (HAL_IO_RADIO_IRQ != 0xFF)
+    SPI.usingInterrupt(HAL_IO_RADIO_IRQ); // add checking for spi conflicts
     attachInterrupt(HAL_IO_RADIO_IRQ, m_rdy_line_handle, LOW); 
   // We use the LOW level of the RDYN line as the atmega328 can wakeup from sleep only on LOW
 }
@@ -354,7 +376,7 @@ hal_aci_data_t * hal_aci_tl_poll_get(void)
 
 
   //SPI.begin();  
-    
+  SPI.beginTransaction(SPISettings(2000000, LSBFIRST, SPI_MODE0));  // gain control of SPI bus
   HAL_IO_SET_STATE(HAL_IO_RADIO_REQN, 0);
   
   // Receive from queue
@@ -395,10 +417,13 @@ hal_aci_data_t * hal_aci_tl_poll_get(void)
   }
 
   HAL_IO_SET_STATE(HAL_IO_RADIO_REQN, 1);
+  SPI.endTransaction();              // release the SPI bus
   //SPI.end()
   //RDYN should follow the REQN line in approx 100ns
   
+#if defined(__AVR__)
   sleep_enable();
+#endif
   attachInterrupt(HAL_IO_RADIO_IRQ, m_rdy_line_handle, LOW);  
 
 

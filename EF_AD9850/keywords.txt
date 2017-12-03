@@ -1,0 +1,6 @@
+EF_AD9850		KEYWORD1
+
+init			KEYWORD2
+reset			KEYWORD2
+wr_serial		KEYWORD2
+wr_parrel		KEYWORD2

@@ -50,6 +50,11 @@ class WebSocketsClient: private WebSockets {
         void beginSocketIO(const char *host, uint16_t port, const char * url = "/socket.io/?EIO=3", const char * protocol = "arduino");
         void beginSocketIO(String host, uint16_t port, String url = "/socket.io/?EIO=3", String protocol = "arduino");
 
+#if (WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266)
+        void beginSocketIOSSL(const char *host, uint16_t port, const char * url = "/socket.io/?EIO=3", const char * protocol = "arduino");
+        void beginSocketIOSSL(String host, uint16_t port, String url = "/socket.io/?EIO=3", String protocol = "arduino");
+#endif
+
 #if (WEBSOCKETS_NETWORK_TYPE != NETWORK_ESP8266_ASYNC)
         void loop(void);
 #else
@@ -75,6 +80,10 @@ class WebSocketsClient: private WebSockets {
 
         void setAuthorization(const char * user, const char * password);
         void setAuthorization(const char * auth);
+	
+        void setExtraHeaders(const char * extraHeaders = NULL);
+
+        void setReconnectInterval(unsigned long time);
 
     protected:
         String _host;
@@ -87,7 +96,10 @@ class WebSocketsClient: private WebSockets {
 
         WebSocketClientEvent _cbEvent;
 
-        void messageReceived(WSclient_t * client, WSopcode_t opcode, uint8_t * payload, size_t length);
+        unsigned long _lastConnectionFail;
+        unsigned long _reconnectInterval;
+
+        void messageReceived(WSclient_t * client, WSopcode_t opcode, uint8_t * payload, size_t length, bool fin);
 
         void clientDisconnect(WSclient_t * client);
         bool clientIsConnected(WSclient_t * client);

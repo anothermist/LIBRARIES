@@ -2,7 +2,7 @@
 
 /* XLR8FloatTest
  Copyright (c) 2016 Alorim Technology.  All right reserved.
- Written by Matt Weber (linkedin.com/in/mattweberdesign) of
+ Written by Matt Weber (support@aloriumtech.com) of
  Alorium Technology (info@aloriumtech.com)
  Demonstrates usage of XLR8Float library and
   hardware accelerators

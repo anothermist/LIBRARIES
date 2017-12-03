@@ -14,7 +14,7 @@
 //#define USE_FRDM_K20
 //#define USE_OPENSMART_SHIELD_PINOUT //thanks Michel53
 //#define USE_ELECHOUSE_DUE_16BIT_SHIELD    //Untested yet
-#define USE_MY_BLUEPILL
+//#define USE_MY_BLUEPILL
 
 #if 0
 #elif defined(__AVR_ATmega328P__) && defined(USE_SSD1289_SHIELD_UNO)    //on UNO

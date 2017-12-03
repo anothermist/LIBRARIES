@@ -29,19 +29,6 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
-
-Update 13/2/15 by Bodmer:
-Font 1 will print the Adafruit GLCD font
-drawUnicode renamed drawChar
-drawNumber array size increased
-Faster font drawing
-Update 21/2/15 by Alan Senior:
-Faster line drawing algorithm added
-Update 27/2/15 added font 8
-Speed improvement tweaks 18/3/15
-Minor bug fix 19/3/15
-New comments 06/4/15
-Updated write() function to print fonts via print class. 14/4/15
 */
 
 #include "Adafruit_GFX_AS.h"
@@ -66,10 +53,6 @@ Updated write() function to print fonts via print class. 14/4/15
   #include "Font7s.h"
 #endif
 
-#ifdef LOAD_FONT8
-  #include "Font72.h"
-#endif
-
 #ifdef __AVR__
  #include <avr/pgmspace.h>
 #else
@@ -83,7 +66,6 @@ Adafruit_GFX_AS::Adafruit_GFX_AS(int16_t w, int16_t h):
   _height   = HEIGHT;
   rotation  = 0;
   cursor_y  = cursor_x    = 0;
-  textfont = 1;
   textsize  = 1;
   textcolor = textbgcolor = 0xFFFF;
   wrap      = true;
@@ -198,9 +180,6 @@ void Adafruit_GFX_AS::fillCircleHelper(int16_t x0, int16_t y0, int16_t r,
 }
 
 // Bresenham's algorithm - thx wikpedia
-// This is the basic line drawing algorithm.
-// To improve drawing speed it can be subclassed but then
-// FastH/V line drawing functions must also be subclassed
 void Adafruit_GFX_AS::drawLine(int16_t x0, int16_t y0,
 			    int16_t x1, int16_t y1,
 			    uint16_t color) {
@@ -254,13 +233,13 @@ void Adafruit_GFX_AS::drawRect(int16_t x, int16_t y,
 
 void Adafruit_GFX_AS::drawFastVLine(int16_t x, int16_t y,
 				 int16_t h, uint16_t color) {
-  // Can update in subclasses to improve performance
+  // Update in subclasses if desired!
   drawLine(x, y, x, y+h-1, color);
 }
 
 void Adafruit_GFX_AS::drawFastHLine(int16_t x, int16_t y,
 				 int16_t w, uint16_t color) {
-  // Can update in subclasses to improve performance
+  // Update in subclasses if desired!
   drawLine(x, y, x+w-1, y, color);
 }
 
@@ -311,143 +290,7 @@ void Adafruit_GFX_AS::drawTriangle(int16_t x0, int16_t y0,
   drawLine(x2, y2, x0, y0, color);
 }
 
-/* This was an attempt to speed up triangle drawing using Bresenham method, but not as good as hoped.... 
-   future improvements pending. It works but uses goto statements!*/
-
-// Fill a triangle - Bresenham method - not used! Bigger code and only a few percent faster!
-void Adafruit_GFX_AS::fillTriangle(int16_t x1,int16_t y1,int16_t x2,int16_t y2,int16_t x3,int16_t y3, uint16_t c) {
-	int16_t t1x,t2x,y,minx,maxx,t1xp,t2xp;
-	bool changed1 = false;
-	bool changed2 = false;
-	int16_t signx1,signx2,dx1,dy1,dx2,dy2;
-	uint16_t e1,e2;
-    // Sort vertices
-	if (y1>y2) { swap(y1,y2); swap(x1,x2); }
-	if (y1>y3) { swap(y1,y3); swap(x1,x3); }
-	if (y2>y3) { swap(y2,y3); swap(x2,x3); }
-
-	t1x=t2x=x1; y=y1;   // Starting points
-
-	dx1 = x2 - x1; if(dx1<0) { dx1=-dx1; signx1=-1; } else signx1=1;
-	dy1 = y2 - y1;
- 
-	dx2 = x3 - x1; if(dx2<0) { dx2=-dx2; signx2=-1; } else signx2=1;
-	dy2 = y3 - y1;
-	
-	if (dy1 > dx1) {   // swap values
-        swap(dx1,dy1);
-		changed1 = true;
-	}
-	if (dy2 > dx2) {   // swap values
-        swap(dy2,dx2);
-		changed2 = true;
-	}
-	
-	e2 = dx2>>1;
-    // Flat top, just process the second half
-    if(y1==y2) goto next;
-    e1 = dx1>>1;
-	
-	for (uint16_t i = 0; i < dx1;) {
-		t1xp=0; t2xp=0;
-		if(t1x<t2x) { minx=t1x; maxx=t2x; }
-		else		{ minx=t2x; maxx=t1x; }
-        // process first line until y value is about to change
-		while(i<dx1) {
-			i++;			
-			e1 += dy1;
-	   	   	while (e1 >= dx1) {
-				e1 -= dx1;
-   	   	   	   if (changed1) t1xp=signx1;//t1x += signx1;
-				else          goto next1;
-			}
-			if (changed1) break;
-			else t1x += signx1;
-		}
-	// Move line
-	next1:
-        // process second line until y value is about to change
-		while (1) {
-			e2 += dy2;		
-			while (e2 >= dx2) {
-				e2 -= dx2;
-				if (changed2) t2xp=signx2;//t2x += signx2;
-				else          goto next2;
-			}
-			if (changed2)     break;
-			else              t2x += signx2;
-		}
-	next2:
-		if(minx>t1x) minx=t1x; if(minx>t2x) minx=t2x;
-		if(maxx<t1x) maxx=t1x; if(maxx<t2x) maxx=t2x;
-	   	drawFastHLine(minx, y, maxx-minx, c);    // Draw line from min to max points found on the y
-		// Now increase y
-		if(!changed1) t1x += signx1;
-		t1x+=t1xp;
-		if(!changed2) t2x += signx2;
-		t2x+=t2xp;
-    	y += 1;
-		if(y==y2) break;
-		
-   }
-	next:
-	// Second half
-	dx1 = x3 - x2; if(dx1<0) { dx1=-dx1; signx1=-1; } else signx1=1;
-	dy1 = y3 - y2;
-	t1x=x2;
- 
-	if (dy1 > dx1) {   // swap values
-        swap(dy1,dx1);
-		changed1 = true;
-	} else changed1=false;
-	
-	e1 = dx1>>1;
-	
-	for (uint16_t i = 0; i<=dx1; i++) {
-		t1xp=0; t2xp=0;
-		if(t1x<t2x) { minx=t1x; maxx=t2x; }
-		else		{ minx=t2x; maxx=t1x; }
-	    // process first line until y value is about to change
-		while(i<dx1) {
-    		e1 += dy1;
-	   	   	while (e1 >= dx1) {
-				e1 -= dx1;
-   	   	   	   	if (changed1) { t1xp=signx1; break; }//t1x += signx1;
-				else          goto next3;
-			}
-			if (changed1) break;
-			else   	   	  t1x += signx1;
-			if(i<dx1) i++;
-		}
-	next3:
-        // process second line until y value is about to change
-		while (t2x!=x3) {
-			e2 += dy2;
-	   	   	while (e2 >= dx2) {
-				e2 -= dx2;
-				if(changed2) t2xp=signx2;
-				else          goto next4;
-			}
-			if (changed2)     break;
-			else              t2x += signx2;
-		}	   	   
-	next4:
-
-		if(minx>t1x) minx=t1x; if(minx>t2x) minx=t2x;
-		if(maxx<t1x) maxx=t1x; if(maxx<t2x) maxx=t2x;
-	   	drawFastHLine(minx, y, maxx-minx, c);    // Draw line from min to max points found on the y
-		// Now increase y
-		if(!changed1) t1x += signx1;
-		t1x+=t1xp;
-		if(!changed2) t2x += signx2;
-		t2x+=t2xp;
-    	y += 1;
-		if(y>y3) return;
-	}
-}
-
-/*
-// Fill a triangle - original Adafruit function works well and code footprint is small
+// Fill a triangle
 void Adafruit_GFX_AS::fillTriangle ( int16_t x0, int16_t y0,
 				  int16_t x1, int16_t y1,
 				  int16_t x2, int16_t y2, uint16_t color) {
@@ -499,7 +342,10 @@ void Adafruit_GFX_AS::fillTriangle ( int16_t x0, int16_t y0,
     b   = x0 + sb / dy02;
     sa += dx01;
     sb += dx02;
-
+    /* longhand:
+    a = x0 + (x1 - x0) * (y - y0) / (y1 - y0);
+    b = x0 + (x2 - x0) * (y - y0) / (y2 - y0);
+    */
     if(a > b) swap(a,b);
     drawFastHLine(a, y, b-a+1, color);
   }
@@ -513,12 +359,15 @@ void Adafruit_GFX_AS::fillTriangle ( int16_t x0, int16_t y0,
     b   = x0 + sb / dy02;
     sa += dx12;
     sb += dx02;
-
+    /* longhand:
+    a = x1 + (x2 - x1) * (y - y1) / (y2 - y1);
+    b = x0 + (x2 - x0) * (y - y0) / (y2 - y0);
+    */
     if(a > b) swap(a,b);
     drawFastHLine(a, y, b-a+1, color);
   }
 }
-*/
+
 void Adafruit_GFX_AS::drawBitmap(int16_t x, int16_t y,
 			      const uint8_t *bitmap, int16_t w, int16_t h,
 			      uint16_t color) {
@@ -535,92 +384,29 @@ void Adafruit_GFX_AS::drawBitmap(int16_t x, int16_t y,
 }
 
 #if ARDUINO >= 100
-size_t Adafruit_GFX_AS::write(uint8_t uniCode) {
+size_t Adafruit_GFX_AS::write(uint8_t c) {
 #else
-void Adafruit_GFX_AS::write(uint8_t uniCode) {
+void Adafruit_GFX_AS::write(uint8_t c) {
 #endif
-
-  unsigned int width = 0;
-  unsigned int height = 0;
-
-  switch(textfont) {
-  #ifdef LOAD_GLCD
-    case 1:
-      width = 6;
-      height = 8;
-      break;
-  #endif
-
-  #ifdef LOAD_FONT2
-    case 2:
-      width = pgm_read_byte(widtbl_f16+uniCode-32) + 1;
-      height = chr_hgt_f16;
-      break;
-  #endif
-
-//    case 3:
-//      width = pgm_read_byte(widtbl_f24+uniCode-32);
-//      height = chr_hgt_f24;
-//      break;
-
-  #ifdef LOAD_FONT4
-    case 4:
-      width = pgm_read_byte(widtbl_f32+uniCode-32) - 3;
-      height = chr_hgt_f32;
-      break;
-  #endif
-
-//    case 5:
-//      width = pgm_read_byte(widtbl_f48+uniCode-32);
-//      height = chr_hgt_f48;
-//      break;
-
-  #ifdef LOAD_FONT6
-    case 6:
-      width = pgm_read_byte(widtbl_f64+uniCode-32) - 3;
-      height = chr_hgt_f64;
-      break;
-  #endif
-
-  #ifdef LOAD_FONT7
-    case 7:
-      width = pgm_read_byte(widtbl_f7s+uniCode-32) + 2;
-      height = chr_hgt_f7s;
-      break;
-  #endif
-
-  #ifdef LOAD_FONT8
-    case 8:
-      width = pgm_read_byte(widtbl_f72+uniCode-32) + 2;
-      height = chr_hgt_f72;
-      break;
-  #endif
-
-    default:
-    #if ARDUINO >= 100
-      return 0;
-    #endif
-  }
-
-  if (uniCode == '\n') {
-    cursor_y += textsize*height;
+  if (c == '\n') {
+    cursor_y += textsize*8;
     cursor_x  = 0;
-  } else if (uniCode == '\r') {
-    // skip
+  } else if (c == '\r') {
+    // skip em
   } else {
-    if (cursor_x+width*textsize > _width) {
-      cursor_y += textsize*height;
+    drawChar(cursor_x, cursor_y, c, textcolor, textbgcolor, textsize);
+    cursor_x += textsize*6;
+    if (wrap && (cursor_x > (_width - textsize*6))) {
+      cursor_y += textsize*8;
       cursor_x = 0;
     }
-    cursor_x += drawChar(uniCode, cursor_x, cursor_y, textfont);
   }
-
 #if ARDUINO >= 100
   return 1;
 #endif
 }
 
-// Draw a character - only used for the original Adafruit font
+// Draw a character
 void Adafruit_GFX_AS::drawChar(int16_t x, int16_t y, unsigned char c,
 			    uint16_t color, uint16_t bg, uint8_t size) {
 #ifdef LOAD_GLCD
@@ -630,75 +416,29 @@ void Adafruit_GFX_AS::drawChar(int16_t x, int16_t y, unsigned char c,
      ((y + 8 * size - 1) < 0))   // Clip top
     return;
 
-if (size == 1) {
-  if (bg == color) {
-    for (int8_t i=0; i<6; i++ ) {
-      uint8_t line;
-      if (i == 5) line = 0x0;
-      else line = pgm_read_byte(font+(c*5)+i);
-
-      for (int8_t j = 0; j<8; j++) {
-        if (line & 0x1) drawPixel(x+i, y+j, color);
-        line >>= 1;
+  for (int8_t i=0; i<6; i++ ) {
+    uint8_t line;
+    if (i == 5) 
+      line = 0x0;
+    else 
+      line = pgm_read_byte(font+(c*5)+i);
+    for (int8_t j = 0; j<8; j++) {
+      if (line & 0x1) {
+        if (size == 1) // default size
+          drawPixel(x+i, y+j, color);
+        else {  // big size
+          fillRect(x+(i*size), y+(j*size), size, size, color);
+        } 
+      } else if (bg != color) {
+        if (size == 1) // default size
+          drawPixel(x+i, y+j, bg);
+        else {  // big size
+          fillRect(x+i*size, y+j*size, size, size, bg);
+        }
       }
+      line >>= 1;
     }
   }
-  else {
-      uint8_t mask = 0x1;
-      uint8_t line1,line2,line3,line4,line5;
-      setAddrWindow(x, y, x+5, y+7);
-      writeBegin();
-      line1 = pgm_read_byte(font+(c*5)+0);
-      line2 = pgm_read_byte(font+(c*5)+1);
-      line3 = pgm_read_byte(font+(c*5)+2);
-      line4 = pgm_read_byte(font+(c*5)+3);
-      line5 = pgm_read_byte(font+(c*5)+4);
-
-      for (int8_t j = 0; j<8; j++) {
-        if (line1 & mask) {while(!(SPSR&_BV(SPIF)));SPDR=color>>8;while(!(SPSR&_BV(SPIF)));SPDR=color;}
-        else {while(!(SPSR&_BV(SPIF)));SPDR=bg>>8;while(!(SPSR&_BV(SPIF)));SPDR=bg;}
-        if (line2 & mask) {while(!(SPSR&_BV(SPIF)));SPDR=color>>8;while(!(SPSR&_BV(SPIF)));SPDR=color;}
-        else {while(!(SPSR&_BV(SPIF)));SPDR=bg>>8;while(!(SPSR&_BV(SPIF)));SPDR=bg;}
-        if (line3 & mask) {while(!(SPSR&_BV(SPIF)));SPDR=color>>8;while(!(SPSR&_BV(SPIF)));SPDR=color;}
-        else {while(!(SPSR&_BV(SPIF)));SPDR=bg>>8;while(!(SPSR&_BV(SPIF)));SPDR=bg;}
-        if (line4 & mask) {while(!(SPSR&_BV(SPIF)));SPDR=color>>8;while(!(SPSR&_BV(SPIF)));SPDR=color;}
-        else {while(!(SPSR&_BV(SPIF)));SPDR=bg>>8;while(!(SPSR&_BV(SPIF)));SPDR=bg;}
-        if (line5 & mask) {while(!(SPSR&_BV(SPIF)));SPDR=color>>8;while(!(SPSR&_BV(SPIF)));SPDR=color;}
-        else {while(!(SPSR&_BV(SPIF)));SPDR=bg>>8;while(!(SPSR&_BV(SPIF)));SPDR=bg;}
-        while(!(SPSR&_BV(SPIF)));SPDR=bg>>8;while(!(SPSR&_BV(SPIF)));SPDR=bg;
-        mask <<= 1;
-      }
-    while(!(SPSR&_BV(SPIF)));
-    writeEnd();
-  }
-
-} else {
-  if (bg == color) {
-    for (int8_t i=0; i<6; i++ ) {
-      uint8_t line;
-      if (i == 5) line = 0x0;
-      else line = pgm_read_byte(font+(c*5)+i);
-
-      for (int8_t j = 0; j<8; j++) {
-        if (line & 0x1) fillRect(x+(i*size), y+(j*size), size, size, color);
-        line >>= 1;
-      }
-    }
-  }
-  else {
-    for (int8_t i=0; i<6; i++ ) {
-      uint8_t line;
-      if (i == 5) line = 0x0;
-      else line = pgm_read_byte(font+(c*5)+i);
-
-      for (int8_t j = 0; j<8; j++) {
-        if (line & 0x1) fillRect(x+(i*size), y+(j*size), size, size, color);
-        else fillRect(x+i*size, y+j*size, size, size, bg);
-        line >>= 1;
-      }
-    }
-  }
-}
 #endif
 }
 
@@ -707,18 +447,8 @@ void Adafruit_GFX_AS::setCursor(int16_t x, int16_t y) {
   cursor_y = y;
 }
 
-void Adafruit_GFX_AS::setCursor(int16_t x, int16_t y, uint8_t font) {
-  textfont = font;
-  cursor_x = x;
-  cursor_y = y;
-}
-
 void Adafruit_GFX_AS::setTextSize(uint8_t s) {
   textsize = (s > 0) ? s : 1;
-}
-
-void Adafruit_GFX_AS::setTextFont(uint8_t f) {
-  textfont = (f > 0) ? f : 1;
 }
 
 void Adafruit_GFX_AS::setTextColor(uint16_t c) {
@@ -770,218 +500,149 @@ void Adafruit_GFX_AS::invertDisplay(boolean i) {
 }
 
 /***************************************************************************************
-** Function name:           drawChar
-** Description:             draw a unicode onto the screen
+** Function name:           drawUnicode
+** Descriptions:            draw a unicode
 ***************************************************************************************/
-int Adafruit_GFX_AS::drawChar(unsigned int uniCode, int x, int y, int font)
+int Adafruit_GFX_AS::drawUnicode(unsigned int uniCode, int x, int y, int size)
 {
-  unsigned int width = 0;
-  unsigned int height = 0;
-  unsigned int flash_address = 0; // 16 bit address OK for Arduino if font files <60K
+    
+   if (size) uniCode -= 32;
 
-  int8_t gap = 0;
-  uniCode -= 32; // Not using info from font files at the moment
+   unsigned int width = 0;
+   unsigned int height = 0;
+   unsigned int flash_address = 0;
+   char gap = 0;
 
-  switch(font) {
-  #ifdef LOAD_GLCD
-    case 1:
-      drawChar(x, y,uniCode+32,textcolor, textbgcolor, textsize);
-      return 6*textsize;
-  #endif
-
-  #ifdef LOAD_FONT2
-    case 2:
-      flash_address = pgm_read_word(&chrtbl_f16[uniCode]);
-      width = pgm_read_byte(widtbl_f16+uniCode);
-      height = chr_hgt_f16;
-      gap = 1;
-      break;
-  #endif
-
-//    case 3:
-//      flash_address = pgm_read_word(&chrtbl_f24[uniCode]);
-//      width = pgm_read_byte(widtbl_f24+uniCode);
-//      height = chr_hgt_f24;
-//      gap = 0;
-//      break;
-
-  #ifdef LOAD_FONT4
-    case 4:
-      flash_address = pgm_read_word(&chrtbl_f32[uniCode]);
-      width = pgm_read_byte(widtbl_f32+uniCode);
-      height = chr_hgt_f32;
-      gap = -3;
-      break;
-  #endif
-
-//    case 5:
-//      flash_address = pgm_read_word(&chrtbl_f48[uniCode]);
-//      width = pgm_read_byte(widtbl_f48+uniCode);
-//      height = chr_hgt_f48;
-//      gap = -3;
-//      break;
-
-  #ifdef LOAD_FONT6
-    case 6:
-      flash_address = pgm_read_word(&chrtbl_f64[uniCode]);
-      width = pgm_read_byte(widtbl_f64+uniCode);
-      height = chr_hgt_f64;
-      gap = -3;
-      break;
-  #endif
-
-  #ifdef LOAD_FONT7
-    case 7:
-      flash_address = pgm_read_word(&chrtbl_f7s[uniCode]);
-      width = pgm_read_byte(widtbl_f7s+uniCode);
-      height = chr_hgt_f7s;
-      gap = 2;
-      break;
-  #endif
-
-  #ifdef LOAD_FONT8
-    case 8:
-      flash_address = pgm_read_word(&chrtbl_f72[uniCode]);
-      width = pgm_read_byte(widtbl_f72+uniCode);
-      height = chr_hgt_f72;
-      gap = 2;
-      break;
-  #endif
-
-    default:
-      return 0;
-  }
-
-if (x+(width+gap)*textsize >= _width) return (width+gap)*textsize ;
+//   if (size == 1) {
+//     flash_address = pgm_read_word(&chrtbl_f8[uniCode]);
+//     width = pgm_read_byte(widtbl_f8+uniCode);
+//     height = chr_hgt_f8;
+//     gap = 1;
+//   }
+#ifdef LOAD_FONT2
+   if (size == 2) {
+     flash_address = pgm_read_word(&chrtbl_f16[uniCode]);
+     width = pgm_read_byte(widtbl_f16+uniCode);
+     height = chr_hgt_f16;
+     gap = 1;
+   }
+#endif
+//   if (size == 3) {
+//     flash_address = pgm_read_word(&chrtbl_f24[uniCode]);
+//     width = pgm_read_byte(widtbl_f24+uniCode);
+//     height = chr_hgt_f24;
+//     gap = 0;
+//   }
+#ifdef LOAD_FONT4
+   if (size == 4) {
+     flash_address = pgm_read_word(&chrtbl_f32[uniCode]);
+     width = pgm_read_byte(widtbl_f32+uniCode);
+     height = chr_hgt_f32;
+     gap = -3;
+   }
+#endif
+//   if (size == 5) {
+//     flash_address = pgm_read_word(&chrtbl_f48[uniCode]);
+//     width = pgm_read_byte(widtbl_f48+uniCode);
+//     height = chr_hgt_f48;
+//     gap = -3;
+//   }
+#ifdef LOAD_FONT6
+   if (size == 6) {
+     flash_address = pgm_read_word(&chrtbl_f64[uniCode]);
+     width = pgm_read_byte(widtbl_f64+uniCode);
+     height = chr_hgt_f64;
+     gap = -3;
+   }
+#endif
+#ifdef LOAD_FONT7
+   if (size == 7) {
+     flash_address = pgm_read_word(&chrtbl_f7s[uniCode]);
+     width = pgm_read_byte(widtbl_f7s+uniCode);
+     height = chr_hgt_f7s;
+     gap = 2;
+   }
+#endif
 
 int w = (width+7)/8;
 int pX      = 0;
 int pY      = y;
+int color   = 0;
 byte line = 0;
 
-if (textcolor == textbgcolor | textsize != 1) {
-  for(int i=0; i<height; i++)
-  {
-    if (textcolor != textbgcolor) {
-      if (textsize == 1) drawFastHLine(x, pY, width+gap, textbgcolor);
-      else fillRect(x, pY, (width+gap)*textsize, textsize, textbgcolor);
-    }
-    for (int k = 0;k < w; k++)
-    { 
-      line = pgm_read_byte(flash_address+w*i+k);
-      if(line) {
-        if (textsize==1){
-          pX = x + k*8;
-          if(line & 0x80) drawPixel(pX, pY, textcolor);
-          if(line & 0x40) drawPixel(pX+1, pY, textcolor);
-          if(line & 0x20) drawPixel(pX+2, pY, textcolor);
-          if(line & 0x10) drawPixel(pX+3, pY, textcolor);
-          if(line & 0x8) drawPixel(pX+4, pY, textcolor);
-          if(line & 0x4) drawPixel(pX+5, pY, textcolor);
-          if(line & 0x2) drawPixel(pX+6, pY, textcolor);
-          if(line & 0x1) drawPixel(pX+7, pY, textcolor);
-        }
-        else {
-          pX = x + k*8*textsize;
-          if(line & 0x80) fillRect(pX, pY, textsize, textsize, textcolor);
-          if(line & 0x40) fillRect(pX+textsize, pY, textsize, textsize, textcolor);
-          if(line & 0x20) fillRect(pX+2*textsize, pY, textsize, textsize, textcolor);
-          if(line & 0x10) fillRect(pX+3*textsize, pY, textsize, textsize, textcolor);
-          if(line & 0x8) fillRect(pX+4*textsize, pY, textsize, textsize, textcolor);
-          if(line & 0x4) fillRect(pX+5*textsize, pY, textsize, textsize, textcolor);
-          if(line & 0x2) fillRect(pX+6*textsize, pY, textsize, textsize, textcolor);
-          if(line & 0x1) fillRect(pX+7*textsize, pY, textsize, textsize, textcolor);
-        }
+//fillRect(x,pY,width+gap,height,textbgcolor);
+
+for(int i=0; i<height; i++)
+{
+  if (textcolor != textbgcolor) {
+    if (textsize == 1) drawFastHLine(x, pY, width+gap, textbgcolor);
+    else fillRect(x, pY, (width+gap)*textsize, textsize, textbgcolor);
+  }
+  for (int k = 0;k < w; k++)
+  { 
+    line = pgm_read_byte(flash_address+w*i+k);
+    if(line) {
+      if (textsize==1){
+        pX = x + k*8;
+        if(line & 0x80) drawPixel(pX, pY, textcolor);
+        if(line & 0x40) drawPixel(pX+1, pY, textcolor);
+        if(line & 0x20) drawPixel(pX+2, pY, textcolor);
+        if(line & 0x10) drawPixel(pX+3, pY, textcolor);
+        if(line & 0x8) drawPixel(pX+4, pY, textcolor);
+        if(line & 0x4) drawPixel(pX+5, pY, textcolor);
+        if(line & 0x2) drawPixel(pX+6, pY, textcolor);
+        if(line & 0x1) drawPixel(pX+7, pY, textcolor);
+      }
+       else {
+        pX = x + k*8*textsize;
+        if(line & 0x80) fillRect(pX, pY, textsize, textsize, textcolor);
+        if(line & 0x40) fillRect(pX+textsize, pY, textsize, textsize, textcolor);
+        if(line & 0x20) fillRect(pX+2*textsize, pY, textsize, textsize, textcolor);
+        if(line & 0x10) fillRect(pX+3*textsize, pY, textsize, textsize, textcolor);
+        if(line & 0x8) fillRect(pX+4*textsize, pY, textsize, textsize, textcolor);
+        if(line & 0x4) fillRect(pX+5*textsize, pY, textsize, textsize, textcolor);
+        if(line & 0x2) fillRect(pX+6*textsize, pY, textsize, textsize, textcolor);
+        if(line & 0x1) fillRect(pX+7*textsize, pY, textsize, textsize, textcolor);
       }
     }
-    pY+=textsize;
   }
+  pY+=textsize;
 }
-else
-// Faster drawing of characters and background using block write
-{
-  setAddrWindow(x, y, (x+w*8)-1, y+height-1);
-
-  writeBegin();
-
-  int t = textcolor;
-  int b = textbgcolor;
-
-  for(int i=0; i<height; i++)
-  {
-    for (int k = 0;k < w; k++)
-    { 
-    line = pgm_read_byte(flash_address+w*i+k);
-    pX = x + k*8;
-    if(line&0x80) {while(!(SPSR&_BV(SPIF)));SPDR=t>>8;while(!(SPSR&_BV(SPIF)));SPDR=t;}
-    else {while(!(SPSR&_BV(SPIF)));SPDR=b>>8;while(!(SPSR&_BV(SPIF)));SPDR=b;}
-    if(line&0x40) {while(!(SPSR&_BV(SPIF)));SPDR=t>>8;while(!(SPSR&_BV(SPIF)));SPDR=t;}
-    else {while(!(SPSR&_BV(SPIF)));SPDR=b>>8;while(!(SPSR&_BV(SPIF)));SPDR=b;}
-    if(line&0x20) {while(!(SPSR&_BV(SPIF)));SPDR=t>>8;while(!(SPSR&_BV(SPIF)));SPDR=t;}
-    else {while(!(SPSR&_BV(SPIF)));SPDR=b>>8;while(!(SPSR&_BV(SPIF)));SPDR=b;}
-    if(line&0x10) {while(!(SPSR&_BV(SPIF)));SPDR=t>>8;while(!(SPSR&_BV(SPIF)));SPDR=t;}
-    else {while(!(SPSR&_BV(SPIF)));SPDR=b>>8;while(!(SPSR&_BV(SPIF)));SPDR=b;}
-    if(line&0x8) {while(!(SPSR&_BV(SPIF)));SPDR=t>>8;while(!(SPSR&_BV(SPIF)));SPDR=t;}
-    else {while(!(SPSR&_BV(SPIF)));SPDR=b>>8;while(!(SPSR&_BV(SPIF)));SPDR=b;}
-    if(line&0x4) {while(!(SPSR&_BV(SPIF)));SPDR=t>>8;while(!(SPSR&_BV(SPIF)));SPDR=t;}
-    else {while(!(SPSR&_BV(SPIF)));SPDR=b>>8;while(!(SPSR&_BV(SPIF)));SPDR=b;}
-    if(line&0x2) {while(!(SPSR&_BV(SPIF)));SPDR=t>>8;while(!(SPSR&_BV(SPIF)));SPDR=t;}
-    else {while(!(SPSR&_BV(SPIF)));SPDR=b>>8;while(!(SPSR&_BV(SPIF)));SPDR=b;}
-    if(line&0x1) {while(!(SPSR&_BV(SPIF)));SPDR=t>>8;while(!(SPSR&_BV(SPIF)));SPDR=t;}
-    else {while(!(SPSR&_BV(SPIF)));SPDR=b>>8;while(!(SPSR&_BV(SPIF)));SPDR=b;}
-    }
-    pY+=textsize;
-  }
-  while(!(SPSR&_BV(SPIF)));
-  writeEnd();
-}
-
 return (width+gap)*textsize;        // x +
 }
 
 /***************************************************************************************
-** Function name:           Fast character drawing support functions
-***************************************************************************************/
-
-void Adafruit_GFX_AS::setAddrWindow(int16_t x0, int16_t y0, int16_t x1, int16_t y1)
-{
-  // Do nothing, MUST be subclassed
-}
-
-void Adafruit_GFX_AS::writeBegin()
-{
-  // Do nothing, MUST be subclassed
-} 
-
-void Adafruit_GFX_AS::writeEnd()
-{
-  // Do nothing, MUST be subclassed
-} 
-
-
-/***************************************************************************************
 ** Function name:           drawNumber unsigned with size
-** Description:             draw a long integer
+** Descriptions:            drawNumber
 ***************************************************************************************/
-int Adafruit_GFX_AS::drawNumber(long long_num,int poX, int poY, int font)
+int Adafruit_GFX_AS::drawNumber(long long_num,int poX, int poY, int size)
 {
-    char tmp[12];
+    char tmp[10];
     if (long_num < 0) sprintf(tmp, "%li", long_num);
     else sprintf(tmp, "%lu", long_num);
-    return drawString(tmp, poX, poY, font);
+    return drawString(tmp, poX, poY, size);
+}
+
+/***************************************************************************************
+** Function name:           drawChar
+** Descriptions:            draw char
+***************************************************************************************/
+int Adafruit_GFX_AS::drawChar(char c, int x, int y, int size)
+{
+    return drawUnicode(c, x, y, size);
 }
 
 /***************************************************************************************
 ** Function name:           drawString
-** Description :            draw string
+** Descriptions:            draw string
 ***************************************************************************************/
-int Adafruit_GFX_AS::drawString(char *string, int poX, int poY, int font)
+int Adafruit_GFX_AS::drawString(char *string, int poX, int poY, int size)
 {
     int sumX = 0;
 
     while(*string)
     {
-        int xPlus = drawChar(*string, poX, poY, font);
+        int xPlus = drawChar(*string, poX, poY, size);
         sumX += xPlus;
         *string++;
         poX += xPlus;                            /* Move cursor right       */
@@ -991,9 +652,9 @@ int Adafruit_GFX_AS::drawString(char *string, int poX, int poY, int font)
 
 /***************************************************************************************
 ** Function name:           drawCentreString
-** Descriptions:            draw string centred on dX
+** Descriptions:            draw string across centre
 ***************************************************************************************/
-int Adafruit_GFX_AS::drawCentreString(char *string, int dX, int poY, int font)
+int Adafruit_GFX_AS::drawCentreString(char *string, int dX, int poY, int size)
 {
     int sumX = 0;
     int len = 0;
@@ -1003,28 +664,22 @@ int Adafruit_GFX_AS::drawCentreString(char *string, int dX, int poY, int font)
     while(*pointer)
     {
         ascii = *pointer;
-
-#ifdef LOAD_GLCD
-        if (font==1)len += 6;
-#endif
+        //if (size==0)len += 1+pgm_read_byte(widtbl_log+ascii);
+        //if (size==1)len += 1+pgm_read_byte(widtbl_f8+ascii-32);
 #ifdef LOAD_FONT2
-        if (font==2)len += 1+pgm_read_byte(widtbl_f16+ascii-32);
+        if (size==2)len += 1+pgm_read_byte(widtbl_f16+ascii-32);
 #endif
-        //if (font==3)len += 1+pgm_read_byte(widtbl_f48+ascii-32)/2;
+        //if (size==3)len += 1+pgm_read_byte(widtbl_f48+ascii-32)/2;
 #ifdef LOAD_FONT4
-        if (font==4)len += pgm_read_byte(widtbl_f32+ascii-32)-3;
+        if (size==4)len += pgm_read_byte(widtbl_f32+ascii-32)-3;
 #endif
-        //if (font==5) len += pgm_read_byte(widtbl_f48+ascii-32)-3;
+        //if (size==5) len += pgm_read_byte(widtbl_f48+ascii-32)-3;
 #ifdef LOAD_FONT6
-        if (font==6) len += pgm_read_byte(widtbl_f64+ascii-32)-3;
+        if (size==6) len += pgm_read_byte(widtbl_f64+ascii-32)-3;
 #endif
 #ifdef LOAD_FONT7
-        if (font==7) len += pgm_read_byte(widtbl_f7s+ascii-32)+2;
+        if (size==7) len += pgm_read_byte(widtbl_f7s+ascii-32)+2;
 #endif
-#ifdef LOAD_FONT8
-        if (font==8) len += pgm_read_byte(widtbl_f72+ascii-32)+2;
-#endif
-
         *pointer++;
     }
     len = len*textsize;
@@ -1034,10 +689,11 @@ int Adafruit_GFX_AS::drawCentreString(char *string, int dX, int poY, int font)
 
     while(*string)
     {
-      int xPlus = drawChar(*string, poX, poY, font);
-      sumX += xPlus;
-      *string++;
-      poX += xPlus;                  /* Move cursor right            */
+        
+        int xPlus = drawChar(*string, poX, poY, size);
+        sumX += xPlus;
+        *string++;
+        poX += xPlus;                  /* Move cursor right            */
     }
     
     return sumX;
@@ -1045,9 +701,9 @@ int Adafruit_GFX_AS::drawCentreString(char *string, int dX, int poY, int font)
 
 /***************************************************************************************
 ** Function name:           drawRightString
-** Descriptions:            draw string right justified to dX
+** Descriptions:            draw string right justified
 ***************************************************************************************/
-int Adafruit_GFX_AS::drawRightString(char *string, int dX, int poY, int font)
+int Adafruit_GFX_AS::drawRightString(char *string, int dX, int poY, int size)
 {
     int sumX = 0;
     int len = 0;
@@ -1057,28 +713,22 @@ int Adafruit_GFX_AS::drawRightString(char *string, int dX, int poY, int font)
     while(*pointer)
     {
         ascii = *pointer;
-
-#ifdef LOAD_GLCD
-        if (font==1)len += 6;
-#endif
+        //if (size==0)len += 1+pgm_read_byte(widtbl_log+ascii);
+        //if (size==1)len += 1+pgm_read_byte(widtbl_f8+ascii-32);
 #ifdef LOAD_FONT2
-        if (font==2)len += 1+pgm_read_byte(widtbl_f16+ascii-32);
+        if (size==2)len += 1+pgm_read_byte(widtbl_f16+ascii-32);
 #endif
-        //if (font==3)len += 1+pgm_read_byte(widtbl_f48+ascii-32)/2;
+        //if (size==3)len += 1+pgm_read_byte(widtbl_f48+ascii-32)/2;
 #ifdef LOAD_FONT4
-        if (font==4)len += pgm_read_byte(widtbl_f32+ascii-32)-3;
+        if (size==4)len += pgm_read_byte(widtbl_f32+ascii-32)-3;
 #endif
-        //if (font==5) len += pgm_read_byte(widtbl_f48+ascii-32)-3;
+        //if (size==5) len += pgm_read_byte(widtbl_f48+ascii-32)-3;
 #ifdef LOAD_FONT6
-        if (font==6) len += pgm_read_byte(widtbl_f64+ascii-32)-3;
+        if (size==6) len += pgm_read_byte(widtbl_f64+ascii-32)-3;
 #endif
 #ifdef LOAD_FONT7
-        if (font==7) len += pgm_read_byte(widtbl_f7s+ascii-32)+2;
+        if (size==7) len += pgm_read_byte(widtbl_f7s+ascii-32)+2;
 #endif
-#ifdef LOAD_FONT8
-        if (font==8) len += pgm_read_byte(widtbl_f72+ascii-32)+2;
-#endif
-
         *pointer++;
     }
     
@@ -1089,10 +739,11 @@ int Adafruit_GFX_AS::drawRightString(char *string, int dX, int poY, int font)
 
     while(*string)
     {
-      int xPlus = drawChar(*string, poX, poY, font);
-      sumX += xPlus;
-      *string++;
-      poX += xPlus;          /* Move cursor right            */
+        
+        int xPlus = drawChar(*string, poX, poY, size);
+        sumX += xPlus;
+        *string++;
+        poX += xPlus;          /* Move cursor right            */
     }
     
     return sumX;
@@ -1102,7 +753,7 @@ int Adafruit_GFX_AS::drawRightString(char *string, int dX, int poY, int font)
 ** Function name:           drawFloat
 ** Descriptions:            drawFloat
 ***************************************************************************************/
-int Adafruit_GFX_AS::drawFloat(float floatNumber, int decimal, int poX, int poY, int font)
+int Adafruit_GFX_AS::drawFloat(float floatNumber, int decimal, int poX, int poY, int size)
 {
     unsigned long temp=0;
     float decy=0.0;
@@ -1115,7 +766,7 @@ int Adafruit_GFX_AS::drawFloat(float floatNumber, int decimal, int poX, int poY,
     
     if(floatNumber-0.0 < eep)       // floatNumber < 0
     {
-        xPlus = drawChar('-',poX, poY, font);
+        xPlus = drawChar('-',poX, poY, size);
         floatNumber = -floatNumber;
 
         poX  += xPlus; 
@@ -1132,14 +783,14 @@ int Adafruit_GFX_AS::drawFloat(float floatNumber, int decimal, int poX, int poY,
     temp = (long)floatNumber;
     
     
-    xPlus = drawNumber(temp,poX, poY, font);
+    xPlus = drawNumber(temp,poX, poY, size);
 
     poX  += xPlus; 
     sumX += xPlus;
 
     if(decimal>0)
     {
-        xPlus = drawChar('.',poX, poY, font);
+        xPlus = drawChar('.',poX, poY, size);
         poX += xPlus;                            /* Move cursor right            */
         sumX += xPlus;
     }
@@ -1153,7 +804,7 @@ int Adafruit_GFX_AS::drawFloat(float floatNumber, int decimal, int poX, int poY,
     {
         decy *= 10;                                /* for the next decimal         */
         temp = decy;                               /* get the decimal              */
-        xPlus = drawNumber(temp,poX, poY, font);
+        xPlus = drawNumber(temp,poX, poY, size);
         
         poX += xPlus;                              /* Move cursor right            */
         sumX += xPlus;

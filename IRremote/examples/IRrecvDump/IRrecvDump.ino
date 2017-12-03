@@ -15,8 +15,9 @@
 *  You can change this to another available Arduino Pin.
 *  Your IR receiver should be connected to the pin defined here
 */
+int RECV_PIN = 11;
 
-IRrecv irrecv(A1);
+IRrecv irrecv(RECV_PIN);
 
 decode_results results;
 

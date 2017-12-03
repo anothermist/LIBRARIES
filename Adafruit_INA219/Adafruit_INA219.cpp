@@ -86,7 +86,7 @@ void Adafruit_INA219::wireReadRegister(uint8_t reg, uint16_t *value)
     @note   These calculations assume a 0.1 ohm resistor is present
 */
 /**************************************************************************/
-void Adafruit_INA219::ina219SetCalibration_32V_2A(void)
+void Adafruit_INA219::setCalibration_32V_2A(void)
 {
   // By default we use a pretty huge range for the input voltage,
   // which probably isn't the most appropriate choice for system
@@ -177,7 +177,7 @@ void Adafruit_INA219::ina219SetCalibration_32V_2A(void)
     @note   These calculations assume a 0.1 ohm resistor is present
 */
 /**************************************************************************/
-void Adafruit_INA219::ina219SetCalibration_32V_1A(void)
+void Adafruit_INA219::setCalibration_32V_1A(void)
 {
   // By default we use a pretty huge range for the input voltage,
   // which probably isn't the most appropriate choice for system
@@ -260,7 +260,7 @@ void Adafruit_INA219::ina219SetCalibration_32V_1A(void)
   wireWriteRegister(INA219_REG_CONFIG, config);
 }
 
-void Adafruit_INA219::ina219SetCalibration_16V_400mA(void) {
+void Adafruit_INA219::setCalibration_16V_400mA(void) {
   
   // Calibration which uses the highest precision for 
   // current measurement (0.1mA), at the expense of 
@@ -360,10 +360,15 @@ Adafruit_INA219::Adafruit_INA219(uint8_t addr) {
     @brief  Setups the HW (defaults to 32V and 2A for calibration values)
 */
 /**************************************************************************/
-void Adafruit_INA219::begin() {
+void Adafruit_INA219::begin(uint8_t addr) {
+  ina219_i2caddr = addr;
+  begin();
+}
+
+void Adafruit_INA219::begin(void) {
   Wire.begin();    
-  // Set chip to known config values to start
-  ina219SetCalibration_32V_2A();
+  // Set chip to large range config values to start
+  setCalibration_32V_2A();
 }
 
 /**************************************************************************/

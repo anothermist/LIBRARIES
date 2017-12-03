@@ -28,39 +28,37 @@ as well as Adafruit raw 1.8" TFT display
 
 // For the breakout, you can use any 2 or 3 pins
 // These pins will also work for the 1.8" TFT shield
-#define TFT_CS     10
-#define TFT_RST    9  // you can also connect this to the Arduino reset
+#define TFT_CS     PB10
+#define TFT_RST    PB9  // you can also connect this to the Arduino reset
                       // in which case, set this #define pin to -1!
-#define TFT_DC     8
+#define TFT_DC     PB12
 
 // Option 1 (recommended): must use the hardware SPI pins
 // (for UNO thats sclk = 13 and sid = 11) and pin 10 must be
 // an output. This is much faster - also required if you want
 // to use the microSD card (see the image drawing example)
-Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS,  TFT_DC, TFT_RST);
+//Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS,  TFT_DC, TFT_RST);
 
 // Option 2: use any pins but a little slower!
-#define TFT_SCLK 13   // set these to be whatever pins you like!
-#define TFT_MOSI 11   // set these to be whatever pins you like!
-//Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCLK, TFT_RST);
+#define TFT_SCLK PB13   // set these to be whatever pins you like!
+#define TFT_MOSI PB11   // set these to be whatever pins you like!
+Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCLK, TFT_RST);
 
 
 float p = 3.1415926;
 
 void setup(void) {
-  Serial.begin(115200);
+  Serial.begin(9600);
   Serial.print("Hello! ST7735 TFT Test");
 
   // Use this initializer if you're using a 1.8" TFT
   //tft.initR(INITR_BLACKTAB);   // initialize a ST7735S chip, black tab
 
   // Use this initializer (uncomment) if you're using a 1.44" TFT
-  //tft.initR(INITR_144GREENTAB);   // initialize a ST7735S chip, black tab
+  tft.initR(INITR_144GREENTAB);   // initialize a ST7735S chip, black tab
 
   // Use this initializer (uncomment) if you're using a 0.96" 180x60 TFT
   //tft.initR(INITR_MINI160x80);   // initialize a ST7735S chip, mini display
-
-    tft.initR(INITR_MINI128x128); 
 
   Serial.println("Initialized");
 

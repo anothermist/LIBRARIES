@@ -456,6 +456,109 @@ void write_8(uint8_t x)
 #define READ_8(dst)   { RD_STROBE; READ_DELAY; dst = read_8(); RD_IDLE; }
 #define READ_16(dst)  { uint8_t hi; READ_8(hi); READ_8(dst); dst |= (hi << 8); }
 
+#elif defined(ESP32)       //regular UNO shield on TTGO D1 R32 (ESP32)
+#define LCD_RD  2  //LED
+#define LCD_WR  4
+#define LCD_RS 15  //hard-wired to A2 (GPIO35) 
+#define LCD_CS 33  //hard-wired to A3 (GPIO34)
+#define LCD_RST 32 //hard-wired to A4 (GPIO36)
+
+#define LCD_D0 12
+#define LCD_D1 13
+#define LCD_D2 26
+#define LCD_D3 25
+#define LCD_D4 17
+#define LCD_D5 16
+#define LCD_D6 27
+#define LCD_D7 14
+
+#define RD_PORT GPIO.out
+#define RD_PIN  LCD_RD
+#define WR_PORT GPIO.out
+#define WR_PIN  LCD_WR
+#define CD_PORT GPIO.out
+#define CD_PIN  LCD_RS
+#define CS_PORT GPIO.out1.val
+#define CS_PIN  LCD_CS
+#define RESET_PORT GPIO.out1.val
+#define RESET_PIN  LCD_RST
+
+static inline uint32_t map_8(uint32_t d)
+{
+    return (
+               0
+               | ((d & (1 << 0)) << (LCD_D0 - 0))
+               | ((d & (1 << 1)) << (LCD_D1 - 1))
+               | ((d & (1 << 2)) << (LCD_D2 - 2))
+               | ((d & (1 << 3)) << (LCD_D3 - 3))
+               | ((d & (1 << 4)) << (LCD_D4 - 4))
+               | ((d & (1 << 5)) << (LCD_D5 - 5))
+               | ((d & (1 << 6)) << (LCD_D6 - 6))
+               | ((d & (1 << 7)) << (LCD_D7 - 7))
+           );
+}
+
+static inline uint8_t map_32(uint32_t d)
+{
+    return (
+               0
+               | ((d & (1 << LCD_D0)) >> (LCD_D0 - 0))
+               | ((d & (1 << LCD_D1)) >> (LCD_D1 - 1))
+               | ((d & (1 << LCD_D2)) >> (LCD_D2 - 2))
+               | ((d & (1 << LCD_D3)) >> (LCD_D3 - 3))
+               | ((d & (1 << LCD_D4)) >> (LCD_D4 - 4))
+               | ((d & (1 << LCD_D5)) >> (LCD_D5 - 5))
+               | ((d & (1 << LCD_D6)) >> (LCD_D6 - 6))
+               | ((d & (1 << LCD_D7)) >> (LCD_D7 - 7))
+           );
+}
+
+static inline void write_8(uint16_t data)
+{
+    GPIO.out_w1tc = map_8(0xFF);  //could define once as DMASK
+    GPIO.out_w1ts = map_8(data);
+}
+
+static inline uint8_t read_8()
+{
+    return map_32(GPIO.in);
+}
+static void setWriteDir()
+{
+    pinMode(LCD_D0, OUTPUT);
+    pinMode(LCD_D1, OUTPUT);
+    pinMode(LCD_D2, OUTPUT);
+    pinMode(LCD_D3, OUTPUT);
+    pinMode(LCD_D4, OUTPUT);
+    pinMode(LCD_D5, OUTPUT);
+    pinMode(LCD_D6, OUTPUT);
+    pinMode(LCD_D7, OUTPUT);
+}
+
+static void setReadDir()
+{
+    pinMode(LCD_D0, INPUT);
+    pinMode(LCD_D1, INPUT);
+    pinMode(LCD_D2, INPUT);
+    pinMode(LCD_D3, INPUT);
+    pinMode(LCD_D4, INPUT);
+    pinMode(LCD_D5, INPUT);
+    pinMode(LCD_D6, INPUT);
+    pinMode(LCD_D7, INPUT);
+}
+
+#define WRITE_DELAY { }
+#define READ_DELAY  { }
+
+#define write8(x)     { write_8(x); WRITE_DELAY; WR_STROBE; }
+#define write16(x)    { uint8_t h = (x)>>8, l = x; write8(h); write8(l); }
+#define READ_8(dst)   { RD_STROBE; READ_DELAY; dst = read_8(); RD_IDLE; }
+#define READ_16(dst)  { uint8_t hi; READ_8(hi); READ_8(dst); dst |= (hi << 8); }
+
+#define PIN_LOW(p, b)        (digitalWrite(b, LOW))
+#define PIN_HIGH(p, b)       (digitalWrite(b, HIGH))
+#define PIN_OUTPUT(p, b)     (pinMode(b, OUTPUT))
+
 #else
 #error MCU unsupported
 #endif                          // regular UNO shields on Arduino boards

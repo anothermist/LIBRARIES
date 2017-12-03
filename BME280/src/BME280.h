@@ -1,5 +1,7 @@
 /*
+
 BME280.h
+
 This code records data from the BME280 sensor and provides an API.
 This file is part of the Arduino BME280 library.
 Copyright (C) 2016  Tyler Glenn
@@ -18,102 +20,317 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Written: Dec 30 2015.
-Last Updated: Jan 1 2016. - Happy New year!
+Last Updated: Oct 07 2017.
+
 This code is licensed under the GNU LGPL and is open for ditrbution
 and copying in accordance with the license.
 This header must be included in any derived code or copies of the code.
 
-Based on the data sheet provided by Bosch for the Bme280 environmental sensor.
  */
+
 #ifndef TG_BME_280_H
 #define TG_BME_280_H
 
-/* ==== Includes ==== */
 #include "Arduino.h"
-/* ==== END Includes ==== */
-
-/* ==== Defines ==== */
-#define CTRL_HUM_ADDR  0xF2
-#define CTRL_MEAS_ADDR 0xF4
-#define CONFIG_ADDR    0xF5
-#define PRESS_ADDR     0xF7
-#define TEMP_ADDR      0xFA
-#define HUM_ADDR       0xFD
-#define TEMP_DIG_ADDR  0x88
-#define PRESS_DIG_ADDR 0x8E
-#define HUM_DIG_ADDR1  0xA1
-#define HUM_DIG_ADDR2  0xE1
-#define ID_ADDR        0xD0
-#define BME_ID         0x60
-#define BMP_ID         0x58
-/* ==== END Defines ==== */
 
 
-class BME280{
-protected:
-  uint8_t tempOversamplingRate, humidityOversamplingRate, pressureOversamplingRate; // B000 = Skipped, B001 = x1, B010 = x2, B011 = x4, B100 = x8, B101/other = x16
-  uint8_t mode;                               // Sleep = B00, Normal = B01 and B10, Forced = B11
-  uint8_t standbyTime;                        // B000 = 0.5ms, B001 = 62.5ms, B010 = 125ms, B011 = 250ms, B100 = 250ms, B101 = 1000ms, B110 = 10ms, B111 = 20ms
-  uint8_t filter;                             // B000 = off, B001 = 2, B010 = 4, B011 = 8, B100/other = 16
-  uint8_t controlHumidity;                    // ctrl_hum register. (ctrl_hum[2:0] = Humidity oversampling rate.)
-  uint8_t controlMeasure;                     // ctrl_meas register. (ctrl_meas[7:5] = temperature oversampling rate, ctrl_meas[4:2] = pressure oversampling rate, ctrl_meas[1:0] = mode.)
-  uint8_t config;                             // config register. (config[7:5] = standby time, config[4:2] = filter, ctrl_meas[0] = spi enable.)
-  uint8_t dig[32];
-  bool spiEnable;
-
-
-  /* ==== Write values to BME280 registers. ==== */
-  virtual void WriteRegister(uint8_t addr, uint8_t data)=0;
-
-  /* ==== Read the the trim data from the BME280, return true if successful. ==== */
-  virtual bool ReadTrim()=0;
-
-  /* ==== Read the raw data from the BME280 into an array and return true if successful. ==== */
-  virtual bool ReadData(int32_t data[8])=0;
-
-  /* ==== Calculate the temperature from the BME280 raw data and BME280 trim, return a float. ==== */
-  float CalculateTemperature(int32_t raw, int32_t& t_fine, bool celsius = true);
-
-  /* ==== Calculate the humidity from the BME280 raw data and BME280 trim, return a float. ==== */
-  float CalculateHumidity(int32_t raw, int32_t t_fine);
-
-  /* ==== Calculate the pressure from the BME280 raw data and BME280 trim, return a float. ==== */
-  float CalculatePressure(int32_t raw, int32_t t_fine, uint8_t unit = 0x0);   // unit: B000/other = Pa, B001 = hPa, B010 = inHg, B011 = atm, B100 = bar, B101 = torr, B110 = N/m^2, B111 = psi
-
+//////////////////////////////////////////////////////////////////
+/// BME280 - Driver class for Bosch Bme280 sensor
+///
+/// Based on the data sheet provided by Bosch for
+/// the Bme280 environmental sensor.
+///
+class BME280
+{
 public:
-  /* ==== Constructor used to create the class. All parameters have default values. ==== */
-  BME280(uint8_t tosr = 0x1, uint8_t hosr = 0x1, uint8_t posr = 0x1, uint8_t mode = 0x1,
-    uint8_t st = 0x5, uint8_t filter = 0x0, bool spiEnable = false);  // Oversampling = 1, mode = forced, standby time = 1000ms, filter = none.
 
-  /* ==== Method used at start up to initialize the class. ==== */
-  virtual bool begin()=0;
+/*****************************************************************/
+/* ENUMERATIONS                                                  */
+/*****************************************************************/
 
-  void setMode(uint8_t mode);
+enum TempUnit {
+   TempUnit_Celsius,
+   TempUnit_Fahrenheit
+};
 
-  /* ==== Read the temperature from the BME280 and return a float. ==== */
-  float temp(bool celsius = true);
+enum PresUnit {
+   PresUnit_Pa,
+   PresUnit_hPa,
+   PresUnit_inHg,
+   PresUnit_atm,
+   PresUnit_bar,
+   PresUnit_torr,
+   PresUnit_psi
+};
 
-  /* ==== Read the pressure from the BME280 and return a float with the specified unit.  ==== */
-  float pres(uint8_t unit = 0x0);   // unit: B000 = Pa, B001 = hPa, B010 = Hg, B011 = atm, B100 = bar, B101 = torr, B110 = N/m^2, B111 = psi
+enum OSR {
+   OSR_X1 =  1,
+   OSR_X2 =  2,
+   OSR_X4 =  3,
+   OSR_X8 =  4,
+   OSR_X16 = 5
+};
 
-  /* ==== Read the humidity from the BME280 and return a percentage as a float. ==== */
-  float hum();
+enum Mode {
+   Mode_Sleep  = 0,
+   Mode_Forced = 1,
+   Mode_Normal = 3
+};
 
-  /* ==== Read the data from the BME280 with the specified units. ==== */
-  void  read(float& pressure, float& temp, float& humidity, bool metric = true, uint8_t p_unit = 0x0);
+enum StandbyTime {
+   StandbyTime_500us   = 0,
+   StandbyTime_62500us = 1,
+   StandbyTime_125ms   = 2,
+   StandbyTime_250ms   = 3,
+   StandbyTime_50ms    = 4,
+   StandbyTime_1000ms  = 5,
+   StandbyTime_10ms    = 6,
+   StandbyTime_20ms    = 7
+};
+
+enum Filter {
+   Filter_Off = 0,
+   Filter_2   = 1,
+   Filter_4   = 2,
+   Filter_8   = 3,
+   Filter_16  = 4
+};
+
+enum SpiEnable{
+   SpiEnable_False = 0,
+   SpiEnable_True = 1
+};
+
+enum ChipModel {
+    ChipModel_UNKNOWN = 0,
+    ChipModel_BMP280 = 0x58,
+    ChipModel_BME280 = 0x60
+};
+
+struct Settings {
+   Settings(
+      OSR _tosr       = OSR_X1,
+      OSR _hosr       = OSR_X1,
+      OSR _posr       = OSR_X1,
+      Mode _mode      = Mode_Forced,
+      StandbyTime _st = StandbyTime_1000ms,
+      Filter _filter  = Filter_Off,
+      SpiEnable _se   = SpiEnable_False
+     ): tempOSR(_tosr),
+        humOSR(_hosr),
+        presOSR(_posr),
+        mode(_mode),
+        standbyTime(_st),
+        filter(_filter),
+        spiEnable(_se) {}
+
+   OSR tempOSR;
+   OSR humOSR;
+   OSR presOSR;
+   Mode mode;
+   StandbyTime standbyTime;
+   Filter filter;
+   SpiEnable spiEnable;
+};
+
+/*****************************************************************/
+/* INIT FUNCTIONS                                                */
+/*****************************************************************/
+
+   /////////////////////////////////////////////////////////////////
+   /// Constructor used to create the class.
+   /// All parameters have default values.
+   BME280(
+      const Settings& settings);
+
+   /////////////////////////////////////////////////////////////////
+   /// Method used to initialize the class.
+   bool begin();
+
+/*****************************************************************/
+/* ENVIRONMENTAL FUNCTIONS                                       */
+/*****************************************************************/
+
+   //////////////////////////////////////////////////
+   /// Read the temperature from the BME280 and return a float.
+   float temp(
+      TempUnit unit = TempUnit_Celsius);
+
+   /////////////////////////////////////////////////////////////////
+   /// Read the pressure from the BME280 and return a float with the
+   /// specified unit.
+   float pres(
+      PresUnit unit = PresUnit_Pa);
+
+   /////////////////////////////////////////////////////////////////
+   /// Read the humidity from the BME280 and return a percentage
+   /// as a float.
+   float hum();
+
+   /////////////////////////////////////////////////////////////////
+   /// Read the data from the BME280 in the specified unit.
+   void   read(
+      float&    pressure,
+      float&    temperature,
+      float&    humidity,
+      TempUnit  tempUnit    = TempUnit_Celsius,
+      PresUnit  presUnit    = PresUnit_Pa);
 
 
-  /* ==== Read the data from the BME280 with the specified units and then calculate the altitude. ==== */
-  float alt(bool metric = true, float seaLevelPressure = 101325);
+/*****************************************************************/
+/* ACCESSOR FUNCTIONS                                            */
+/*****************************************************************/
 
-  /* ==== Calculate the altitude based on the pressure with the specified units. ==== */
-  float alt(float pressure, bool metric = true, float seaLevelPressure = 101325); // Pressure given in Pa.
+   /////////////////////////////////////////////////////////////////
+   void setSettings(
+      const Settings& settings);
 
-  /* ==== Read BME280 data and calculate the dew point with the specified units. ==== */
-  float dew(bool metric = true);
+   /////////////////////////////////////////////////////////////////
+   const Settings& getSettings() const;
 
-  /* ==== Calculate the dew point based on the temperature and humidity with the specified units. ==== */
-  float dew(float temp, float hum, bool metric = true);
+   ////////////////////////////////////////////////////////////////
+   /// Method used to return CHIP_ID.
+   uint8_t chipID();
+
+   ////////////////////////////////////////////////////////////////
+   /// Method used to return ChipModel.
+   ChipModel chipModel();
+
+protected:
+
+/*****************************************************************/
+/* CONSTRUCTOR INIT FUNCTIONS                                    */
+/*****************************************************************/
+
+   //////////////////////////////////////////////////////////////////
+   /// Write configuration to BME280, return true if successful.
+   virtual bool Initialize();
+
+
+/*****************************************************************/
+/* ACCESS FUNCTIONS                                              */
+/*****************************************************************/
+
+//uint8_t&  getMode();
+//uint8_t*  getDig();
+//uint8_t&  getControlHumidity();
+//uint8_t&  getControlMeasure();
+//uint8_t&  getConfig();
+
+
+private:
+
+/*****************************************************************/
+/* CONSTANTS                                                     */
+/*****************************************************************/
+
+   static const uint8_t CTRL_HUM_ADDR   = 0xF2;
+   static const uint8_t CTRL_MEAS_ADDR  = 0xF4;
+   static const uint8_t CONFIG_ADDR     = 0xF5;
+   static const uint8_t PRESS_ADDR      = 0xF7;
+   static const uint8_t TEMP_ADDR       = 0xFA;
+   static const uint8_t HUM_ADDR        = 0xFD;
+   static const uint8_t TEMP_DIG_ADDR   = 0x88;
+   static const uint8_t PRESS_DIG_ADDR  = 0x8E;
+   static const uint8_t HUM_DIG_ADDR1   = 0xA1;
+   static const uint8_t HUM_DIG_ADDR2   = 0xE1;
+   static const uint8_t ID_ADDR         = 0xD0;
+
+   static const uint8_t TEMP_DIG_LENGTH         = 6;
+   static const uint8_t PRESS_DIG_LENGTH        = 18;
+   static const uint8_t HUM_DIG_ADDR1_LENGTH    = 1;
+   static const uint8_t HUM_DIG_ADDR2_LENGTH    = 7;
+   static const uint8_t DIG_LENGTH              = 32;
+   static const uint8_t SENSOR_DATA_LENGTH      = 8;
+
+/*****************************************************************/
+/* VARIABLES                                                     */
+/*****************************************************************/
+   Settings m_settings;
+
+   uint8_t m_dig[32];
+   uint8_t m_chip_id;
+   ChipModel m_chip_model;
+
+
+   bool m_initialized;
+
+/*****************************************************************/
+/* ABSTRACT FUNCTIONS                                            */
+/*****************************************************************/
+
+   /////////////////////////////////////////////////////////////////
+   /// Write values to BME280 registers.
+   virtual bool WriteRegister(
+      uint8_t addr,
+      uint8_t data)=0;
+
+   /////////////////////////////////////////////////////////////////
+   /// Read values from BME280 registers.
+   virtual bool ReadRegister(
+      uint8_t addr,
+      uint8_t data[],
+      uint8_t length)=0;
+
+
+
+/*****************************************************************/
+/* WORKER FUNCTIONS                                              */
+/*****************************************************************/
+
+   /////////////////////////////////////////////////////////////////
+   /// Calculates registers based on settings.
+   void CalculateRegisters(
+      uint8_t& ctrlHum,
+      uint8_t& ctrlMeas,
+      uint8_t& config);
+
+   /////////////////////////////////////////////////////////////////
+   /// Write the settings to the chip.
+   bool WriteSettings();
+
+
+   /////////////////////////////////////////////////////////////////
+   /// Read the the chip id data from the BME280, return true if
+   /// successful and the id matches a known value.
+   bool ReadChipID();
+
+   /////////////////////////////////////////////////////////////////
+   /// Read the the trim data from the BME280, return true if
+   /// successful.
+   bool ReadTrim();
+
+   /////////////////////////////////////////////////////////////////
+   /// Read the raw data from the BME280 into an array and return
+   /// true if successful.
+   bool ReadData(
+      int32_t data[8]);
+
+   /////////////////////////////////////////////////////////////////
+   /// Calculate the temperature from the BME280 raw data and
+   /// BME280 trim, return a float.
+   float CalculateTemperature(
+      int32_t raw,
+      int32_t& t_fine,
+      TempUnit unit = TempUnit_Celsius);
+
+   /////////////////////////////////////////////////////////////////
+   /// Calculate the humidity from the BME280 raw data and BME280
+   /// trim, return a float.
+   float CalculateHumidity(
+      int32_t raw,
+      int32_t t_fine);
+
+   /////////////////////////////////////////////////////////////////
+   /// Calculate the pressure from the BME280 raw data and BME280
+   /// trim, return a float.
+   float CalculatePressure(
+      int32_t raw,
+      int32_t t_fine,
+      PresUnit unit = PresUnit_Pa);
+
+
 
 };
+
 #endif // TG_BME_280_H

@@ -1,5 +1,3 @@
-//  Updated write() function to print fonts via print class. 14/4/15
-
 #ifndef _ADAFRUIT_GFX_AS_H
 #define _ADAFRUIT_GFX_AS_H
 
@@ -20,12 +18,8 @@ class Adafruit_GFX_AS : public Print {
 
   Adafruit_GFX_AS(int16_t w, int16_t h); // Constructor
 
-  // These MUST be defined by the subclass:
-  virtual void
-    drawPixel(int16_t x, int16_t y, uint16_t color) = 0,
-    setAddrWindow(int16_t x0, int16_t y0, int16_t x1, int16_t y1),
-    writeBegin(void),
-    writeEnd(void);
+  // This MUST be defined by the subclass:
+  virtual void drawPixel(int16_t x, int16_t y, uint16_t color) = 0;
 
   // These MAY be overridden by the subclass to provide device-specific
   // optimized code.  Otherwise 'generic' versions are used.
@@ -36,11 +30,7 @@ class Adafruit_GFX_AS : public Print {
     drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color),
     fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color),
     fillScreen(uint16_t color),
-    drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color,
-      uint16_t bg, uint8_t size),
     invertDisplay(boolean i);
-  virtual int
-    drawChar(unsigned int c, int x, int y, int size);
 
   // These exist only with Adafruit_GFX_AS (no subclass overrides)
   void
@@ -60,16 +50,18 @@ class Adafruit_GFX_AS : public Print {
       int16_t radius, uint16_t color),
     drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap,
       int16_t w, int16_t h, uint16_t color),
+    drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color,
+      uint16_t bg, uint8_t size),
     setCursor(int16_t x, int16_t y),
-    setCursor(int16_t x, int16_t y, uint8_t font),
     setTextColor(uint16_t c),
     setTextColor(uint16_t c, uint16_t bg),
     setTextSize(uint8_t s),
-    setTextFont(uint8_t f),
     setTextWrap(boolean w),
     setRotation(uint8_t r);
 
+    int drawUnicode(unsigned int uniCode, int x, int y, int size);
     int drawNumber(long long_num,int poX, int poY, int size);
+    int drawChar(char c, int x, int y, int size);
     int drawString(char *string, int poX, int poY, int size);
     int drawCentreString(char *string, int dX, int poY, int size);
     int drawRightString(char *string, int dX, int poY, int size);
@@ -96,7 +88,6 @@ class Adafruit_GFX_AS : public Print {
   uint16_t
     textcolor, textbgcolor;
   uint8_t
-    textfont,
     textsize,
     rotation;
   boolean

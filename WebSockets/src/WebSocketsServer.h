@@ -113,7 +113,7 @@ protected:
 
         bool newClient(WEBSOCKETS_NETWORK_CLASS * TCPclient);
 
-        void messageReceived(WSclient_t * client, WSopcode_t opcode, uint8_t * payload, size_t length);
+        void messageReceived(WSclient_t * client, WSopcode_t opcode, uint8_t * payload, size_t length, bool fin);
 
         void clientDisconnect(WSclient_t * client);
         bool clientIsConnected(WSclient_t * client);
@@ -149,8 +149,7 @@ protected:
          * @param client WSclient_t *  ptr to the client struct
          */
         virtual void handleAuthorizationFailed(WSclient_t *client) {
-
-            client->tcp->write("HTTP/1.1 401 Unauthorized\r\n"
+        	 client->tcp->write("HTTP/1.1 401 Unauthorized\r\n"
                     "Server: arduino-WebSocket-Server\r\n"
                     "Content-Type: text/plain\r\n"
                     "Content-Length: 45\r\n"

@@ -67,6 +67,7 @@ size_t U8X8::write(uint8_t v)
 /*=============================================*/
 /* callbacks */
 
+#ifdef U8X8_USE_PINS
 extern "C" uint8_t u8x8_gpio_and_delay_arduino(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, U8X8_UNUSED void *arg_ptr)
 {
   uint8_t i;
@@ -156,6 +157,7 @@ extern "C" uint8_t u8x8_gpio_and_delay_arduino(u8x8_t *u8x8, uint8_t msg, uint8_
   }
   return 1;
 }
+#endif // U8X8_USE_PINS
 
 
 /*=============================================*/
@@ -337,6 +339,7 @@ extern "C" uint8_t u8x8_byte_arduino_4wire_sw_spi(u8x8_t *u8x8, uint8_t msg, uin
 
 /*=============================================*/
 
+#ifdef U8X8_USE_PINS
 
 extern "C" uint8_t u8x8_byte_arduino_hw_spi(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr)
 {
@@ -373,7 +376,28 @@ extern "C" uint8_t u8x8_byte_arduino_hw_spi(u8x8_t *u8x8, uint8_t msg, uint8_t a
       // removed, use SPI.begin() instead: digitalWrite(13, u8x8_GetSPIClockPhase(u8x8));
       
       /* setup hardware with SPI.begin() instead of previous digitalWrite() and pinMode() calls */
+
+
+      /* issue #377 */
+      /* issue #378: removed ESP8266 support, which is implemented differently */
+#if defined(ESP_PLATFORM) || defined(ARDUINO_ARCH_ESP32)
+      /* ESP32 has the following begin: SPI.begin(int8_t sck=SCK, int8_t miso=MISO, int8_t mosi=MOSI, int8_t ss=-1); */
+      /* not sure about ESP8266 */
+      if ( u8x8->pins[U8X8_PIN_I2C_CLOCK] != U8X8_PIN_NONE && u8x8->pins[U8X8_PIN_I2C_DATA] != U8X8_PIN_NONE )
+      {
+	/* SPI.begin(int8_t sck=SCK, int8_t miso=MISO, int8_t mosi=MOSI, int8_t ss=-1); */
+	/* actually MISO is not used, but what else could be used here??? */
+	SPI.begin(u8x8->pins[U8X8_PIN_I2C_CLOCK], MISO, u8x8->pins[U8X8_PIN_I2C_DATA]);
+      }
+      else
+      {
+	SPI.begin();
+      }
+#else
       SPI.begin();	
+#endif 
+
+      
 
       break;
       
@@ -433,7 +457,7 @@ extern "C" uint8_t u8x8_byte_arduino_hw_spi(u8x8_t *u8x8, uint8_t msg, uint8_t a
 
 
 /* issue #244 */
-extern "C" uint8_t u8x8_byte_arduino_2nd_hw_spi(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr)
+extern "C" uint8_t u8x8_byte_arduino_2nd_hw_spi(U8X8_UNUSED u8x8_t *u8x8, U8X8_UNUSED uint8_t msg, U8X8_UNUSED uint8_t arg_int, U8X8_UNUSED void *arg_ptr)
 {
 #ifdef U8X8_HAVE_2ND_HW_SPI
   uint8_t *data;
@@ -538,8 +562,8 @@ extern "C" uint8_t u8x8_byte_arduino_hw_i2c(U8X8_UNUSED u8x8_t *u8x8, U8X8_UNUSE
       Wire.write((uint8_t *)arg_ptr, (int)arg_int);
       break;
     case U8X8_MSG_BYTE_INIT:
-#ifdef ESP8266
-      /* for ESP8266, Wire.begin has two more arguments: clock and data */          
+#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266) || defined(ESP_PLATFORM) || defined(ARDUINO_ARCH_ESP32)
+      /* for ESP8266/ESP32, Wire.begin has two more arguments: clock and data */          
       if ( u8x8->pins[U8X8_PIN_I2C_CLOCK] != U8X8_PIN_NONE && u8x8->pins[U8X8_PIN_I2C_DATA] != U8X8_PIN_NONE )
       {
 	// second argument for the wire lib is the clock pin. In u8g2, the first argument of the  clock pin in the clock/data pair
@@ -609,6 +633,8 @@ extern "C" uint8_t u8x8_byte_arduino_2nd_hw_i2c(U8X8_UNUSED u8x8_t *u8x8, U8X8_U
 #endif
   return 1;
 }
+
+#endif // U8X8_USE_PINS
 
 /*=============================================*/
 
@@ -876,6 +902,7 @@ extern "C" uint8_t u8x8_byte_arduino_ks0108(u8x8_t *u8x8, uint8_t msg, uint8_t a
 
 
 
+#ifdef U8X8_USE_PINS
 
 /*
   use U8X8_PIN_NONE as value for "reset", if there is no reset line
@@ -1074,3 +1101,20 @@ void u8x8_SetPin_KS0108(u8x8_t *u8x8, uint8_t d0, uint8_t d1, uint8_t d2, uint8_
   u8x8_SetPin(u8x8, U8X8_PIN_CS2, cs2);
   u8x8_SetPin(u8x8, U8X8_PIN_RESET, reset);
 }
+
+void u8x8_SetPin_SED1520(u8x8_t *u8x8, uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7, uint8_t dc, uint8_t e1, uint8_t e2, uint8_t reset)
+{
+  u8x8_SetPin(u8x8, U8X8_PIN_D0, d0);
+  u8x8_SetPin(u8x8, U8X8_PIN_D1, d1);
+  u8x8_SetPin(u8x8, U8X8_PIN_D2, d2);
+  u8x8_SetPin(u8x8, U8X8_PIN_D3, d3);
+  u8x8_SetPin(u8x8, U8X8_PIN_D4, d4);
+  u8x8_SetPin(u8x8, U8X8_PIN_D5, d5);
+  u8x8_SetPin(u8x8, U8X8_PIN_D6, d6);
+  u8x8_SetPin(u8x8, U8X8_PIN_D7, d7);
+  u8x8_SetPin(u8x8, U8X8_PIN_E, e1);
+  u8x8_SetPin(u8x8, U8X8_PIN_CS, e2);
+  u8x8_SetPin(u8x8, U8X8_PIN_DC, dc);
+  u8x8_SetPin(u8x8, U8X8_PIN_RESET, reset);
+}
+#endif // U8X8_USE_PINS

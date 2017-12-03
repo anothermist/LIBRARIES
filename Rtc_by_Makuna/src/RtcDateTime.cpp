@@ -1,13 +1,6 @@
 
-#if defined(ESP8266)
-#include <pgmspace.h>
-#else
-#include <avr/pgmspace.h>
-#endif
-
-#include "RtcDateTime.h"
 #include <Arduino.h>
-
+#include "RtcDateTime.h"
 
 const uint8_t c_daysInMonth[] PROGMEM = { 31,28,31,30,31,30,31,31,30,31,30,31 };
 
@@ -20,7 +13,7 @@ RtcDateTime::RtcDateTime(uint32_t secondsFrom2000)
 uint8_t StringToUint8(const char* pString)
 {
     uint8_t value = 0;
-    
+
     // skip leading 0 and spaces
     while ('0' == *pString || *pString == ' ')
     {

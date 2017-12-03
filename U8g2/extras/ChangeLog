@@ -117,5 +117,30 @@ https://github.com/olikraus/u8g2 ChangeLog
   * Added more examples (issue 216)
   * Updated code for NHD C12864 (issues 219 and 241)
   * Improved speed for HW SPI with SSD13xx OLEDs (issue 215)
+2017-08-12	v2.16.9	  olikraus@gmail.com
+  * Fonts u8g2_font_unifont_t_korean1, u8g2_font_unifont_t_korean2 (issue 266)
+  * Added support for 64128N ST7565 based display (issue 292)
+  * Added extended fonts (_te, unicodes 32-701, issue 284)
+  * Added support for MAX7219 (issue 280)
+  * Performance optimization for SSD1322/25/27  (issue 302)
+  * Fixed setContrast for SSD1322 (issue 328)
+  * Support for 96x16 SSD1306 OLED (issue 295)
+  * Fixed OldStandard-Bold fonts (osb, issue 306)
+  * Support for SED1520/SBN1661 (issue 324)
+ 2017-09-10	v2.17.11   olikraus@gmail.com
+  * Additional _m_  and _h_ symbol fonts (issue 335)
+  * Added parallel interfaces for several UC16xx devices (issue 339)
+  * Support for IL3820, WaveShare 2.9" e-paper (issues 318 & 347)
+  * Improved debounce algorithm (issue 338)
+  * Power save mode for SSD1607 device (issue 352)
+ 2017-09-30	v2.18.13   olikraus@gmail.com
+  * Support for ST7567_JLX12864 (issue 365)
+  * Support for UC1611 (no "s") (issue 339)
+  * Fixed several issues related to the _F_ (full buffer) mode (issue 370)
+ 2017-10-13	v2.19.8   olikraus@gmail.com
+  * Support for UC1601 (issue 378)
+  * Support for ESP32 I2C pin remapping (issue 377)
+  * Support for ST75256 (SPI), JLX256128, JLX172104 (issue 163)
+  * Added uw-ttyp0 fonts (issue 349)
   
   

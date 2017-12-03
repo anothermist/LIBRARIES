@@ -15,7 +15,7 @@
 
 void setup()
 {
-  Serial.begin(9600); //You may alter the BAUD rate here as needed
+  Serial.begin(115200); //You may alter the BAUD rate here as needed
   while (!Serial); //wait until Serial is established - required on some Platforms
 
   //Runs only once per restart of the Arduino.
@@ -79,7 +79,7 @@ void dumpTIMER() {
 
 void dumpTimerPin() {
   Serial.print(F("IR Tx Pin: "));
-  Serial.println(TIMER_PWM_PIN);
+  Serial.println(SEND_PIN);
 }
 
 void dumpClock() {

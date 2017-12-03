@@ -1,0 +1,11 @@
+	component xlr8_float_add1 is
+		port (
+			clk    : in  std_logic                     := 'X';             -- clk
+			areset : in  std_logic                     := 'X';             -- reset
+			en     : in  std_logic_vector(0 downto 0)  := (others => 'X'); -- en
+			a      : in  std_logic_vector(31 downto 0) := (others => 'X'); -- a
+			b      : in  std_logic_vector(31 downto 0) := (others => 'X'); -- b
+			q      : out std_logic_vector(31 downto 0)                     -- q
+		);
+	end component xlr8_float_add1;
+

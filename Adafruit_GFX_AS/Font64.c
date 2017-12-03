@@ -342,7 +342,7 @@ PROGMEM const unsigned char chr_f64_70[192] =         // 4 bytes per row
         0x1E, 0x00, 0x00, 0x00, 0x1E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00     // row 46 - 48
 };
 
-PROGMEM const unsigned char* const chrtbl_f64[96] =        // character pointer table
+PROGMEM const unsigned char * const chrtbl_f64[96] =        // character pointer table
 {
         chr_f64_20, chr_f64_20, chr_f64_20, chr_f64_20, chr_f64_20, chr_f64_20, chr_f64_20, chr_f64_20, 
         chr_f64_20, chr_f64_20, chr_f64_20, chr_f64_20, chr_f64_20, chr_f64_2D, chr_f64_2E, chr_f64_20, 
