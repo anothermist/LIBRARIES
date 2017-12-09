@@ -7,8 +7,8 @@ It does this by keeping hands off almost everything, and only touching the minim
 
 The canonical source for information is the [FreeRTOS Web Site](http://www.freertos.org/ "FreeRTOS").
 Within this site, the [Getting Started](http://www.freertos.org/FreeRTOS-quick-start-guide.html "Quick Start Guide") page is very useful.
-It is worth having a view from a user, and [manicbug](https://maniacbug.wordpress.com/2012/01/31/freertos/) has some interesting examples.
-My other [AVRfreeRTOS Repository](https://sourceforge.net/projects/avrfreertos/) has plenty of examples,
+
+My other [AVRfreeRTOS Sourceforge Repository](https://sourceforge.net/projects/avrfreertos/) or [AVRfreeRTOS Github](https://github.com/feilipu/avrfreertos) has plenty of examples,
 ranging from [blink](https://sourceforge.net/projects/avrfreertos/files/MegaBlink/) through to a [synthesiser](https://sourceforge.net/projects/avrfreertos/files/GA_Synth/).
 
 ## General
@@ -31,13 +31,17 @@ Watchdog period options:
 							
 Note that Timer resolution is affected by integer math division and the time slice selected. Trying to measure 100ms, using a 60ms time slice for example, won't work.
 
-Stack for the loop() function has been set at 192 bytes. This can be configured by adjusting the configIDLE_STACK_SIZE parameter.
-It should not be less than the configMINIMAL_STACK_SIZE. If you have stack overflow issues, just increase it.
+Stack for the loop() function has been set at 192 bytes. This can be configured by adjusting the configMINIMAL_STACK_SIZE parameter. If you have stack overflow issues, just increase it.
 Users should prefer to allocate larger structures, arrays, or buffers using pvPortMalloc(), rather than defining them locally on the stack.
 
 Memory for the heap is allocated by the normal malloc() function, wrapped by pvPortMalloc().
 This option has been selected because it is automatically adjusted to use the capabilities of each device.
 Other heap allocation schemes are supported by FreeRTOS, and they can used with additional configuration.
+
+## Upgrading
+
+* [Upgrading to FreeRTOS-9](http://www.freertos.org/FreeRTOS-V9.html)
+* [Upgrading to FreeRTOS-10](http://www.freertos.org/FreeRTOS-V10.html)
 
 ## Errors
 
