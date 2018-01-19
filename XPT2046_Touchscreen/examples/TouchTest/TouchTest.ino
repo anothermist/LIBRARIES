@@ -13,22 +13,8 @@ XPT2046_Touchscreen ts(CS_PIN, TIRQ_PIN);  // Param 2 - Touch IRQ Pin - interrup
 void setup() {
   Serial.begin(38400);
   ts.begin();
+  ts.setRotation(1);
   while (!Serial && (millis() <= 1000));
-}
-
-void loopB() {
-  TS_Point p = ts.getPoint();
-  Serial.print("Pressure = ");
-  Serial.print(p.z);
-  if (ts.touched()) {
-    Serial.print(", x = ");
-    Serial.print(p.x);
-    Serial.print(", y = ");
-    Serial.print(p.y);
-  }
-  Serial.println();
-  //  delay(100);
-  delay(30);
 }
 
 void loop() {

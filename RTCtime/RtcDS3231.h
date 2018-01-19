@@ -528,14 +528,10 @@ public:
         _wire.write(DS3231_REG_TEMP);
         _wire.endTransmission();
 
+        // Read scaled 16-bit 2's complement integer and return degC float	    
         _wire.requestFrom(DS3231_ADDRESS, DS3231_REG_TEMP_SIZE);
-        float degrees = (float) _wire.read();
-        // fraction is just the upper bits
-        // representing 1/4 of a degree
-        uint8_t fract = (_wire.read() >> 6) * 25;
-
-        degrees += (float)fract / ((degrees < 0) ? -100.0f : 100.0f) ;
-        return degrees;
+        uint8_t mstemp = _wire.read();
+        return (int16_t)((mstemp << 8) | (uint8_t)_wire.read()) / 256.0f;
     }
 
 

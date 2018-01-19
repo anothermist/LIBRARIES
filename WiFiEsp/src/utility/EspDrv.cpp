@@ -143,7 +143,7 @@ void EspDrv::reset()
 
 
 
-bool EspDrv::wifiConnect(char* ssid, const char *passphrase)
+bool EspDrv::wifiConnect(const char* ssid, const char* passphrase)
 {
 	LOGDEBUG(F("> wifiConnect"));
 
@@ -170,7 +170,7 @@ bool EspDrv::wifiConnect(char* ssid, const char *passphrase)
 }
 
 
-bool EspDrv::wifiStartAP(char* ssid, const char* pwd, uint8_t channel, uint8_t enc, uint8_t espMode)
+bool EspDrv::wifiStartAP(const char* ssid, const char* pwd, uint8_t channel, uint8_t enc, uint8_t espMode)
 {
 	LOGDEBUG(F("> wifiStartAP"));
 
@@ -230,7 +230,7 @@ void EspDrv::config(IPAddress ip)
 	delay(500);
 	
 	char buf[16];
-	sprintf(buf, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+	sprintf_P(buf, PSTR("%d.%d.%d.%d"), ip[0], ip[1], ip[2], ip[3]);
 
 	int ret = sendCmd(F("AT+CIPSTA_CUR=\"%s\""), 2000, buf);
 	delay(500);
@@ -254,7 +254,7 @@ void EspDrv::configAP(IPAddress ip)
 	delay(500);
 	
 	char buf[16];
-	sprintf(buf, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+	sprintf_P(buf, PSTR("%d.%d.%d.%d"), ip[0], ip[1], ip[2], ip[3]);
 
 	int ret = sendCmd(F("AT+CIPAP_CUR=\"%s\""), 2000, buf);
 	delay(500);
@@ -545,7 +545,7 @@ char* EspDrv::getSSIDNetoworks(uint8_t networkItem)
 uint8_t EspDrv::getEncTypeNetowrks(uint8_t networkItem)
 {
 	if (networkItem >= WL_NETWORKS_LIST_MAXNUM)
-		return NULL;
+		return 0;
 
     return _networkEncr[networkItem];
 }
@@ -553,7 +553,7 @@ uint8_t EspDrv::getEncTypeNetowrks(uint8_t networkItem)
 int32_t EspDrv::getRSSINetoworks(uint8_t networkItem)
 {
 	if (networkItem >= WL_NETWORKS_LIST_MAXNUM)
-		return NULL;
+		return 0;
 
     return _networkRssi[networkItem];
 }

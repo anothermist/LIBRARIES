@@ -19,6 +19,7 @@ void ackTimeout() {
 		ser0->stop();
 		return;
 	}
+	ser0->startAckTimer();
 }
 
 ISR(TIMER1_COMPA_vect) {
@@ -26,14 +27,7 @@ ISR(TIMER1_COMPA_vect) {
 }
 
 ArduinoSerialToTCPBridgeClient::ArduinoSerialToTCPBridgeClient() {
-	ackOutstanding = false;
-	expectedRxSeqFlag = false;
-	pubSequence = false;
-	tx_retries = 0;
-	readBufpH = 0;
-	readBufpT = 0;
-	readBufisFull = false;
-	state = STATE_DISCONNECTED;
+	reset();
 	ser0 = this;
 	NeoSerial.attachInterrupt(rxISR0);
 	NeoSerial.begin(115200);
@@ -43,13 +37,13 @@ ArduinoSerialToTCPBridgeClient::ArduinoSerialToTCPBridgeClient() {
 /*
 	http://forum.arduino.cc/index.php?topic=315271.msg2183707#msg2183707
 
-	SUCCESS				1
-	FAILED				0
-	TIMED_OUT			-1
-	INVALID_SERVER		-2
-	TRUNCATED			-3
-	INVALID_RESPONSE	-4
-	DOMAIN_NOT_FOUND	-5
+	SUCCESS              1
+	FAILED               0
+	TIMED_OUT           -1
+	INVALID_SERVER      -2
+	TRUNCATED           -3
+	INVALID_RESPONSE    -4
+	DOMAIN_NOT_FOUND    -5
 */
 int ArduinoSerialToTCPBridgeClient::connect(IPAddress ip, uint16_t port) {
 	uint8_t destination[6] = {
@@ -114,63 +108,77 @@ size_t ArduinoSerialToTCPBridgeClient::write(uint8_t b) {
 	return write(&b, 1);
 }
 
-// TODO: Buffer bytes to send. May be too much for the Uno.
 size_t ArduinoSerialToTCPBridgeClient::write(const uint8_t *buf, size_t size) {
-	if (size > 250)
-		return 0;
+	size_t written = 0;
+
+	while (written < size) {
+		size_t left = size - written;
+		uint8_t toWrite = (left > 250) ? 250 : left;
+
+		while(ackOutstanding && (state == STATE_CONNECTED));
+		if (state != STATE_CONNECTED)
+			return 0;
+
+		uint8_t cmd = PROTOCOL_PUBLISH;
+		if (pubSequence)
+			cmd |= 0x80;
+
+		if (!writePacket(cmd, buf + written, toWrite))
+			return 0;
+
+		lastTx_cmd = cmd;
+		lastTx_buf = (uint8_t*) (buf + written);
+		lastTx_size = toWrite;
+
+		ackOutstanding = true;
+		startAckTimer();
+		written += toWrite;
+	}
 
 	while(ackOutstanding && (state == STATE_CONNECTED));
 	if (state != STATE_CONNECTED)
 		return 0;
 
-	uint8_t cmd = PROTOCOL_PUBLISH;
-	if (pubSequence) {
-		cmd |= 0x80;
-	}
-
-	lastTx_cmd = cmd;
-	lastTx_buf = (uint8_t*) buf;
-	lastTx_size = size;
-
-	if (!writePacket(lastTx_cmd, lastTx_buf, lastTx_size)) {
-		return 0;
-	}
-
-	ackOutstanding = true;
-	startAckTimer();
-
 	return size;
 }
 
 int ArduinoSerialToTCPBridgeClient::available() {
-	if (readBufisFull) {
+	if (rxBufisFull)
 		return 256;
-	}
-	if (readBufpT >= readBufpH) {
-		return (int) (readBufpT - readBufpH);
+
+	if (rxBufpT >= rxBufpH) {
+		return (int) (rxBufpT - rxBufpH);
 	} else {
-		return 256 - (int) (readBufpH - readBufpT);
+		return 256 - (int) (rxBufpH - rxBufpT);
 	}
 }
 
 int ArduinoSerialToTCPBridgeClient::read() {
-	if (!available()) {
+	if (available() == 0)
 		return -1;
-	}
 
-	uint8_t ch = readBuf[readBufpH++];
-	readBufisFull = false;
+	uint8_t ch = rxBuf[rxBufpH++];
+	rxBufisFull = false;
 	return ch;
 }
 
 int ArduinoSerialToTCPBridgeClient::read(uint8_t *buf, size_t size) {
-	if (!available()) {
+	int have = available();
+	if (have == 0)
 		return -1;
-	}
+
+	int toRead = (size > have) ? have : size;
+
+	for (size_t i = 0; i < toRead; i++)
+		buf[i] = rxBuf[rxBufpH++];
+
+	rxBufisFull = false;
+	// should we return rather when number of bytes requested is read?
+	return toRead;
 }
 
 int ArduinoSerialToTCPBridgeClient::peek() {
-	return readBuf[readBufpH];
+	return rxBuf[rxBufpH];
 }
 
 void ArduinoSerialToTCPBridgeClient::flush() {
@@ -178,9 +186,9 @@ void ArduinoSerialToTCPBridgeClient::flush() {
 }
 
 void ArduinoSerialToTCPBridgeClient::stop() {
-	stopAckTimer();
 	writePacket(PROTOCOL_DISCONNECT, NULL, 0);
 	flush();
+	reset();
 	//NeoSerial.end();
 }
 
@@ -192,93 +200,142 @@ ArduinoSerialToTCPBridgeClient::operator bool() {
 	return 1;
 }
 
+void ArduinoSerialToTCPBridgeClient::reset() {
+	stopAckTimer();
+	state = STATE_DISCONNECTED;
+	ackOutstanding = false;
+	expectedRxSeqFlag = false;
+	pubSequence = false;
+	tx_retries = 0;
+	rxBufpH = 0;
+	rxBufpT = 0;
+	rxBufisFull = false;
+}
+
 boolean ArduinoSerialToTCPBridgeClient::writePacket(uint8_t command, uint8_t* payload, uint8_t pLength) {
-	workBuffer[0] = pLength + 5;
-	workBuffer[1] = command;
+	if (pLength > 250)
+		return false;
+
+	CRC32 crc;
+	uint8_t h_length = pLength + 5;
+
+	while(NeoSerial.availableForWrite() < 2);
+	NeoSerial.write(h_length);
+	crc.update(h_length);
+	NeoSerial.write(command);
+	crc.update(command);
+
 	if (payload != NULL) {
-		for (uint8_t i = 2; i < pLength + 2; i++) {
-			workBuffer[i] = payload[i - 2];
+		uint8_t written = 0;
+
+		while(written < pLength) {
+			int space = NeoSerial.availableForWrite();
+
+			if (space > 0) {
+				uint8_t left = pLength - written;
+				uint8_t toWrite = (left > space) ? space : left;
+
+				for (uint8_t i = written; i < (written + toWrite); i++) {
+					NeoSerial.write(payload[i]);
+					crc.update(payload[i]);
+				}
+				written += toWrite;
+			}
 		}
 	}
 
-	uint32_t crcCode = CRC32::checksum(workBuffer, pLength + 2);
-	workBuffer[pLength + 2] = crcCode & 0x000000FF;
-	workBuffer[pLength + 3] = (crcCode & 0x0000FF00) >> 8;
-	workBuffer[pLength + 4] = (crcCode & 0x00FF0000) >> 16;
-	workBuffer[pLength + 5] = (crcCode & 0xFF000000) >> 24;
+	uint32_t checksum = crc.finalize();
 
-	if ((int) (pLength) + 6 > NeoSerial.availableForWrite()) {
-		return false;
-	}
-
-	for (int i = 0; i < pLength + 6; i++) {
-		NeoSerial.write(workBuffer[i]);
-	}
+	while(NeoSerial.availableForWrite() < 4);
+	NeoSerial.write(checksum);
+	NeoSerial.write(checksum >> 8);
+	NeoSerial.write(checksum >> 16);
+	NeoSerial.write(checksum >> 24);
 
 	return true;
 }
 
 void ArduinoSerialToTCPBridgeClient::rxCallback(uint8_t c) {
-	static uint16_t packetCount = 0;
+	static uint16_t byteCount = 0;
 	static uint8_t rxState = RX_PACKET_IDLE;
 
-	rxBuffer[packetCount++] = c;
+	static uint8_t newBufPtr;
+	static uint8_t p_length;
+	static uint8_t p_cmd;
+	static uint32_t p_crc;
+	static CRC32 crc;
+
+	byteCount++;
 
 	switch (rxState) {
 
 	case RX_PACKET_IDLE:
+		p_length = c;
+		crc.reset();
+		crc.update(c);
 		rxState = RX_PACKET_GOTLENGTH;
 		break;
 
 	case RX_PACKET_GOTLENGTH:
-		rxState = RX_PACKET_GOTCOMMAND;
+		p_cmd = c;
+		p_crc = 0;
+		crc.update(c);
+		if (p_length > 5) {
+			newBufPtr = rxBufpT;
+			rxState = RX_PACKET_GOTCOMMAND;
+		} else {
+			rxState = RX_PACKET_GOTPAYLOAD;
+		}
 		break;
 
 	case RX_PACKET_GOTCOMMAND:
-		uint8_t packetLength = rxBuffer[0];
+		if (!rxBufisFull)
+			rxBuf[newBufPtr++] = c;
+		rxBufisFull = (rxBufpH == newBufPtr);
+		crc.update(c);
+		if (byteCount == (p_length - 3))
+			rxState = RX_PACKET_GOTPAYLOAD;
+		break;
 
-		if (packetCount == (uint16_t)packetLength + 1) {
-			packetCount = 0;
+	case RX_PACKET_GOTPAYLOAD:
+		// Integrity checking.
+		p_crc |= (uint32_t)c << (8 * (byteCount - p_length + 2));
+
+		if (byteCount == (uint16_t)p_length + 1) {
+			uint32_t crcCode = crc.finalize();
+			byteCount = 0;
 			rxState = RX_PACKET_IDLE;
 
-			// Integrity checking.
-			uint32_t crcRx = (uint32_t) rxBuffer[packetLength - 3] | ((uint32_t) rxBuffer[packetLength - 2] << 8)
-				| ((uint32_t) rxBuffer[packetLength - 1] << 16) | ((uint32_t) rxBuffer[packetLength] << 24);
-			uint32_t crcCode = CRC32::checksum(rxBuffer, packetLength - 3);
-
 			// Received packet valid.
-			if (crcRx == crcCode) {
-				boolean rxSeqFlag = (rxBuffer[1] & 0x80) > 0;
+			if (p_crc == crcCode) {
+				boolean rxSeqFlag = (p_cmd & 0x80) > 0;
 
-				switch (rxBuffer[1] & 0x7F) {
+				switch (p_cmd & 0x7F) {
 				// Connection established with destination.
 				case PROTOCOL_CONNACK:
-					if (rxBuffer[0] == 5) {
+					if (p_length == 5)
 						state = STATE_CONNECTED;
-					}
+					break;
+				// Upstream tcp connection closed.
+				case PROTOCOL_DISCONNECT:
+					if (p_length == 5 && (state == STATE_CONNECTED))
+						reset();
 					break;
 				// Incoming data.
 				case PROTOCOL_PUBLISH:
-					writePacket(PROTOCOL_ACK | (rxBuffer[1] & 0x80), NULL, 0);
+					writePacket(PROTOCOL_ACK | (p_cmd & 0x80), NULL, 0);
 					if (rxSeqFlag == expectedRxSeqFlag) {
 						expectedRxSeqFlag = !expectedRxSeqFlag;
-						if (rxBuffer[0] > 5) {
-							for (uint8_t i = 0; i < rxBuffer[0] - 5; i++) {
-								readBuf[readBufpT++] = rxBuffer[2 + i];
-							}
-							readBufisFull = (readBufpH == readBufpT);
-						}
+						rxBufpT = newBufPtr;
 					}
 					break;
-				// Protocol Acknowledge
+				// Protocol Acknowledge.
 				case PROTOCOL_ACK:
-					if (ackOutstanding) {
-						if (rxSeqFlag == pubSequence) {
-							stopAckTimer();
-							pubSequence = !pubSequence;
-							tx_retries = 0;
-							ackOutstanding = false;
-						}
+					if (ackOutstanding && (rxSeqFlag == pubSequence)) {
+						stopAckTimer();
+						pubSequence = !pubSequence;
+						tx_retries = 0;
+						ackOutstanding = false;
 					}
 					break;
 				}

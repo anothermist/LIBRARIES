@@ -23,7 +23,7 @@ SCK (Serial Clock)  ->  A5 on Uno/Pro-Mini, 21 on Mega2560/Due, 3 Leonardo/Pro-M
 #include <BME280I2C.h>
 #include <Wire.h>
 
-#define SERIAL_BAUD 115200
+#define SERIAL_BAUD 9600
 
 BME280I2C bme;    // Default : forced mode, standby time = 1000 ms
                   // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,

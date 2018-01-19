@@ -27,17 +27,6 @@
 #define MSEC_THRESHOLD  3
 #define SPI_SETTING     SPISettings(2000000, MSBFIRST, SPI_MODE0)
 
-XPT2046_Touchscreen::XPT2046_Touchscreen(uint8_t cs, uint8_t tirq)
-{
-	csPin = cs;
-	tirqPin = tirq;
-	msraw = 0x80000000;
-	xraw = 0;
-	yraw = 0;
-	zraw = 0;
-	isrWake = true;
-}
-
 static XPT2046_Touchscreen 	*isrPinptr;
 void isrPin(void);
 
@@ -48,7 +37,7 @@ bool XPT2046_Touchscreen::begin()
 	digitalWrite(csPin, HIGH);
 	if (255 != tirqPin) {
 		pinMode( tirqPin, INPUT );
-		attachInterrupt( tirqPin, isrPin, FALLING );
+		attachInterrupt(digitalPinToInterrupt(tirqPin), isrPin, FALLING);
 		isrPinptr = this;
 	}
 	return true;
@@ -64,6 +53,11 @@ TS_Point XPT2046_Touchscreen::getPoint()
 {
 	update();
 	return TS_Point(xraw, yraw, zraw);
+}
+
+bool XPT2046_Touchscreen::tirqTouched()
+{
+	return (isrWake);
 }
 
 bool XPT2046_Touchscreen::touched()
@@ -152,8 +146,23 @@ void XPT2046_Touchscreen::update()
 	//Serial.println();
 	if (z >= Z_THRESHOLD) {
 		msraw = now;	// good read completed, set wait
-		xraw = x;
-		yraw = y;
+		switch (rotation) {
+		  case 0:
+			xraw = 4095 - y;
+			yraw = x;
+			break;
+		  case 1:
+			xraw = x;
+			yraw = y;
+			break;
+		  case 2:
+			xraw = y;
+			yraw = 4095 - x;
+			break;
+		  default: // 3
+			xraw = 4095 - x;
+			yraw = 4095 - y;
+		}
 	}
 }
 

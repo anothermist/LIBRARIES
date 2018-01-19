@@ -9,7 +9,7 @@
  * @copyright Naguissa
  * @author Naguissa
  * @email naguissa.com@gmail.com
- * @version 1.0
+ * @version 3.2.0
  * @created 2015-05-07
  */
 #ifndef URTCLIB
@@ -24,56 +24,60 @@
 	#define URTCLIB_ADDRESS 0x68
 	#define URTCLIB_EE_ADDRESS 0x57
 
-	//Comment to disable RTC-setting function
-	#define URTCLIB_SET
-
-	//Comment to disable EEPROM functionality
-	#define URTCLIB_EEPROM
-
 	// Convert normal decimal numbers to binary coded decimal
 	#define uRTCLIB_decToBcd(val) ((uint8_t) ((val / 10 * 16) + (val % 10)))
-	//#define RTCLIB_decToBcd(val) ((uint8_t) (val + 6 * (val / 10)))
 
 	// Convert binary coded decimal to normal decimal numbers
-	//#define RTCLIB_bcdToDec(val) ((uint8_t) (val - 6 * (val >> 4)))
 	#define uRTCLIB_bcdToDec(val) ((uint8_t) ((val / 16 * 10) + (val % 16)))
 
-
-	#ifdef _VARIANT_ARDUINO_STM32_
-		#define URTCLIB_INIT_WIRE() if (_do_init) { _do_init = false; Wire.begin(); }
+	// ESP8266 yield function
+	#if ARDUINO_ARCH_ESP8266
+		#define uRTCLIB_YIELD yield();
+	#else
+		#define uRTCLIB_YIELD
 	#endif
-
+	
+	// Wire delay
+	#define uRTCLIB_WIRE_DELAY 5
+	
+	
 
 	class uRTCLib {
 		public:
+			// Constructors
 			uRTCLib();
+			uRTCLib(const int);
+			uRTCLib(const int, const int);
+			uRTCLib(bool);
+			uRTCLib(bool, const int);
+			uRTCLib(bool, const int, const int);
+			// RTC functions
+			void refresh();
 			uint8_t second();
 			uint8_t minute();
 			uint8_t hour();
 			uint8_t day();
 			uint8_t month();
 			uint8_t year();
-			uint8_t seconds();
 			uint8_t dayOfWeek();
-			void refresh();
-			void set_rtc_address(int);
-
-			#ifdef URTCLIB_SET
-				void set(uint8_t second, uint8_t minute, uint8_t hour, uint8_t dayOfWeek, uint8_t dayOfMonth, uint8_t month, uint8_t year);
-			#endif
-
-			#ifdef URTCLIB_EEPROM
-				void set_ee_address(int);
-				unsigned char eeprom_read(const unsigned int address);
-				void eeprom_write(const unsigned int address, const unsigned char data);
-			#endif
-
+			void set_rtc_address(const int);
+			void set(const uint8_t, const uint8_t, const uint8_t, const uint8_t, const uint8_t, const uint8_t, const uint8_t);
+			// EEPROM
+			void set_ee_address(const uint8_t);
+			// EEPROM read functions
+			void eeprom_read(const unsigned int, byte *, const uint8_t);
+			template <typename TR> void eeprom_read(const unsigned int, TR *);
+			byte eeprom_read(const unsigned int);
+			// EEPROM write functions
+			bool eeprom_write(const unsigned int, void *, const uint8_t);
+			bool eeprom_write(const unsigned int, char);
+			bool eeprom_write(const unsigned int, unsigned char);
+ 			template <typename TW> bool eeprom_write(const unsigned int, const TW);
 		private:
+			// Adresses
 			int _rtc_address = URTCLIB_ADDRESS;
-			#ifdef URTCLIB_EEPROM
-				int _ee_address = URTCLIB_EE_ADDRESS;
-			#endif
-		
+			int _ee_address = URTCLIB_EE_ADDRESS;
+			// RTC rad data
 			uint8_t _second = 0;
 			uint8_t _minute = 0;
 			uint8_t _hour = 0;
@@ -81,8 +85,37 @@
 			uint8_t _month = 0;
 			uint8_t _year = 0;
 			uint8_t _dayOfWeek = 0;
-			#ifdef _VARIANT_ARDUINO_STM32_
-				bool _do_init = true;
-			#endif
+			// EEPROM read and write private functions - works with bytes
+			byte _eeprom_read(const unsigned int);
+			bool _eeprom_write(const unsigned int, const byte);
+			// Fix for 1st write error
+			bool init = false;
+			#define uRTCLIB_STM32_INIT_FIX() { if (!init) { init = true;  _eeprom_read(0); delay(10); } }
 	};
+
+
+	// Templates must be here because Arduino compiler incoptability to declare them on .cpp fil
+
+	/**
+	 * Write any datatype to EEPROM address
+	 *
+	 * @param unsigned int address Address inside EEPROM to write to
+	 * @param data <typename> data to write
+	 */
+	template <typename TW> bool uRTCLib::eeprom_write(const unsigned int address, const TW data) {
+		return eeprom_write(address, (void *) &data, sizeof(TW));
+	}
+
+
+	/**
+	 * Read any datatype from EEPROM address
+	 *
+	 * @param unsigned int address Address inside EEPROM to read from
+	 * @return <typename> read data
+	 */
+	template <typename TR> void uRTCLib::eeprom_read(const unsigned int address, TR *data) {
+		eeprom_read(address, (byte *) data, sizeof(TR));
+	}
 #endif
+
+

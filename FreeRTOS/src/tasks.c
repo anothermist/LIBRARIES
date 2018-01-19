@@ -412,7 +412,7 @@ PRIVILEGED_DATA static volatile UBaseType_t uxSchedulerSuspended	= ( UBaseType_t
 
 #if( configSUPPORT_STATIC_ALLOCATION == 1 )
 
-	extern void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize );
+	extern void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, configSTACK_DEPTH_TYPE *pulIdleTaskStackSize );
 
 #endif
 
@@ -505,7 +505,7 @@ static void prvAddCurrentTaskToDelayedList( TickType_t xTicksToWait, const BaseT
  */
 #if ( ( configUSE_TRACE_FACILITY == 1 ) || ( INCLUDE_uxTaskGetStackHighWaterMark == 1 ) )
 
-	static uint16_t prvTaskCheckFreeStackSpace( const uint8_t * pucStackByte ) PRIVILEGED_FUNCTION;
+	static configSTACK_DEPTH_TYPE prvTaskCheckFreeStackSpace( const uint8_t * pucStackByte ) PRIVILEGED_FUNCTION;
 
 #endif
 
@@ -546,7 +546,7 @@ static void prvResetNextTaskUnblockTime( void );
  */
 static void prvInitialiseNewTask( 	TaskFunction_t pxTaskCode,
 									const char * const pcName,
-									const uint32_t ulStackDepth,
+									const configSTACK_DEPTH_TYPE ulStackDepth,
 									void * const pvParameters,
 									UBaseType_t uxPriority,
 									TaskHandle_t * const pxCreatedTask,
@@ -576,7 +576,7 @@ static void prvAddNewTaskToReadyList( TCB_t *pxNewTCB ) PRIVILEGED_FUNCTION;
 
 	TaskHandle_t xTaskCreateStatic(	TaskFunction_t pxTaskCode,
 									const char * const pcName,
-									const uint32_t ulStackDepth,
+									const configSTACK_DEPTH_TYPE ulStackDepth,
 									void * const pvParameters,
 									UBaseType_t uxPriority,
 									StackType_t * const puxStackBuffer,
@@ -658,7 +658,7 @@ static void prvAddNewTaskToReadyList( TCB_t *pxNewTCB ) PRIVILEGED_FUNCTION;
 
 			prvInitialiseNewTask(	pxTaskDefinition->pvTaskCode,
 									pxTaskDefinition->pcName,
-									( uint32_t ) pxTaskDefinition->usStackDepth,
+									pxTaskDefinition->usStackDepth,
 									pxTaskDefinition->pvParameters,
 									pxTaskDefinition->uxPriority,
 									pxCreatedTask, pxNewTCB,
@@ -706,7 +706,7 @@ static void prvAddNewTaskToReadyList( TCB_t *pxNewTCB ) PRIVILEGED_FUNCTION;
 
 				prvInitialiseNewTask(	pxTaskDefinition->pvTaskCode,
 										pxTaskDefinition->pcName,
-										( uint32_t ) pxTaskDefinition->usStackDepth,
+										pxTaskDefinition->usStackDepth,
 										pxTaskDefinition->pvParameters,
 										pxTaskDefinition->uxPriority,
 										pxCreatedTask, pxNewTCB,
@@ -801,7 +801,7 @@ static void prvAddNewTaskToReadyList( TCB_t *pxNewTCB ) PRIVILEGED_FUNCTION;
 			}
 			#endif /* configSUPPORT_STATIC_ALLOCATION */
 
-			prvInitialiseNewTask( pxTaskCode, pcName, ( uint32_t ) usStackDepth, pvParameters, uxPriority, pxCreatedTask, pxNewTCB, NULL );
+			prvInitialiseNewTask( pxTaskCode, pcName, usStackDepth, pvParameters, uxPriority, pxCreatedTask, pxNewTCB, NULL );
 			prvAddNewTaskToReadyList( pxNewTCB );
 			xReturn = pdPASS;
 		}
@@ -818,7 +818,7 @@ static void prvAddNewTaskToReadyList( TCB_t *pxNewTCB ) PRIVILEGED_FUNCTION;
 
 static void prvInitialiseNewTask( 	TaskFunction_t pxTaskCode,
 									const char * const pcName,
-									const uint32_t ulStackDepth,
+									const configSTACK_DEPTH_TYPE ulStackDepth,
 									void * const pvParameters,
 									UBaseType_t uxPriority,
 									TaskHandle_t * const pxCreatedTask,
@@ -856,7 +856,7 @@ UBaseType_t x;
 	by the port. */
 	#if( portSTACK_GROWTH < 0 )
 	{
-		pxTopOfStack = pxNewTCB->pxStack + ( ulStackDepth - ( uint32_t ) 1 );
+		pxTopOfStack = pxNewTCB->pxStack + ( ulStackDepth - ( configSTACK_DEPTH_TYPE ) 1 );
 		pxTopOfStack = ( StackType_t * ) ( ( ( portPOINTER_SIZE_TYPE ) pxTopOfStack ) & ( ~( ( portPOINTER_SIZE_TYPE ) portBYTE_ALIGNMENT_MASK ) ) ); /*lint !e923 MISRA exception.  Avoiding casts between pointers and integers is not practical.  Size differences accounted for using portPOINTER_SIZE_TYPE type. */
 
 		/* Check the alignment of the calculated top of stack is correct. */
@@ -879,7 +879,7 @@ UBaseType_t x;
 
 		/* The other extreme of the stack space is required if stack checking is
 		performed. */
-		pxNewTCB->pxEndOfStack = pxNewTCB->pxStack + ( ulStackDepth - ( uint32_t ) 1 );
+		pxNewTCB->pxEndOfStack = pxNewTCB->pxStack + ( ulStackDepth - ( configSTACK_DEPTH_TYPE ) 1 );
 	}
 	#endif /* portSTACK_GROWTH */
 
@@ -1903,7 +1903,7 @@ BaseType_t xReturn;
 	{
 		StaticTask_t *pxIdleTaskTCBBuffer = NULL;
 		StackType_t *pxIdleTaskStackBuffer = NULL;
-		uint32_t ulIdleTaskStackSize;
+		configSTACK_DEPTH_TYPE ulIdleTaskStackSize;
 
 		/* The Idle task is created using user provided RAM - obtain the
 		address of the RAM then create the idle task. */
@@ -3622,7 +3622,7 @@ static void prvCheckTasksWaitingTermination( void )
 
 #if ( ( configUSE_TRACE_FACILITY == 1 ) || ( INCLUDE_uxTaskGetStackHighWaterMark == 1 ) )
 
-	static uint16_t prvTaskCheckFreeStackSpace( const uint8_t * pucStackByte )
+	static configSTACK_DEPTH_TYPE prvTaskCheckFreeStackSpace( const uint8_t * pucStackByte )
 	{
 	uint32_t ulCount = 0U;
 
@@ -3634,13 +3634,15 @@ static void prvCheckTasksWaitingTermination( void )
 
 		ulCount /= ( uint32_t ) sizeof( StackType_t ); /*lint !e961 Casting is not redundant on smaller architectures. */
 
-		return ( uint16_t ) ulCount;
+		return ( configSTACK_DEPTH_TYPE ) ulCount;
 	}
 
 #endif /* ( ( configUSE_TRACE_FACILITY == 1 ) || ( INCLUDE_uxTaskGetStackHighWaterMark == 1 ) ) */
 /*-----------------------------------------------------------*/
 
 #if ( INCLUDE_uxTaskGetStackHighWaterMark == 1 )
+
+#if configENABLE_BACKWARD_COMPATIBILITY == 1
 
 	UBaseType_t uxTaskGetStackHighWaterMark( TaskHandle_t xTask )
 	{
@@ -3664,6 +3666,33 @@ static void prvCheckTasksWaitingTermination( void )
 
 		return uxReturn;
 	}
+
+#else
+
+	configSTACK_DEPTH_TYPE uxTaskGetStackHighWaterMark( TaskHandle_t xTask )
+	{
+	TCB_t *pxTCB;
+	uint8_t *pucEndOfStack;
+	configSTACK_DEPTH_TYPE uxReturn;
+
+		pxTCB = prvGetTCBFromHandle( xTask );
+
+		#if portSTACK_GROWTH < 0
+		{
+			pucEndOfStack = ( uint8_t * ) pxTCB->pxStack;
+		}
+		#else
+		{
+			pucEndOfStack = ( uint8_t * ) pxTCB->pxEndOfStack;
+		}
+		#endif
+
+		uxReturn = prvTaskCheckFreeStackSpace( pucEndOfStack );
+
+		return uxReturn;
+	}
+
+#endif /* configENABLE_BACKWARD_COMPATIBILITY */
 
 #endif /* INCLUDE_uxTaskGetStackHighWaterMark */
 /*-----------------------------------------------------------*/

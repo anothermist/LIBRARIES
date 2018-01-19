@@ -25,5 +25,5 @@ void loop() {
       break;
   }
 
-  delay(1000);
+  delay(2500);
 }
