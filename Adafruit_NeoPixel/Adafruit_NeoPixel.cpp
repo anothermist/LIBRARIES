@@ -130,7 +130,7 @@ void Adafruit_NeoPixel::show(void) {
   // allows the mainline code to start generating the next frame of data
   // rather than stalling for the latch.
   while(!canShow());
-  // endTime is a private member (rather than global var) so that mutliple
+  // endTime is a private member (rather than global var) so that multiple
   // instances on different pins can be quickly issued in succession (each
   // instance doesn't delay the next).
 
@@ -1721,7 +1721,87 @@ void Adafruit_NeoPixel::show(void) {
   }
 #endif
 
-#else // Other ARM architecture -- Presumed Arduino Due
+#elif defined (NRF51)
+  uint8_t          *p   = pixels,
+                    pix, count, mask;
+  int32_t         num = numBytes;
+  unsigned int bitmask = ( 1 << g_ADigitalPinMap[pin] );
+// https://github.com/sandeepmistry/arduino-nRF5/blob/dc53980c8bac27898fca90d8ecb268e11111edc1/variants/BBCmicrobit/variant.cpp
+
+  volatile unsigned int *reg = (unsigned int *) (0x50000000UL + 0x508);
+
+// https://github.com/sandeepmistry/arduino-nRF5/blob/dc53980c8bac27898fca90d8ecb268e11111edc1/cores/nRF5/SDK/components/device/nrf51.h
+// http://www.iot-programmer.com/index.php/books/27-micro-bit-iot-in-c/chapters-micro-bit-iot-in-c/47-micro-bit-iot-in-c-fast-memory-mapped-gpio?showall=1
+// https://github.com/Microsoft/pxt-neopixel/blob/master/sendbuffer.asm
+
+  asm volatile(
+    // "cpsid i" ; disable irq
+
+    //    b .start
+    "b  L%=_start"                    "\n\t"
+    // .nextbit:               ;            C0
+    "L%=_nextbit:"                    "\n\t"          //;            C0
+    //    str r1, [r3, #0]    ; pin := hi  C2
+    "strb %[bitmask], [%[reg], #0]"   "\n\t"          //; pin := hi  C2
+    //    tst r6, r0          ;            C3
+    "tst %[mask], %[pix]"             "\n\t"//          ;            C3
+    //    bne .islate         ;            C4
+    "bne L%=_islate"                  "\n\t"          //;            C4
+    //    str r1, [r2, #0]    ; pin := lo  C6
+    "strb %[bitmask], [%[reg], #4]"   "\n\t"          //; pin := lo  C6
+    // .islate:
+    "L%=_islate:"                     "\n\t"
+    //    lsrs r6, r6, #1     ; r6 >>= 1   C7
+    "lsr %[mask], %[mask], #1"       "\n\t"          //; r6 >>= 1   C7
+    //    bne .justbit        ;            C8
+    "bne L%=_justbit"                 "\n\t"          //;            C8
+
+    //    ; not just a bit - need new byte
+    //    adds r4, #1         ; r4++       C9
+    "add %[p], #1"                   "\n\t"          //; r4++       C9
+    //    subs r5, #1         ; r5--       C10
+    "sub %[num], #1"                 "\n\t"          //; r5--       C10
+    //    bcc .stop           ; if (r5<0) goto .stop  C11
+    "bcc L%=_stop"                    "\n\t"          //; if (r5<0) goto .stop  C11
+    // .start:
+    "L%=_start:"
+    //    movs r6, #0x80      ; reset mask C12
+    "movs %[mask], #0x80"             "\n\t"          //; reset mask C12
+    //    nop                 ;            C13
+    "nop"                             "\n\t"          //;            C13
+
+    // .common:               ;             C13
+    "L%=_common:"                     "\n\t"          //;            C13
+    //    str r1, [r2, #0]   ; pin := lo   C15
+    "strb %[bitmask], [%[reg], #4]"   "\n\t"          //; pin := lo  C15
+    //    ; always re-load byte - it just fits with the cycles better this way
+    //    ldrb r0, [r4, #0]  ; r0 := *r4   C17
+    "ldrb  %[pix], [%[p], #0]"        "\n\t"          //; r0 := *r4   C17
+    //    b .nextbit         ;             C20
+    "b L%=_nextbit"                   "\n\t"          //;             C20
+
+    // .justbit: ; C10
+    "L%=_justbit:"                    "\n\t"          //; C10
+    //    ; no nops, branch taken is already 3 cycles
+    //    b .common ; C13
+    "b L%=_common"                    "\n\t"          //; C13
+
+    // .stop:
+    "L%=_stop:"                       "\n\t"
+    //    str r1, [r2, #0]   ; pin := lo
+    "strb %[bitmask], [%[reg], #4]"   "\n\t"          //; pin := lo
+    //    cpsie i            ; enable irq
+
+    : [p] "+r" (p),
+    [pix] "=&r" (pix),
+    [count] "=&r" (count),
+    [mask] "=&r" (mask),
+    [num] "+r" (num)
+    : [bitmask] "r" (bitmask),
+    [reg] "r" (reg)
+  );
+
+#elif defined(__SAM3X8E__) // Arduino Due
 
   #define SCALE      VARIANT_MCK / 2UL / 1000000UL
   #define INST       (2UL * F_CPU / VARIANT_MCK)
@@ -2096,3 +2176,63 @@ uint8_t Adafruit_NeoPixel::getBrightness(void) const {
 void Adafruit_NeoPixel::clear() {
   memset(pixels, 0, numBytes);
 }
+
+/* A PROGMEM (flash mem) table containing 8-bit unsigned sine wave (0-255).
+   Copy & paste this snippet into a Python REPL to regenerate:
+import math
+for x in range(256):
+    print("{:3},".format(int((math.sin(x/128.0*math.pi)+1.0)*127.5+0.5))),
+    if x&15 == 15: print
+*/
+static const uint8_t PROGMEM _sineTable[256] = {
+  128,131,134,137,140,143,146,149,152,155,158,162,165,167,170,173,
+  176,179,182,185,188,190,193,196,198,201,203,206,208,211,213,215,
+  218,220,222,224,226,228,230,232,234,235,237,238,240,241,243,244,
+  245,246,248,249,250,250,251,252,253,253,254,254,254,255,255,255,
+  255,255,255,255,254,254,254,253,253,252,251,250,250,249,248,246,
+  245,244,243,241,240,238,237,235,234,232,230,228,226,224,222,220,
+  218,215,213,211,208,206,203,201,198,196,193,190,188,185,182,179,
+  176,173,170,167,165,162,158,155,152,149,146,143,140,137,134,131,
+  128,124,121,118,115,112,109,106,103,100, 97, 93, 90, 88, 85, 82,
+   79, 76, 73, 70, 67, 65, 62, 59, 57, 54, 52, 49, 47, 44, 42, 40,
+   37, 35, 33, 31, 29, 27, 25, 23, 21, 20, 18, 17, 15, 14, 12, 11,
+   10,  9,  7,  6,  5,  5,  4,  3,  2,  2,  1,  1,  1,  0,  0,  0,
+    0,  0,  0,  0,  1,  1,  1,  2,  2,  3,  4,  5,  5,  6,  7,  9,
+   10, 11, 12, 14, 15, 17, 18, 20, 21, 23, 25, 27, 29, 31, 33, 35,
+   37, 40, 42, 44, 47, 49, 52, 54, 57, 59, 62, 65, 67, 70, 73, 76,
+   79, 82, 85, 88, 90, 93, 97,100,103,106,109,112,115,118,121,124};
+
+/* Similar to above, but for an 8-bit gamma-correction table.
+   Copy & paste this snippet into a Python REPL to regenerate:
+import math
+gamma=2.6
+for x in range(256):
+    print("{:3},".format(int(math.pow((x)/255.0,gamma)*255.0+0.5))),
+    if x&15 == 15: print
+*/
+static const uint8_t PROGMEM _gammaTable[256] = {
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,  1,  1,  1,  1,
+    1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,  2,  3,  3,  3,  3,
+    3,  3,  4,  4,  4,  4,  5,  5,  5,  5,  5,  6,  6,  6,  6,  7,
+    7,  7,  8,  8,  8,  9,  9,  9, 10, 10, 10, 11, 11, 11, 12, 12,
+   13, 13, 13, 14, 14, 15, 15, 16, 16, 17, 17, 18, 18, 19, 19, 20,
+   20, 21, 21, 22, 22, 23, 24, 24, 25, 25, 26, 27, 27, 28, 29, 29,
+   30, 31, 31, 32, 33, 34, 34, 35, 36, 37, 38, 38, 39, 40, 41, 42,
+   42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+   58, 59, 60, 61, 62, 63, 64, 65, 66, 68, 69, 70, 71, 72, 73, 75,
+   76, 77, 78, 80, 81, 82, 84, 85, 86, 88, 89, 90, 92, 93, 94, 96,
+   97, 99,100,102,103,105,106,108,109,111,112,114,115,117,119,120,
+  122,124,125,127,129,130,132,134,136,137,139,141,143,145,146,148,
+  150,152,154,156,158,160,162,164,166,168,170,172,174,176,178,180,
+  182,184,186,188,191,193,195,197,199,202,204,206,209,211,213,215,
+  218,220,223,225,227,230,232,235,237,240,242,245,247,250,252,255};
+
+uint8_t Adafruit_NeoPixel::sine8(uint8_t x) const {
+  return pgm_read_byte(&_sineTable[x]); // 0-255 in, 0-255 out
+}
+
+uint8_t Adafruit_NeoPixel::gamma8(uint8_t x) const {
+  return pgm_read_byte(&_gammaTable[x]); // 0-255 in, 0-255 out
+}
+

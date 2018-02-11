@@ -72,9 +72,17 @@
 	  #elif defined SOFTSPI
 	  // change these pins to your liking
       //
-      const uint8_t SOFT_SPI_MISO_PIN = 16; 
-      const uint8_t SOFT_SPI_MOSI_PIN = 15; 
-      const uint8_t SOFT_SPI_SCK_PIN = 14;  
+      #ifndef SOFT_SPI_MISO_PIN
+      #define SOFT_SPI_MISO_PIN 9
+      #endif
+
+      #ifndef SOFT_SPI_MOSI_PIN
+      #define SOFT_SPI_MOSI_PIN 8
+      #endif
+
+      #ifndef SOFT_SPI_SCK_PIN
+      #define SOFT_SPI_SCK_PIN 7
+      #endif 
       const uint8_t SPI_MODE = 0;
       #define _SPI spi
       
@@ -123,17 +131,10 @@
 // Arduino DUE is arm and does not include avr/pgmspace
 #if defined (ARDUINO_ARCH_ESP8266)
 
-  #define PSTR(x) (x)
-  #define printf Serial.printf
-  #define sprintf(...) os_sprintf( __VA_ARGS__ )
-  #define printf_P printf
-  #define strlen_P strlen  
-  #define PROGMEM
-  #define pgm_read_byte(addr) (*(const unsigned char *)(addr))
-  #define pgm_read_word(p) (*(p))
+  #include <pgmspace.h>
   #define PRIPSTR "%s"
 
-#elif defined(ARDUINO) && ! defined(__arm__) && !defined (__ARDUINO_X86__) || defined(XMEGA)
+#elif defined(ARDUINO) && !defined(ESP_PLATFORM) && ! defined(__arm__) && !defined (__ARDUINO_X86__) || defined(XMEGA)
 	#include <avr/pgmspace.h>
 	#define PRIPSTR "%S"
 #else

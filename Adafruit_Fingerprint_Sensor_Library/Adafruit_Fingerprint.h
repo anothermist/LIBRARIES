@@ -63,15 +63,27 @@
 #define FINGERPRINT_UPLOAD 0x08
 #define FINGERPRINT_DELETE 0x0C
 #define FINGERPRINT_EMPTY 0x0D
+#define FINGERPRINT_SETPASSWORD 0x12
 #define FINGERPRINT_VERIFYPASSWORD 0x13
 #define FINGERPRINT_HISPEEDSEARCH 0x1B
 #define FINGERPRINT_TEMPLATECOUNT 0x1D
 
 //#define FINGERPRINT_DEBUG
 
-#define DEFAULTTIMEOUT 5000  // milliseconds
+#define DEFAULTTIMEOUT 1000  ///< UART reading timeout in milliseconds
 
+///! Helper class to craft UART packets
 struct Adafruit_Fingerprint_Packet {
+
+/**************************************************************************/
+/*!
+    @brief   Create a new UART-borne packet
+    @param   type Command, data, ack type packet
+    @param   length Size of payload
+    @param   data Pointer to bytes of size length we will memcopy into the internal buffer
+*/
+/**************************************************************************/
+
   Adafruit_Fingerprint_Packet(uint8_t type, uint16_t length, uint8_t * data) {
     this->start_code = FINGERPRINT_STARTCODE;
     this->type = type;
@@ -83,21 +95,22 @@ struct Adafruit_Fingerprint_Packet {
     else
       memcpy(this->data, data, 64);
   }
-  uint16_t start_code;
-  uint8_t address[4];
-  uint8_t type;
-  uint16_t length;
-  uint8_t data[64];
+  uint16_t start_code;      ///< "Wakeup" code for packet detection
+  uint8_t address[4];       ///< 32-bit Fingerprint sensor address
+  uint8_t type;             ///< Type of packet
+  uint16_t length;          ///< Length of packet
+  uint8_t data[64];         ///< The raw buffer for packet payload
 };
 
+///! Helper class to communicate with and keep state for fingerprint sensors
 class Adafruit_Fingerprint {
  public:
 #if defined(__AVR__) || defined(ESP8266)
-  Adafruit_Fingerprint(SoftwareSerial *);
+  Adafruit_Fingerprint(SoftwareSerial *ss, uint32_t password = 0x0);
 #endif
-  Adafruit_Fingerprint(HardwareSerial *);
+  Adafruit_Fingerprint(HardwareSerial *hs, uint32_t password = 0x0);
 
-  void begin(uint16_t baud);
+  void begin(uint32_t baud);
 
   boolean verifyPassword(void);
   uint8_t getImage(void);
@@ -111,12 +124,19 @@ class Adafruit_Fingerprint {
   uint8_t deleteModel(uint16_t id);
   uint8_t fingerFastSearch(void);
   uint8_t getTemplateCount(void);
+  uint8_t setPassword(uint32_t password);
   void writeStructuredPacket(const Adafruit_Fingerprint_Packet & p);
   uint8_t getStructuredPacket(Adafruit_Fingerprint_Packet * p, uint16_t timeout=DEFAULTTIMEOUT);
 
-  uint16_t fingerID, confidence, templateCount;
+  /// The matching location that is set by fingerFastSearch()
+  uint16_t fingerID;
+  /// The confidence of the fingerFastSearch() match, higher numbers are more confidents
+  uint16_t confidence;
+  /// The number of stored templates in the sensor, set by getTemplateCount()
+  uint16_t templateCount;
 
  private:
+  uint8_t checkPassword(void);
   uint32_t thePassword;
   uint32_t theAddress;
     uint8_t recvPacket[20];
