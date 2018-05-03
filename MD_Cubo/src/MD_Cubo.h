@@ -4,9 +4,9 @@ LED Cubes
 ---------
 
 The MD_Cubo library implements methods and a framework that enable the software elements of 
-any single color LED cube to be easily implemented. This allows the programmer to use the 
-LED matrix as a pixel device addressable through XYZ cartesian coordinates, displaying 
-graphics elements much like any other pixel addressable display.
+any monochrome or color LED cube to be easily implemented. This allows the programmer to 
+use the LED matrix as a voxel device addressable through XYZ cartesian coordinates, displaying 
+graphics elements much like any other voxel addressable display.
 
 The Library
 -----------
@@ -14,21 +14,21 @@ The library implements functions that allow LED cubes to be abstracted in softwa
 underlying hardware changes do not affect the definition and structure of the controlling code.
 
 In this scenario, it is convenient to abstract out the concept of the hardware device and 
-create a uniform and consistent cartesian (XYZ) voxel address space, with the libraries 
+create a uniform and consistent 3D cartesian (XYZ) voxel address space, with the libraries 
 determining device-element address for each LED. Similarly, control of the devices should 
 be uniform and abstracted to a system level.
 
 There appears to be 2 major architectures for implementing cubes:
 
-- A scanning refresh model. In this model the LEDs are refreshed by the Arduino at a rate fast 
+-# A 'scanning refresh' model. In this model the LEDs are refreshed by the Arduino at a rate fast 
 enough to activate a persistence of vision (POV) effect.
-- A 'set and forget' model. In this model the pixel is set by the Arduino and some other hardware 
+-# A 'set and forget' model. In this model the voxel is set by the Arduino and some other hardware 
 ensures that the appropriate LEDs are turned on.
 
 The software must take into account these differences and allow both to work using the same basic 
 software pattern. At a fundamental level, the hardware dependent code required needs to do the following:
-- Initialise the hardware
-- Turn on specific LED (voxel) on or off
+- Initialize the hardware
+- Turn on specific LED (voxel) on or off in the specified color
 - Update the display (internal buffers to actual device)
 - Animate the display (ignored for 'set and forget', refresh for scanning)
 
@@ -51,22 +51,24 @@ From this reference point
 - the Y axis is the left to right axis you can see.
 - the X axis is the axis in the 'depth' direction of the cube.
 
-Hardware Supported
-------------------
-- \subpage pageICSTATION4x4
-- \subpage pagePAULRB4x4
-- \subpage pageJOLLICUBE8x8
+Cube Hardware Supported
+-----------------------
+- \subpage pageICSTATION4x4x4
+- \subpage pagePAULRB4x4x4
+- \subpage pageJOLLICUBE8x8x8
+- \subpage pageZIFFRADIY4x4x4
 
 Revision History 
 ----------------
-xxx 2016 - version 1.2
--
+Mar 2018 - version 2.0.0
+- Added color cube support
+- Add Ziffra 4x4x4 color cube based on STC15F2K60S2 with serial interface
 
 Feb 2016 - version 1.1
 - Added jolliCube - first 8x8x8 cube
-- Reorganised library
-- Reorganised and expanded examples
-- Added text based examples, font defintion file and related utility functions
+- Reorganized library
+- Reorganized and expanded examples
+- Added text based examples, font definition file and related utility functions
 
 Aug 2015 - version 1.0
 - First release
@@ -93,14 +95,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 #define MD_CUBO_H
 
 #include <Arduino.h>
+#include "ColorDefs.h"
 
 /**
  * \file
  * \brief Main header file for the MD_Cubo library
  */
 
-#define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))		///< Generic macro to return number of array elemenmts
-#define MAX_INTENSITY 0xff		///< Maximum intensity for a cube; setting is 0..MAX_INTENSITY
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))    ///< Generic macro to return number of array elemenmts
+#define MAX_INTENSITY 0xff    ///< Maximum intensity for a cube; setting is 0..MAX_INTENSITY
 
 /**
  * Core object for the MD_Cubo library
@@ -108,38 +111,38 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 class MD_Cubo
 {
 public:
-	/**
-	 * Axis name enumerated type.
-	 *
-	 * This enumerated type is used to specify a cartesian axis
-	 */
-	enum axis_t
-	{
-		XAXIS,	///< X axis
-		YAXIS,	///< Y axis
-		ZAXIS	///< Z axis (always vertical, starting at the bottom) 
-	};
+  /**
+  * Axis name enumerated type.
+  *
+  * This enumerated type is used to specify a cartesian axis
+  */
+  enum axis_t
+  {
+    XAXIS,  ///< X axis
+    YAXIS,  ///< Y axis
+    ZAXIS   ///< Z axis (always vertical, starting at the bottom) 
+  };
 
-	/**
-	 * Plane name enumerated type.
-	 *
-	 * This enumerated type is used to define a specific cartesian plane
-	 */
-	enum plane_t
-	{
-		XYPLANE,	///< Cartesian plane bounded by XY axes
-		XZPLANE,	///< Cartesian plane bounded by XZ axes
-		YZPLANE	  ///< Cartesian plane bounded by YZ axes
-	};
+  /**
+  * Plane name enumerated type.
+  *
+  * This enumerated type is used to define a specific cartesian plane
+  */
+  enum plane_t
+  {
+    XYPLANE,  ///< Cartesian plane bounded by XY axes
+    XZPLANE,  ///< Cartesian plane bounded by XZ axes
+    YZPLANE   ///< Cartesian plane bounded by YZ axes
+  };
 
  /** 
    * Class Constructor.
    *
    * Instantiate a new instance of the class. The parameters passed are used to 
-   * initialise the object. Multiple instances may co-exist  provided the virtual
+   * initialize the object. Multiple instances may co-exist provided the virtual
    * cube functions can do so also.
    * 
-   * \param sizeCube	the number of LEDs on each side of the cube.
+   * \param sizeCube the number of LEDs on each side of the cube.
    */
   MD_Cubo(uint8_t sizeCube): _sizeXaxis(sizeCube), _sizeYaxis(sizeCube), _sizeZaxis(sizeCube) {};
 
@@ -158,7 +161,7 @@ public:
  /** 
    * Initialize the object.
    *
-   * Initialise the object data. This needs to be called during setup() to initialise new 
+   * Initialize the object data. This needs to be called during setup() to initialize new 
    * data for the class that cannot be done during the object creation.
    *
    * Hardware interfaces implemented in virtual functions should be initialized here.
@@ -166,52 +169,92 @@ public:
   virtual void begin(void) {};
 
  /** 
-   * Set the specified point in the cube.
+   * Set the specified point in the cube (monochrome version).
+   * 
+   * This method should only be implemented for monochrome cubes and is for backward
+   * compatibility only. The preferred implementation is to use the color version for
+   * all cubes.
    * 
    * This is the most basic graphic function and is necessarily only implementable in 
    * the user derived object, as it is heavily related to the hardware configuration.
-   * The (x,y,z) coordinate for the pixel needs to be mapped to a device action to turn the 
-   * pixel on or off.
+   * The (x,y,z) coordinate for the voxel needs to be mapped to a device action to turn the 
+   * voxel on or off.
    *
-   * \param p     pixel value - if false, set the pixel off. If true, set the pixel on.
-   * \param x     x coordinate for the pixel.
-   * \param y     y coordinate for the pixel.
-   * \param z     z coordinate for the pixel.
+   * \param p  voxel value - if false, set the voxel off. Otherwise, set the voxel on.
+   * \param x  x coordinate for the voxel.
+   * \param y  y coordinate for the voxel.
+   * \param z  z coordinate for the voxel.
    * \return No return value.
    */
-  virtual void setVoxel(boolean p, uint8_t x, uint8_t y, uint8_t z) {};
+  virtual void setVoxel(boolean p, uint8_t x, uint8_t y, uint8_t z) { setVoxel(p ? VOX_ON : VOX_OFF, x, y, z);  };
 
- /** 
-   * Get the status of specified pixel in the cube.
+  /**
+  * Set the specified point in the cube.
+  *
+  * This is the most basic graphic function and is necessarily only implementable in
+  * the user derived object, as it is heavily related to the hardware configuration.
+  * The (x,y,z) coordinate for the voxel needs to be mapped to a device action to turn the
+  * voxel to the specified color in the specified color and intensity.
+  *
+  * By default all cubes are treated as color cubes. User code should recognize if it is 
+  * operating with a color or monochrome cube by testing isColorCube(). For clarity, 
+  * monochrome cubes should use the default VOX_ON and VOX_OFF colors for clarity, 
+  * color cubes are free to choose any RGB color.
+  *
+  * Default for this virtual method is to invoke the monochrome method if color is
+  * not implemented in user code.
+  *
+  * \see isColorCube()
+  *
+  * \param p  voxel RGB value - if VOX_OFF, set the voxel off. Otherwise, set the voxel to the color.
+  * \param x  x coordinate for the voxel.
+  * \param y  y coordinate for the voxel.
+  * \param z  z coordinate for the voxel.
+  * \return No return value.
+  */
+  virtual void setVoxel(uint32_t p, uint8_t x, uint8_t y, uint8_t z) { };
+  
+  /**
+   * Get the status of specified point in the cube.
    * 
    * This is the most basic graphic function and is necessarily only implementable in 
    * the user derived object, as it is heavily related to the hardware configuration.
-   * The (x,y,z) coordinate for the pixel needs to be mapped to a device address and 
-   * on/off value of the pixel returned to the calling program..
+   * The (x,y,z) coordinate for the voxel needs to be mapped to a device address and 
+   * color value of the voxel returned to the calling program.
    *
-   * \param x     x coordinate for the pixel.
-   * \param y     y coordinate for the pixel.
-   * \param z     z coordinate for the pixel.
-   * \return pixel value - if false if the pixel is off. true if the pixel on.
+   * \param x  x coordinate for the voxel.
+   * \param y  y coordinate for the voxel.
+   * \param z  z coordinate for the voxel.
+   * \return voxel RGB value - VOX_OFF if the voxel is off. Otherwise the voxel color value.
    */
-  virtual boolean getVoxel(uint8_t x, uint8_t y, uint8_t z) {};
+  virtual uint32_t getVoxel(uint8_t x, uint8_t y, uint8_t z) {};
 
  /** 
-   * Set the intensity/brightness of the cube.
+   * Set the default intensity/brightness of the cube.
    * 
-   * Set the overall brightness of the cube. This is only implementable in the user 
+   * Set the default brightness of the cube. This is only implementable in the user 
    * derived object, as it is heavily reliant on the hardware configuration.
    *
    * Brightness is supplied as a number 0 to MAX_INTENSITY (0 is darkest). If the
    * hardware has a different range this will need to be remapped in the user derived 
    * object.
    *
-   * \param intensity the intensity for the cube (0 .. MAX_INTENSITY).
+   * \param intensity  the intensity for the cube (0 .. MAX_INTENSITY).
    * \return No return value.
    */
-  virtual void setIntensity(uint8_t intensity) {};
+  virtual void setIntensity(uint8_t intensity) { _intensity = intensity; };
 
- /** 
+  /**
+  * Get the default intensity/brightness of the cube.
+  *
+  * Get the default brightness of the cube. This is only implementable in the user
+  * derived object, as it is heavily reliant on the hardware configuration.
+  *
+  * \return The intensity for the cube (0 .. MAX_INTENSITY).
+  */
+  uint8_t getIntensity(void) { return(_intensity); };
+  
+  /**
    * Update the cube display.
    * 
    * All cube changes are buffered internally until this method is called, at which time 
@@ -222,6 +265,18 @@ public:
    */
   virtual void update() {};
 
+  /** 
+   * Clear the cube.
+   * 
+   * Set every voxel in the cube to the specified value (default off). The generic method 
+   * iterates through all the voxels. A more efficient implementation may be possible by 
+   * exploiting access to hardware.
+   *
+   * \param p  set the the RGB value required, RGB(0,0,0) for all black (default).
+   * \return No return value.
+   */
+  virtual void clear(uint32_t p = VOX_OFF);
+ 
  /** 
    * Animate the cube display.
    * 
@@ -244,29 +299,26 @@ public:
    * independent of any size definitions, which are known in in the user derived object, 
    * as it is reliant on the hardware configuration.
    *
-   * \param	axis	specifies the axis required, one of the axis_t enumerations
-   * \return size of the cube..
+   * \param axis  specifies the axis required, one of the axis_t enumerations.
+   * \return Size of the cube.
    */
-  virtual uint8_t size(axis_t axis) { return 0; };
+  uint8_t size(axis_t axis) { return 0; };
 
-  /** @} */
+  /**
+  * Return whether the cube supports RGB color.
+  *
+  * Return true if the cube supports RGB colors. This will depend on the hardware
+  * implemented, so can be overridden by the user functions. 
+  *
+  * \return True if RGB color supported.
+  */
+  virtual bool isColorCube(void) { return(false); };
+
+  /* @} */
   //--------------------------------------------------------------
   /** \name Methods for device-independent graphics.
    * @{
    */
-  /** 
-   * Clear the cube.
-   * 
-   * Set every pixel in the cube to the specificed value (default off). The generic method 
-   * iterates through all the pixels. A more efficient implementation may be possible by 
-   * exploiting access 
-   * to hardware.
-   *
-   * \param p set ON if true, off if false (default).
-   * \return No return value.
-   */
-  virtual void clear(boolean p = false);
- 
   /** 
    * Fill the specified plane.
    * 
@@ -275,12 +327,12 @@ public:
    * and the axis specified. For example, if plane is XYPLANE, coord is the z 
    * value through which the plane passes.
    *
-   * \param p         pixel value - if false, set the pixel off. If true, set the pixel on.
-   * \param plane the plane this applies to. One of the plane_t value.
-   * \param coord axis intersection coordinate value.
+   * \param p      voxel RGB value - if VOX_OFF set the voxel off. Otherwise set the voxel to the color.
+   * \param plane  the plane this applies to. One of the plane_t value.
+   * \param coord  axis intersection coordinate value.
    * \return No return value.
    */
-  virtual void fillPlane(boolean p, plane_t plane, uint8_t coord);
+  void fillPlane(uint32_t p, plane_t plane, uint8_t coord);
 
   /**
   * Copy the specified plane.
@@ -290,50 +342,50 @@ public:
   * point between the plane and the axis specified. For example, if plane is 
   * XYPLANE, coord is the z value through which the plane passes.
   *
-  * \param plane the plane this applies to. One of the plane_t value.
-  * \param cordFrom the source coordinate value.
-  * \param cordTo the destination coordinate value.
+  * \param plane     the plane this applies to. One of the plane_t value.
+  * \param cordFrom  the source coordinate value.
+  * \param cordTo    the destination coordinate value.
   * \return No return value.
   */
-  virtual void copyPlane(plane_t plane, uint8_t cordFrom, uint8_t cordTo);
+  void copyPlane(plane_t plane, uint8_t cordFrom, uint8_t cordTo);
 
   /**
    * Draw an arbitrary line in 3D space.
    * 
    * The line is drawn from the start to the end coordinates using Bresenham's 
    * line drawing algorithm in 3D. The line can be drawn 'on' or 'off' by specifying 
-   * the pixel value, p.
+   * the voxel value, p.
    *
-   * \param p       pixel value - if false, set the pixel off. If true, set the pixel on.
-   * \param x1      x coordinate for the start point.
-   * \param y1      y coordinate for the start point.
-   * \param z1      z coordinate for the start point.
-   * \param x2      x coordinate for the end point.
-   * \param y2      y coordinate for the end point.
-   * \param z2      z coordinate for the end point.
+   * \param p   voxel RGB value - if VOX_OFF, set the voxel off. Otherwise, set the voxel to the color.
+   * \param x1  x coordinate for the start point.
+   * \param y1  y coordinate for the start point.
+   * \param z1  z coordinate for the start point.
+   * \param x2  x coordinate for the end point.
+   * \param y2  y coordinate for the end point.
+   * \param z2  z coordinate for the end point.
    * \return No return value.
    */
-  virtual void drawLine(boolean p, uint8_t x1, uint8_t y1, uint8_t z1, uint8_t x2, uint8_t y2, uint8_t z2);
+  void drawLine(uint32_t p, uint8_t x1, uint8_t y1, uint8_t z1, uint8_t x2, uint8_t y2, uint8_t z2);
 
   /**
   * Draw an arbitrary rectangular prism in 3D space.
   *
-  * The rectangular prism is drawn from the start coordinates with to the diagonally 
-  * opposite corner in 3D space. The line can be drawn 'on' or 'off' by specifying
-  * the pixel value, p.
+  * The rectangular prism is drawn from the start coordinates to the diagonally 
+  * opposite corner in 3D space. The line can be drawn in any color by specifying
+  * the voxel value, p.
   * A cube is a rectangular prism with the same dx, dy, dz
   * A rectangle (2D) is a rectangular prism with one of dx, dy or dz set to 0
   *
-  * \param p       pixel value - if false, set the pixel off. If true, set the pixel on.
-  * \param x       x coordinate for one corner.
-  * \param y       y coordinate for one corner.
-  * \param z       z coordinate for one corner.
-  * \param dx      x delta for diagonally opposite point.
-  * \param dy      y delta for diagonally opposite point.
-  * \param dz      z delta for diagonally opposite point.
+  * \param p   voxel RGB value - if VOX_OFF set the voxel off. Otherwise set the voxel to the color.
+  * \param x   x coordinate for one corner.
+  * \param y   y coordinate for one corner.
+  * \param z   z coordinate for one corner.
+  * \param dx  x delta for diagonally opposite point.
+  * \param dy  y delta for diagonally opposite point.
+  * \param dz  z delta for diagonally opposite point.
   * \return No return value.
   */
-  virtual void drawRPrism(boolean p, uint8_t x, uint8_t y, uint8_t z, int8_t dx, uint8_t dy, uint8_t dz);
+  void drawRPrism(uint32_t p, uint8_t x, uint8_t y, uint8_t z, int8_t dx, int8_t dy, int8_t dz);
 
   /**
   * Draw the outline of a cube in 3D space.
@@ -341,21 +393,22 @@ public:
   * The cube is a rectangular prism with same dx, dy, dz, so this is a wrapper 
   * for the more generic case.
   *
-  * \param p       pixel value - if false, set the pixel off. If true, set the pixel on.
-  * \param x       x coordinate for one corner.
-  * \param y       y coordinate for one corner.
-  * \param z       z coordinate for one corner.
-  * \param size    The size of one side of the cube in pixels.
+  * \param p     voxel RGB value - if VOX_OFF, set the voxel off. Otherwise set the voxel to the color.
+  * \param x     x coordinate for one corner.
+  * \param y     y coordinate for one corner.
+  * \param z     z coordinate for one corner.
+  * \param size  the size of one side of the cube in voxels.
   * \return No return value.
   */
-  inline void drawCube(boolean p, uint8_t x, uint8_t y, uint8_t z, int8_t size) { drawRPrism(p, x, y, z, size-1, size-1, size-1); };
+  void drawCube(uint32_t p, uint8_t x, uint8_t y, uint8_t z, int8_t size) { drawRPrism(p, x, y, z, size-1, size-1, size-1); };
 
-  /** @} */
+  /* @} */
 
 protected:
-  uint8_t _sizeXaxis;  ///< the number of LEDs on x axis of the cube. Total number of pixels is x*y*z.
-  uint8_t _sizeYaxis;  ///< the number of LEDs on y axis of the cube. Total number of pixels is x*y*z.
-  uint8_t _sizeZaxis;  ///< the number of LEDs on z axis of the cube. Total number of pixels is x*y*z.
+  uint8_t _sizeXaxis;  ///< the number of LEDs on x axis of the cube. Total number of voxels is x*y*z.
+  uint8_t _sizeYaxis;  ///< the number of LEDs on y axis of the cube. Total number of voxels is x*y*z.
+  uint8_t _sizeZaxis;  ///< the number of LEDs on z axis of the cube. Total number of voxels is x*y*z.
+  uint8_t _intensity;  ///< the default intensity for the cube.
 };
 
 #endif

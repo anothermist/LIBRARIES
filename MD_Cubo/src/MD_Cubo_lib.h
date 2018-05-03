@@ -2,26 +2,7 @@
 MD_Cubo - Arduino LED Cube Library
   
 See header file for comments
-
-This file contains library related definitions and is not visible
-to user code.
-  
-Copyright (C) 2015 Marco Colli. All rights reserved.
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- */
+*/
 
  #pragma once
 
@@ -33,7 +14,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 #define	MD_DEBUG	0		///< Enable or disable (default) debugging output from the MD_LED3 library
 
 #if MD_DEBUG
-#define	PRINT(s, v)		{ Serial.print(F(s)); Serial.print(v); }		///< Print a string followed by a value (decimal)
+#define	PRINT(s, v)		{ Serial.print(F(s)); Serial.print(v); }		  ///< Print a string followed by a value (decimal)
 #define	PRINTX(s, v)	{ Serial.print(F(s)); Serial.print(v, HEX); }	///< Print a string followed by a value (hex)
 #define	PRINTB(s, v)	{ Serial.print(F(s)); Serial.print(v, BIN); }	///< Print a string followed by a value (binary)
 #define	PRINTS(s)		  { Serial.print(F(s)); }						///< Print a string
@@ -62,7 +43,7 @@ After doing some research of existing cubes it seems there are 2 main types of L
 activate a persistence of vision (POV) effect in the observer. This puts the onus of multiplexing control 
 in the Arduino software. An example of this type hardware is the ICStation Light Cube Kit, based on 74HC595 
 shift registers to control LED anodes and 4 I/O ports of Arduino control 4 common cathodes of LED. This type 
-of hardware is the most common for LED cubes and relies on the microcontroller software opening a circuit 
+of hardware is the most common for LED cubes and relies on the micro controller software opening a circuit 
 (a path for current) for each LED in very quick succession.
 - A 'set and forget' model, where each LED is set by the Arduino and some other hardware components ensure 
 that they remain turned on or off. One example is the PaulRB or JolliCube versions provided with the library.
@@ -82,11 +63,11 @@ this is implemented in the object constructor and begin() method for object.
 - _Size of the cube_. To allow user code to be independent of hardware, the size of the cube being controlled
 is obtained form the library. Provision is made to allow each of the X, Y and Z axes to be of different size.
 - _Turn a LED on/off_. This is THE basic function for the cube and is implemented in the setVoxel() method. 
-Every other drawing function - clear(), drawLine(), fillPlane() -  can be written in using setVoxel(). The 
-device function maps between the caressian coordinates and the LED cube.
+Every other drawing function - clear(), drawLine(), fillPlane() -  can be written using setVoxel(). The 
+device function maps between the cartesian coordinates and the LED cube.
 - _Test a LED on/off_. This is implemented in the getVoxel() method and used to test if a pizel is already on. 
 Every other drawing function - clear(), drawLine(), fillPlane() -  can be written in using setVoxel(). The 
-device function maps between the caressian coordinates and the LED cube.
+device function maps between the cartesian coordinates and the LED cube.
 - _Update the cube_. Implemented in the update() method, this allows the internal buffers to be copied to the 
 cube display, allowing for crisp animations and controlled updates, as all the changes accumulated since the 
 previous update are shown at once.

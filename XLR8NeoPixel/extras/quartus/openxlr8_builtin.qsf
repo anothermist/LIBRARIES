@@ -1,0 +1,110 @@
+#==============================================================================
+# Copyright (c) 2016 Alorium Technology.  All right reserved.
+#==============================================================================
+#
+# File Name  : openxlr8_builtin.qsf
+# Author     : Steve Phillips
+# Contact    : support@aloriumtech.com
+# Description:
+#
+# This file allows the OpenXLR8 user to specify whether any of the "built-in"
+# functional units are included in the OpenXLR8 image.
+#
+#==============================================================================
+
+#==============================================================================
+# This section contains the QSF statements that the user can modify. The
+# explanation of these settings are in the following section
+
+# Enable a set of "built-in" functional units
+set_parameter -name APP_XB0_ENABLE  0
+
+# Set values for number of units in each functional unit
+set_parameter -name NUM_NEOPIXELS   15
+set_parameter -name NUM_SERVOS      12
+set_parameter -name NUM_QUADRATURES 6
+set_parameter -name NUM_PIDS        6
+
+#==============================================================================
+
+# The XLR8 top level contains some "built-in" function units that are
+# used in some of the various images that are shipped by
+# Alorium. These functional units are normally not included in an
+# OpenXLR8 build, but can be enabled here to be included. So, if you
+# would like to include the Floating Point functional unit in your
+# OpenXLR8 build, you could either wire the Floating Point unit into
+# your OpenXLR8 module or you could simply enable the built-in
+# Floating point unit here.
+
+# The disadvantage of using the built-in functional units is that they
+# can not communicate directly with you other OpenXLR8 functions like
+# they could if you instantiated the functional units into the
+# OpenXLR8 module.
+
+# To enable the built-in functional units, set the correct bit in the
+# APP_XB0_ENABLE parameter above. The enable bits are defined as
+# follows:
+
+#  +----------------+------+---------------------------+
+#  | APP_XB0_ENABLE | NAME | Description               |
+#  +----------------+------+---------------------------+
+#  |   bit [31:5]   |      |  reserved (must be zero)  |
+#  |   bit [4]      |   P  |  PID                      |
+#  |   bit [3]      |   Q  |  Quadrature               |
+#  |   bit [2]      |   N  |  NeoPixel                 |
+#  |   bit [1]      |   S  |  Servo                    |
+#  |   bit [0]      |   F  |  Floating Point           |
+#  +----------------+------+---------------------------+
+
+# The value passed to the set_paramter QSF command must be a decimal
+# number. The following table shows all possible combination of the
+# built-in functional units, what the Hex number is that specifies
+# that, and what the decimal number is that is the equivelant. Find
+# the combination of functional units you would like and then edits
+# the set+parameter statement for APP_XB0_ENABLE above to substitute
+# in the corect decimal value.
+
+#   +-----+-----+-----+-----+-----+------+-------------+
+#   |  P  |  Q  |  N  |  S  |  F  |  Hex |   Decimal   |
+#   +-----+-----+-----+-----+-----+------+-------------+
+#   |  0  |  0  |  0  |  0  |  0  | 0x00 |      0      |
+#   |  0  |  0  |  0  |  0  |  1  | 0x01 |      1      |
+#   |  0  |  0  |  0  |  1  |  0  | 0x02 |      2      |
+#   |  0  |  0  |  0  |  1  |  1  | 0x03 |      3      |
+#   |  0  |  0  |  1  |  0  |  0  | 0x04 |      4      |
+#   |  0  |  0  |  1  |  0  |  1  | 0x05 |      5      |
+#   |  0  |  0  |  1  |  1  |  0  | 0x06 |      6      |
+#   |  0  |  0  |  1  |  1  |  1  | 0x07 |      7      |
+#   +-----+-----+-----+-----+-----+------+-------------+
+#   |  0  |  1  |  0  |  0  |  0  | 0x08 |      8      |
+#   |  0  |  1  |  0  |  0  |  1  | 0x09 |      9      |
+#   |  0  |  1  |  0  |  1  |  0  | 0x0A |     10      |
+#   |  0  |  1  |  0  |  1  |  1  | 0x0B |     11      |
+#   |  0  |  1  |  1  |  0  |  0  | 0x0C |     12      |
+#   |  0  |  1  |  1  |  0  |  1  | 0x0D |     13      |
+#   |  0  |  1  |  1  |  1  |  0  | 0x0E |     14      |
+#   |  0  |  1  |  1  |  1  |  1  | 0x0F |     15      |
+#   +-----+-----+-----+-----+-----+------+-------------+
+#   |  1  |  0  |  0  |  0  |  0  | 0x10 |     16      |
+#   |  1  |  0  |  0  |  0  |  1  | 0x11 |     17      |
+#   |  1  |  0  |  0  |  1  |  0  | 0x12 |     18      |
+#   |  1  |  0  |  0  |  1  |  1  | 0x13 |     19      |
+#   |  1  |  0  |  1  |  0  |  0  | 0x14 |     20      |
+#   |  1  |  0  |  1  |  0  |  1  | 0x15 |     21      |
+#   |  1  |  0  |  1  |  1  |  0  | 0x16 |     22      |
+#   |  1  |  0  |  1  |  1  |  1  | 0x17 |     23      |
+#   +-----+-----+-----+-----+-----+------+-------------+
+#   |  1  |  1  |  0  |  0  |  0  | 0x18 |     24      |
+#   |  1  |  1  |  0  |  0  |  1  | 0x19 |     25      |
+#   |  1  |  1  |  0  |  1  |  0  | 0x1A |     26      |
+#   |  1  |  1  |  0  |  1  |  1  | 0x1B |     27      |
+#   |  1  |  1  |  1  |  0  |  0  | 0x1C |     28      |
+#   |  1  |  1  |  1  |  0  |  1  | 0x1D |     29      |
+#   |  1  |  1  |  1  |  1  |  0  | 0x1E |     30      |
+#   |  1  |  1  |  1  |  1  |  1  | 0x1F |     31      |
+#   +-----+-----+-----+-----+-----+------+-------------+
+
+# For the functional units other than Floating Point, the user can
+# specify the number of each functional unit to enable. Change the
+# values specified in the set_parameter statements above to change
+# them from the defaults.

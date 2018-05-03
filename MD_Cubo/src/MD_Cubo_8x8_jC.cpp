@@ -1,6 +1,11 @@
 ﻿#include <MD_Cubo.h>
 #include "MD_Cubo_8x8_jC.h"
 
+/**
+ * \file
+ * \brief Main file for the MD_Cubo jolliCube object
+ */
+
 void MD_Cubo_JC::begin()
 {
   pinMode(_data, OUTPUT);
@@ -21,11 +26,11 @@ void MD_Cubo_JC::sendSPI(byte reg, uint8_t val)
 {
   digitalWrite(_load, LOW); // load data
 
-	for (uint8_t d = 0; d < MAX_DEVICES; d++)
-	{
-		shiftOut(_data, _clock, MSBFIRST, reg); // send register
-		shiftOut(_data, _clock, MSBFIRST, val); // send value
-	}
+  for (uint8_t d = 0; d < MAX_DEVICES; d++)
+  {
+    shiftOut(_data, _clock, MSBFIRST, reg); // send register
+    shiftOut(_data, _clock, MSBFIRST, val); // send value
+  }
 
   digitalWrite(_load, HIGH);
 }
@@ -40,45 +45,47 @@ void MD_Cubo_JC::update()
   {
     digitalWrite(_load, LOW); // load data
     for (int8_t d = MAX_DEVICES - 1; d >= 0; d--)
-	  {
-		  shiftOut(_data, _clock, MSBFIRST, DIGIT0 + i);    // send register
-		  shiftOut(_data, _clock, MSBFIRST, _layer[d][i]);  // send value
+    {
+      shiftOut(_data, _clock, MSBFIRST, DIGIT0 + i);    // send register
+      shiftOut(_data, _clock, MSBFIRST, _layer[d][i]);  // send value
     }
     digitalWrite(_load, HIGH);
   }
 }
 
-void MD_Cubo_JC::setVoxel(boolean p, uint8_t x, uint8_t y, uint8_t z)
+void MD_Cubo_JC::setVoxel(uint32_t p, uint8_t x, uint8_t y, uint8_t z)
 {
 // The X coordinate is the device address
 // The Y coordinate is the segment
 // The Z coordinate is the digit
   
   if ((x >= CUBE_XSIZE) || (y >= CUBE_YSIZE) || (z >= CUBE_ZSIZE))
-	  return;
+    return;
     
-  bitWrite(_layer[x][(CUBE_ZSIZE-1)-z], y, p);
+  bitClear(_layer[x][(CUBE_ZSIZE - 1) - z], y);
+  if (p != VOX_OFF)
+    bitSet(_layer[x][(CUBE_ZSIZE - 1) - z], y);
 }
 
-boolean MD_Cubo_JC::getVoxel(uint8_t x, uint8_t y, uint8_t z)
+uint32_t MD_Cubo_JC::getVoxel(uint8_t x, uint8_t y, uint8_t z)
 {
   // The X coordinate is the device address
   // The Y coordinate is the segment
   // The Z coordinate is the digit
 
   if ((x >= CUBE_XSIZE) || (y >= CUBE_YSIZE) || (z >= CUBE_ZSIZE))
-    return(false);
+    return(VOX_OFF);
 
-  return(bitRead(_layer[x][(CUBE_ZSIZE - 1) - z], y) != 0);
+  return(bitRead(_layer[x][(CUBE_ZSIZE - 1) - z], y) ? VOX_ON : VOX_OFF);
 }
 
 uint8_t MD_Cubo_JC::size(axis_t axis)
 {
   switch(axis)
   {
-	  case XAXIS: return(CUBE_XSIZE);
-	  case YAXIS: return(CUBE_YSIZE);
-	  case ZAXIS: return(CUBE_ZSIZE);
+    case XAXIS: return(CUBE_XSIZE);
+    case YAXIS: return(CUBE_YSIZE);
+    case ZAXIS: return(CUBE_ZSIZE);
   }
 }
 

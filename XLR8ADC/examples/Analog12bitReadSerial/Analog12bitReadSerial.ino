@@ -1,6 +1,6 @@
 /* Analog12bitReadSerial
- Copyright (c) 2016 Alorim Technology.  All right reserved.
- by Matt Weber (linkedin.com/in/mattweber0) of
+ Copyright (c) 2016 Alorium Technology.  All right reserved.
+ by Matt Weber (support@aloriumtech.com) of
  Alorium Technology (info@aloriumtech.com)
  
  Uses the XLR8 ADC to read analog input pin 0, do both 10bit (0-1023, about

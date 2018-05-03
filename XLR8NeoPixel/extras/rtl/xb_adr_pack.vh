@@ -34,10 +34,10 @@
 //
 
 // These are the default values from the avr_adr_pack.vh. Change at your peril.
-localparam NEOCR_ADDR      = 8'hF4; // XLR8 NeoPixel XB Control Reg
-localparam NEOD0_ADDR      = 8'hF5; // XLR8 NeoPixel XB Data 0 Reg
-localparam NEOD1_ADDR      = 8'hF6; // XLR8 NeoPixel XB Data 1 Reg
-localparam NEOD2_ADDR      = 8'hF7; // XLR8 NeoPixel XB Data 2 Reg
+localparam XB_NEOCR_ADDR      = 8'hF4; // XLR8 NeoPixel XB Control Reg
+localparam XB_NEOD0_ADDR      = 8'hF5; // XLR8 NeoPixel XB Data 0 Reg
+localparam XB_NEOD1_ADDR      = 8'hF6; // XLR8 NeoPixel XB Data 1 Reg
+localparam XB_NEOD2_ADDR      = 8'hF7; // XLR8 NeoPixel XB Data 2 Reg
 
 //
 //----------------------------------------------------------------------

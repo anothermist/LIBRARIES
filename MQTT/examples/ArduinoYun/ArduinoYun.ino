@@ -9,24 +9,12 @@
 
 #include <Bridge.h>
 #include <BridgeClient.h>
-#include <MQTTClient.h>
+#include <MQTT.h>
 
 BridgeClient net;
 MQTTClient client;
 
 unsigned long lastMillis = 0;
-
-void setup() {
-  Bridge.begin();
-  Serial.begin(115200);
-
-  // Note: Local domain names (e.g. "Computer.local" on OSX) are not supported by Arduino.
-  // You need to set the IP address directly.
-  client.begin("broker.shiftr.io", net);
-  client.onMessage(messageReceived);
-
-  connect();
-}
 
 void connect() {
   Serial.print("connecting...");
@@ -41,6 +29,22 @@ void connect() {
   // client.unsubscribe("/hello");
 }
 
+void messageReceived(String &topic, String &payload) {
+  Serial.println("incoming: " + topic + " - " + payload);
+}
+
+void setup() {
+  Bridge.begin();
+  Serial.begin(115200);
+
+  // Note: Local domain names (e.g. "Computer.local" on OSX) are not supported by Arduino.
+  // You need to set the IP address directly.
+  client.begin("broker.shiftr.io", net);
+  client.onMessage(messageReceived);
+
+  connect();
+}
+
 void loop() {
   client.loop();
 
@@ -53,8 +57,4 @@ void loop() {
     lastMillis = millis();
     client.publish("/hello", "world");
   }
-}
-
-void messageReceived(String &topic, String &payload) {
-  Serial.println("incoming: " + topic + " - " + payload);
 }

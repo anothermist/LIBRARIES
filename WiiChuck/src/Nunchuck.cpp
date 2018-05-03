@@ -1,119 +1,80 @@
-#include "Nunchuck.h"
+#include "Accessory.h"
 
-Nunchuck::Nunchuck() :
-    Accessory() {
+int Accessory::getJoyX() {
+	return decodeInt(joyXBytes);
 }
-int Nunchuck::getJoyX() {
-    return decodeInt(joyXBytes);
-}
-int Nunchuck::getJoyY() {
-    return decodeInt(joyYBytes);
+int Accessory::getJoyY() {
+	return decodeInt(joyYBytes);
 }
 
-float Nunchuck::getRollAngle() {
-    return atan2((double) getAccelX() - 511, (double) getAccelZ() - 511) * 180.0 / PI;
+float Accessory::getRollAngle() {
+	return atan2((double) getAccelX() - 511, (double) getAccelZ() - 511) * 180.0 / PI;
 }
-float Nunchuck::getPitchAngle() {
-    return -atan2((double) getAccelY() - 511, (double) getAccelZ() - 511) * 180.0 / PI;
+float Accessory::getPitchAngle() {
+	return -atan2((double) getAccelY() - 511, (double) getAccelZ() - 511) * 180.0 / PI;
 }
-int Nunchuck::getAccelX() {
-    return decodeInt(accelXBytes);
+int Accessory::getAccelX() {
+	return decodeInt(accelXBytes);
 }
-int Nunchuck::getAccelY() {
-    return decodeInt(accelYBytes);
+int Accessory::getAccelY() {
+	return decodeInt(accelYBytes);
 }
-int Nunchuck::getAccelZ() {
-    return decodeInt(accelZBytes);
+int Accessory::getAccelZ() {
+	return decodeInt(accelZBytes);
 }
-boolean Nunchuck::checkButtonC() {
-    return decodeBit(buttonCBits);
+boolean Accessory::getButtonC() {
+	return decodeBit(buttonCBits);
 }
-boolean Nunchuck::checkButtonZ() {
-    return decodeBit(buttonZBits);
+boolean Accessory::getButtonZ() {
+	return decodeBit(buttonZBits);
 }
+void  Accessory::getValuesNunchuck( uint8_t * values){
+	values[0]=map(getJoyX(),0,255,0,255);
+	values[1]=map(getJoyY(),0,255,0,255);
+	values[2]=map(getRollAngle(),0,1024,0,256);
+	values[3]=map(getPitchAngle(),0,1024,0,256);
+	values[4]=map(getAccelX(),0,1024,0,256);
+	values[5]=map(getAccelY(),0,1024,0,256);
 
-void Nunchuck::printInputs(Stream& stream) {
-    char st[100];
+	values[6]=map(getAccelZ(),0,1024,0,256);
+	values[7]=0;
+	values[8]=0;
+	values[9]=0;
+	values[10]=getButtonZ()?255:0;
+	values[11]=getButtonC()?255:0;
+	values[12]=0;
+	values[13]=0;
 
-    stream.print("NUNCHUCK ");
-    sprintf(st,
-            "  JoyX: %4d  | JoyY: %4d | Ax: %4d | Ay: %4d | Az: %4d | Buttons: ",
-            getJoyX(), getJoyY(), getAccelX(), getAccelY(),getAccelZ());
+	values[14]=0;
+	values[15]=0;
+	values[16]=0;
 
-    stream.print(st);
-
-    if (checkButtonC())
-        stream.print("C");
-    else
-        stream.print("-");
-    if (checkButtonZ())
-        stream.print("Z");
-    else
-        stream.print("-");
-    stream.println();
+	values[17]=0;
+	values[18]=0;
+	for(int i=0;i<WII_VALUES_ARRAY_SIZE;i++){
+		if(values[i]>247){
+			values[i]=255;
+		}
+	}
 }
+void Accessory::printInputsNunchuck(Stream& stream) {
+	char st[100];
 
+	stream.print("NUNCHUCK ");
+	sprintf(st,
+	        "  JoyX: %4d  | JoyY: %4d | Ax: %4d | Ay: %4d | Az: %4d | Buttons: ",
+	        getJoyX(), getJoyY(), getAccelX(), getAccelY(),getAccelZ());
 
+	stream.print(st);
 
-unsigned int  Nunchuck::joyX::mapVar() {
-    Nunchuck* c = (Nunchuck*)controller;
-    return smap(c->getJoyX(),myMax,myZero,myMin,servoMax,servoZero,servoMin);
+	if (getButtonC())
+		stream.print("C");
+	else
+		stream.print("-");
+	if (getButtonZ())
+		stream.print("Z");
+	else
+		stream.print("-");
+	stream.println();
 }
-
-void Nunchuck::joyX::printMap(Stream& stream) {
-    stream.print("Nunchuck::joyX -> ");
-    Mapping::printMap(stream);
-}
-
-unsigned int  Nunchuck::joyY::mapVar() {
-    Nunchuck* c = (Nunchuck*)controller;
-    return smap(c->getJoyY(),myMax,myZero,myMin,servoMax,servoZero,servoMin);
-}
-
-void Nunchuck::joyY::printMap(Stream& stream) {
-    stream.print("Nunchuck::joyY -> ");
-    Mapping::printMap(stream);
-}
-
-unsigned int  Nunchuck::roll::mapVar() {
-    Nunchuck* c = (Nunchuck*)controller;
-    return smap(c->getRollAngle(),myMax,myZero,myMin,servoMax,servoZero,servoMin);
-}
-
-void Nunchuck::roll::printMap(Stream& stream) {
-    stream.print("Nunchuck::roll -> ");
-    Mapping::printMap(stream);
-}
-
-
-unsigned int  Nunchuck::pitch::mapVar() {
-    Nunchuck* c = (Nunchuck*)controller;
-    return smap(c->getPitchAngle(),myMax,myZero,myMin,servoMax,servoZero,servoMin);
-}
-
-void Nunchuck::pitch::printMap(Stream& stream) {
-    stream.print("Nunchuck::pitch -> ");
-    Mapping::printMap(stream);
-}
-
-unsigned int  Nunchuck::buttonC::mapVar() {
-    Nunchuck* c = (Nunchuck*)controller;
-    return (c->checkButtonC()) ? servoMax:servoZero;
-}
-
-void Nunchuck::buttonC::printMap(Stream& stream) {
-    stream.print("Nunchuck::ButtonC -> ");
-    Mapping::printMap(stream);
-}
-
-unsigned int  Nunchuck::buttonZ::mapVar() {
-    Nunchuck* c = (Nunchuck*)controller;
-    return (c->checkButtonZ()) ? servoMax:servoZero;
-}
-
-void Nunchuck::buttonZ::printMap(Stream& stream) {
-    stream.print("Nunchuck::ButtonZ -> ");
-    Mapping::printMap(stream);
-}
-
 

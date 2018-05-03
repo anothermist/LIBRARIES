@@ -1,0 +1,28 @@
+#==============================================================================
+# Copyright (c) 2016 Alorium Technology.  All right reserved.
+#==============================================================================
+#
+# File Name  : openxlr8.qsf
+# Author     : Steve Phillips
+# Contact    : support@aloriumtech.com
+# Description:
+#
+# This is the file that the OpenXLR8 user should use to set all the
+# Quartus settings specific to the OpenXLR8 being developed. This is
+# typically used to include the RTL files needed.
+#
+# Quartus settings for XLR8 project
+#  http://www.aloriumtech.com/xlr8
+#  https://github.com/AloriumTechnology
+#==============================================================================
+
+#==============================================================================
+# Set paths to specifc source files as need here
+
+# Load settings file specific to this OpenXLR8 module
+set_global_assignment -name VERILOG_FILE ../rtl/xlr8_neopixel.v
+set_global_assignment -name SEARCH_PATH ../rtl/ram2p1024x36
+
+
+
+#==============================================================================

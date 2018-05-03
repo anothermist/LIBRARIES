@@ -142,6 +142,8 @@ class MFRC522 {
 public:
 	// Size of the MFRC522 FIFO
 	static const byte FIFO_SIZE = 64;		// The FIFO is 64 bytes.
+	// Default value for unused pin
+	static constexpr uint8_t UNUSED_PIN = UINT8_MAX;
 
 	// MFRC522 registers. Described in chapter 9 of the datasheet.
 	// When using SPI all addresses are shifted one bit left in the "SPI address byte" (section 8.1.2.3)
@@ -408,6 +410,7 @@ public:
 	void PICC_DumpMifareUltralightToSerial();
 	
 	// Advanced functions for MIFARE
+	DEPRECATED_MSG("name will change in next version")
 	void MIFARE_SetAccessBits(byte *accessBitBuffer, byte g0, byte g1, byte g2, byte g3);
 	DEPRECATED_MSG("will move to extra class in next version")
 	bool MIFARE_OpenUidBackdoor(bool logErrors);

@@ -18,7 +18,8 @@ typedef struct {
   MQTTClientCallbackAdvanced advanced = nullptr;
 } MQTTClientCallback;
 
-static void MQTTClientHandler(lwmqtt_client_t *client, void *ref, lwmqtt_string_t topic, lwmqtt_message_t message) {
+static void MQTTClientHandler(lwmqtt_client_t * /*client*/, void *ref, lwmqtt_string_t topic,
+                              lwmqtt_message_t message) {
   // get callback
   auto cb = (MQTTClientCallback *)ref;
 
@@ -76,7 +77,7 @@ class MQTTClient {
   lwmqtt_arduino_network_t network = {nullptr};
   lwmqtt_arduino_timer_t timer1 = {0};
   lwmqtt_arduino_timer_t timer2 = {0};
-  lwmqtt_client_t client = {0};
+  lwmqtt_client_t client;
 
   bool _connected = false;
   lwmqtt_return_code_t _returnCode = (lwmqtt_return_code_t)0;
@@ -84,6 +85,7 @@ class MQTTClient {
 
  public:
   explicit MQTTClient(int bufSize = 128) {
+    memset(&client, 0, sizeof(client));
     this->bufSize = (size_t)bufSize;
     this->readBuf = (uint8_t *)malloc((size_t)bufSize + 1);
     this->writeBuf = (uint8_t *)malloc((size_t)bufSize);
@@ -156,11 +158,11 @@ class MQTTClient {
     this->timeout = (uint32_t)timeout;
   }
 
-  boolean connect(const char clientId[]) { return this->connect(clientId, nullptr, nullptr); }
+  bool connect(const char clientId[]) { return this->connect(clientId, nullptr, nullptr); }
 
-  boolean connect(const char clientId[], const char username[]) { return this->connect(clientId, username, nullptr); }
+  bool connect(const char clientId[], const char username[]) { return this->connect(clientId, username, nullptr); }
 
-  boolean connect(const char clientId[], const char username[], const char password[]) {
+  bool connect(const char clientId[], const char username[], const char password[]) {
     // close left open connection if still connected
     if (this->connected()) {
       this->close();
@@ -207,35 +209,35 @@ class MQTTClient {
     return true;
   }
 
-  boolean publish(const String &topic) { return this->publish(topic.c_str(), ""); }
+  bool publish(const String &topic) { return this->publish(topic.c_str(), ""); }
 
-  boolean publish(const char topic[]) { return this->publish(topic, ""); }
+  bool publish(const char topic[]) { return this->publish(topic, ""); }
 
-  boolean publish(const String &topic, const String &payload) { return this->publish(topic.c_str(), payload.c_str()); }
+  bool publish(const String &topic, const String &payload) { return this->publish(topic.c_str(), payload.c_str()); }
 
-  boolean publish(const String &topic, const String &payload, bool retained, int qos) {
+  bool publish(const String &topic, const String &payload, bool retained, int qos) {
     return this->publish(topic.c_str(), payload.c_str(), retained, qos);
   }
 
-  boolean publish(const char topic[], const String &payload) { return this->publish(topic, payload.c_str()); }
+  bool publish(const char topic[], const String &payload) { return this->publish(topic, payload.c_str()); }
 
-  boolean publish(const char topic[], const String &payload, bool retained, int qos) {
+  bool publish(const char topic[], const String &payload, bool retained, int qos) {
     return this->publish(topic, payload.c_str(), retained, qos);
   }
 
-  boolean publish(const char topic[], const char payload[]) {
+  bool publish(const char topic[], const char payload[]) {
     return this->publish(topic, (char *)payload, (int)strlen(payload));
   }
 
-  boolean publish(const char topic[], const char payload[], bool retained, int qos) {
+  bool publish(const char topic[], const char payload[], bool retained, int qos) {
     return this->publish(topic, (char *)payload, (int)strlen(payload), retained, qos);
   }
 
-  boolean publish(const char topic[], const char payload[], int length) {
+  bool publish(const char topic[], const char payload[], int length) {
     return this->publish(topic, payload, length, false, 0);
   }
 
-  boolean publish(const char topic[], const char payload[], int length, bool retained, int qos) {
+  bool publish(const char topic[], const char payload[], int length, bool retained, int qos) {
     // return immediately if not connected
     if (!this->connected()) {
       return false;
@@ -257,13 +259,13 @@ class MQTTClient {
     return true;
   }
 
-  boolean subscribe(const String &topic) { return this->subscribe(topic.c_str()); }
+  bool subscribe(const String &topic) { return this->subscribe(topic.c_str()); }
 
-  boolean subscribe(const String &topic, int qos) { return this->subscribe(topic.c_str(), qos); }
+  bool subscribe(const String &topic, int qos) { return this->subscribe(topic.c_str(), qos); }
 
-  boolean subscribe(const char topic[]) { return this->subscribe(topic, 0); }
+  bool subscribe(const char topic[]) { return this->subscribe(topic, 0); }
 
-  boolean subscribe(const char topic[], int qos) {
+  bool subscribe(const char topic[], int qos) {
     // return immediately if not connected
     if (!this->connected()) {
       return false;
@@ -278,9 +280,9 @@ class MQTTClient {
     return true;
   }
 
-  boolean unsubscribe(const String &topic) { return this->unsubscribe(topic.c_str()); }
+  bool unsubscribe(const String &topic) { return this->unsubscribe(topic.c_str()); }
 
-  boolean unsubscribe(const char topic[]) {
+  bool unsubscribe(const char topic[]) {
     // return immediately if not connected
     if (!this->connected()) {
       return false;
@@ -295,7 +297,7 @@ class MQTTClient {
     return true;
   }
 
-  boolean loop() {
+  bool loop() {
     // return immediately if not connected
     if (!this->connected()) {
       return false;
@@ -321,7 +323,7 @@ class MQTTClient {
     return true;
   }
 
-  boolean connected() {
+  bool connected() {
     // a client is connected if the network is connected, a client is available and
     // the connection has been properly initiated
     return this->netClient != nullptr && this->netClient->connected() == 1 && this->_connected;
@@ -331,7 +333,7 @@ class MQTTClient {
 
   lwmqtt_return_code_t returnCode() { return this->_returnCode; }
 
-  boolean disconnect() {
+  bool disconnect() {
     // return immediately if not connected anymore
     if (!this->connected()) {
       return false;
@@ -347,7 +349,7 @@ class MQTTClient {
   }
 
  private:
-  boolean close() {
+  bool close() {
     // set flag
     this->_connected = false;
 

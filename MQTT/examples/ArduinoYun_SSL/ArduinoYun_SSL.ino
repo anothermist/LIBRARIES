@@ -9,12 +9,29 @@
 
 #include <Bridge.h>
 #include <BridgeSSLClient.h>
-#include <MQTTClient.h>
+#include <MQTT.h>
 
 BridgeSSLClient net;
 MQTTClient client;
 
 unsigned long lastMillis = 0;
+
+void connect() {
+  Serial.print("connecting...");
+  while (!client.connect("arduino", "try", "try")) {
+    Serial.print(".");
+    delay(1000);
+  }
+
+  Serial.println("\nconnected!");
+
+  client.subscribe("/hello");
+  // client.unsubscribe("/hello");
+}
+
+void messageReceived(String &topic, String &payload) {
+  Serial.println("incoming: " + topic + " - " + payload);
+}
 
 void setup() {
   Bridge.begin();
@@ -30,19 +47,6 @@ void setup() {
   connect();
 }
 
-void connect() {
-  Serial.print("connecting...");
-  while (!client.connect("arduino", "try", "try")) {
-    Serial.print(".");
-    delay(1000);
-  }
-
-  Serial.println("\nconnected!");
-
-  client.subscribe("/hello");
-  // client.unsubscribe("/hello");
-}
-
 void loop() {
   client.loop();
 
@@ -55,8 +59,4 @@ void loop() {
     lastMillis = millis();
     client.publish("/hello", "world");
   }
-}
-
-void messageReceived(String &topic, String &payload) {
-  Serial.println("incoming: " + topic + " - " + payload);
 }

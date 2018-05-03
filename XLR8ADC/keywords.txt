@@ -10,12 +10,16 @@ XLR8ADC	KEYWORD1
 # Methods and Functions 
 #######################################	
 
-begin		KEYWORD2
+begin	KEYWORD2
 set12bitMode	KEYWORD2
 set10bitMode	KEYWORD2
 is12bitMode	KEYWORD2
 is10bitMode	KEYWORD2
-end		KEYWORD2
+setArduinoMode	KEYWORD2
+setXLR8Mode	KEYWORD2
+isArduinoMode	KEYWORD2
+isXLR8Mode	KEYWORD2
+end	KEYWORD2
 
 
 #######################################

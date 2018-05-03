@@ -52,6 +52,7 @@ const char *dow2String(uint8_t code)
 {
   static const char *str[] = {" ---", " Sun", " Mon", " Tue", " Wed", " Thu", " Fri", " Sat"};
 
+  if (code > 7) code = 0;
   return(str[code]);
 }
 
@@ -291,7 +292,8 @@ void inputTime(void)
 void showDoW(void)
 {
   RTC.readTime();
-  PRINT("\nCalculated DoW is", dow2String(RTC.calcDoW(RTC.yyyy, RTC.mm, RTC.dd)));
+  PRINT("\nCalculated DoW (", RTC.calcDoW(RTC.yyyy, RTC.mm, RTC.dd));
+  PRINT(") is ", dow2String(RTC.calcDoW(RTC.yyyy, RTC.mm, RTC.dd)));
 }
 
 void cbAlarm1()

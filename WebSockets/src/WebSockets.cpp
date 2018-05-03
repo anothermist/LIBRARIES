@@ -38,6 +38,8 @@ extern "C" {
 
 #ifdef ESP8266
 #include <Hash.h>
+#elif defined(ESP32)
+#include <hwcrypto/sha.h>
 #else
 
 extern "C" {
@@ -46,12 +48,13 @@ extern "C" {
 
 #endif
 
+
 /**
  *
  * @param client WSclient_t *  ptr to the client struct
  * @param code uint16_t see RFC
- * @param reason
- * @param reasonLen
+ * @param reason ptr to the disconnect reason message
+ * @param reasonLen length of the disconnect reason message
  */
 void WebSockets::clientDisconnect(WSclient_t * client, uint16_t code, char * reason, size_t reasonLen) {
     DEBUG_WEBSOCKETS("[WS][%d][handleWebsocket] clientDisconnect code: %u\n", client->num, code);
@@ -72,8 +75,8 @@ void WebSockets::clientDisconnect(WSclient_t * client, uint16_t code, char * rea
  *
  * @param client WSclient_t *   ptr to the client struct
  * @param opcode WSopcode_t
- * @param payload uint8_t *
- * @param length size_t
+ * @param payload uint8_t *     ptr to the payload
+ * @param length size_t         length of the payload
  * @param mask bool             add dummy mask to the frame (needed for web browser)
  * @param fin bool              can be used to send data in more then one frame (set fin on the last frame)
  * @param headerToPayload bool  set true if the payload has reserved 14 Byte at the beginning to dynamically add the Header (payload neet to be in RAM!)
@@ -91,7 +94,7 @@ bool WebSockets::sendFrame(WSclient_t * client, WSopcode_t opcode, uint8_t * pay
         return false;
     }
 
-    DEBUG_WEBSOCKETS("[WS][%d][sendFrame] ------- send massage frame -------\n", client->num);
+    DEBUG_WEBSOCKETS("[WS][%d][sendFrame] ------- send message frame -------\n", client->num);
     DEBUG_WEBSOCKETS("[WS][%d][sendFrame] fin: %u opCode: %u mask: %u length: %u headerToPayload: %u\n", client->num, fin, opcode, mask, length, headerToPayload);
 
     if(opcode == WSop_text) {
@@ -483,6 +486,9 @@ String WebSockets::acceptKey(String & clientKey) {
     uint8_t sha1HashBin[20] = { 0 };
 #ifdef ESP8266
     sha1(clientKey + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11", &sha1HashBin[0]);
+#elif defined(ESP32)
+    String data = clientKey + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+    esp_sha(SHA1, (unsigned char*)data.c_str(), data.length(), &sha1HashBin[0]);
 #else
     clientKey += "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
     SHA1_CTX ctx;

@@ -3,9 +3,11 @@
 [![Build Status](https://travis-ci.org/256dpi/arduino-mqtt.svg?branch=master)](https://travis-ci.org/256dpi/arduino-mqtt)
 [![GitHub release](https://img.shields.io/github/release/256dpi/arduino-mqtt.svg)](https://github.com/256dpi/arduino-mqtt/releases)
 
-This library bundles the [lwmqtt](https://github.com/256dpi/lwmqtt) client and adds a thin wrapper to get an Arduino like API.
+This library bundles the [lwmqtt](https://github.com/256dpi/lwmqtt) MQTT 3.1.1 client and adds a thin wrapper to get an Arduino like API.
 
 Download the latest version from the [release](https://github.com/256dpi/arduino-mqtt/releases) section. Or even better use the builtin Library Manager in the Arduino IDE and search for "MQTT".
+
+The library is also available on [PlatformIO](https://platformio.org/lib/show/617/MQTT). You can install it by running: `pio lib install "MQTT"`. 
 
 ## Compatibility
 
@@ -16,6 +18,7 @@ The following examples show how you can use the library with various Arduino com
 - [Arduino WiFi Shield](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoWiFiShield/ArduinoWiFiShield.ino)
 - [Adafruit HUZZAH ESP8266](https://github.com/256dpi/arduino-mqtt/blob/master/examples/AdafruitHuzzahESP8266/AdafruitHuzzahESP8266.ino) ([SSL](https://github.com/256dpi/arduino-mqtt/blob/master/examples/AdafruitHuzzahESP8266_SSL/AdafruitHuzzahESP8266_SSL.ino))
 - [Arduino/Genuino WiFi101 Shield](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoWiFi101/ArduinoWiFi101.ino) ([SSL](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoWiFi101_SSL/ArduinoWiFi101_SSL.ino))
+- [Arduino MKR GSM 1400](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoMKRGSM1400/ArduinoMKRGSM1400.ino) ([SSL](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoMKRGSM1400_SSL/ArduinoMKRGSM1400_SSL.ino))
 - [ESP32 Development Board](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ESP32DevelopmentBoard/ESP32DevelopmentBoard.ino) ([SSL](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ESP32DevelopmentBoard_SSL/ESP32DevelopmentBoard_SSL.ino))
 
 Other shields and boards should also work if they provide a [Client](https://www.arduino.cc/en/Reference/ClientConstructor) based network implementation.
@@ -33,9 +36,9 @@ Other shields and boards should also work if they provide a [Client](https://www
 The following example uses an Arduino MKR1000 to connect to shiftr.io. You can check on your device after a successful connection here: https://shiftr.io/try.
 
 ```c++
-#include <MQTTClient.h>
 #include <SPI.h>
 #include <WiFi101.h>
+#include <MQTT.h>
 
 const char ssid[] = "ssid";
 const char pass[] = "pass";
@@ -44,18 +47,6 @@ WiFiClient net;
 MQTTClient client;
 
 unsigned long lastMillis = 0;
-
-void setup() {
-  Serial.begin(115200);
-  WiFi.begin(ssid, pass);
-
-  // Note: Local domain names (e.g. "Computer.local" on OSX) are not supported by Arduino.
-  // You need to set the IP address directly.
-  client.begin("broker.shiftr.io", net);
-  client.onMessage(messageReceived);
-
-  connect();
-}
 
 void connect() {
   Serial.print("checking wifi...");
@@ -76,6 +67,22 @@ void connect() {
   // client.unsubscribe("/hello");
 }
 
+void messageReceived(String &topic, String &payload) {
+  Serial.println("incoming: " + topic + " - " + payload);
+}
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin(ssid, pass);
+
+  // Note: Local domain names (e.g. "Computer.local" on OSX) are not supported by Arduino.
+  // You need to set the IP address directly.
+  client.begin("broker.shiftr.io", net);
+  client.onMessage(messageReceived);
+
+  connect();
+}
+
 void loop() {
   client.loop();
 
@@ -88,10 +95,6 @@ void loop() {
     lastMillis = millis();
     client.publish("/hello", "world");
   }
-}
-
-void messageReceived(String &topic, String &payload) {
-  Serial.println("incoming: " + topic + " - " + payload);
 }
 ```
 
@@ -148,9 +151,9 @@ void setOptions(int keepAlive, bool cleanSession, int timeout);
 Connect to broker using the supplied client id and an optional username and password:
 
 ```c++
-boolean connect(const char clientId[]);
-boolean connect(const char clientId[], const char username[]);
-boolean connect(const char clientId[], const char username[], const char password[]);
+bool connect(const char clientId[]);
+bool connect(const char clientId[], const char username[]);
+bool connect(const char clientId[], const char username[], const char password[]);
 ```
 
 - This functions returns a boolean that indicates if the connection has been established successfully.
@@ -158,38 +161,38 @@ boolean connect(const char clientId[], const char username[], const char passwor
 Publishes a message to the broker with an optional payload:
 
 ```c++
-boolean publish(const String &topic);
-boolean publish(const char topic[]);
-boolean publish(const String &topic, const String &payload);
-boolean publish(const String &topic, const String &payload, bool retained, int qos);
-boolean publish(const char topic[], const String &payload);
-boolean publish(const char topic[], const String &payload, bool retained, int qos);
-boolean publish(const char topic[], const char payload[]);
-boolean publish(const char topic[], const char payload[], bool retained, int qos);
-boolean publish(const char topic[], const char payload[], int length);
-boolean publish(const char topic[], const char payload[], int length, bool retained, int qos);
+bool publish(const String &topic);
+bool publish(const char topic[]);
+bool publish(const String &topic, const String &payload);
+bool publish(const String &topic, const String &payload, bool retained, int qos);
+bool publish(const char topic[], const String &payload);
+bool publish(const char topic[], const String &payload, bool retained, int qos);
+bool publish(const char topic[], const char payload[]);
+bool publish(const char topic[], const char payload[], bool retained, int qos);
+bool publish(const char topic[], const char payload[], int length);
+bool publish(const char topic[], const char payload[], int length, bool retained, int qos);
 ```
 
 Subscribe to a topic:
 
 ```c++
-boolean subscribe(const String &topic);
-boolean subscribe(const String &topic, int qos); 
-boolean subscribe(const char topic[]);
-boolean subscribe(const char topic[], int qos);
+bool subscribe(const String &topic);
+bool subscribe(const String &topic, int qos); 
+bool subscribe(const char topic[]);
+bool subscribe(const char topic[], int qos);
 ```
 
 Unsubscribe from a topic:
 
 ```c++
-boolean unsubscribe(const String &topic);
-boolean unsubscribe(const char topic[]);
+bool unsubscribe(const String &topic);
+bool unsubscribe(const char topic[]);
 ```
 
 Sends and receives packets:
 
 ```c++
-boolean loop();
+bool loop();
 ```
 
 - This function should be called in every `loop`.
@@ -197,7 +200,7 @@ boolean loop();
 Check if the client is currently connected:
 
 ```c++
-boolean connected();
+bool connected();
 ```
 
 Access low-level information for debugging:
@@ -207,8 +210,16 @@ lwmqtt_err_t lastError();
 lwmqtt_return_code_t returnCode();
 ```
 
+- The error codes can be found [here](https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L11).
+- The return codes can be found [here](https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L243).
+
 Disconnect from the broker:
 
 ```c++
-boolean disconnect();
+bool disconnect();
 ```
+
+## Release Management
+
+- Update version in `library.properties`.
+- Create release on GitHub.

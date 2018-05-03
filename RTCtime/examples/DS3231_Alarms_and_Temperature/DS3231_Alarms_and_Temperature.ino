@@ -4,7 +4,6 @@
 // It is not possible to have it working with a DS1307 which lacks that feature
 
 
-
 // ------> V E R Y   I M P O R T A N T !  <------
 // CONNECTIONS:
 //

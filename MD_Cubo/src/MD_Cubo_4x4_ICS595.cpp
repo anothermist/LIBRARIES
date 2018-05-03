@@ -1,6 +1,11 @@
 ﻿#include <MD_Cubo.h>
 #include "MD_CUBO_4x4_ICS595.h"
 
+/**
+ * \file
+ * \brief Main file for the MD_Cubo ICStation 595 object
+ */
+
 void MD_Cubo_ICS595::begin()
 {
   pinMode(_data, OUTPUT);
@@ -65,30 +70,31 @@ void MD_Cubo_ICS595::update()
   memcpy(&_current, &_scratch, sizeof(dispData_t));
 }
 
-void MD_Cubo_ICS595::setVoxel(boolean p, uint8_t x, uint8_t y, uint8_t z)
+void MD_Cubo_ICS595::setVoxel(uint32_t p, uint8_t x, uint8_t y, uint8_t z)
 {
   PRINT("\nPixel ", p);
   PRINT(" @ ", x);
   PRINT(",",y);
   PRINT(",",z);
-  if ((x>CUBE_SIZE) || (y>CUBE_SIZE) || (z>CUBE_SIZE))
+
+  if ((x >= CUBE_SIZE) || (y >= CUBE_SIZE) || (z >= CUBE_SIZE))
     return;
   
-  uint16_t  pix = (x + (y << 2));  // x + (y * 4)
-  
+  uint16_t  pix = (x + (y << 2));  // same as x + (y * 4)
+  boolean b = (p != VOX_OFF);
 
-  bitWrite(_scratch.data[z], pix, p);
-  _scratch.count[z] += (p ? 1 : -1);
+  bitWrite(_scratch.data[z], pix, b ? 1 : 0);
+  _scratch.count[z] += (b ? 1 : -1);
   
   PRINTX(" layer data ", _scratch.data[z]);
 }
 
-boolean MD_Cubo_ICS595::getVoxel(uint8_t x, uint8_t y, uint8_t z)
+uint32_t MD_Cubo_ICS595::getVoxel(uint8_t x, uint8_t y, uint8_t z)
 {
-  if ((x>CUBE_SIZE) || (y>CUBE_SIZE) || (z>CUBE_SIZE))
-    return(false);
+  if ((x >= CUBE_SIZE) || (y >= CUBE_SIZE) || (z >= CUBE_SIZE))
+    return(VOX_OFF);
 
-  uint16_t  pix = x + (y << 2);  // x + (y * 4)
+  uint16_t  pix = x + (y << 2);  // same as x + (y * 4)
 
-  return (bitRead(_scratch.data[z], pix) != 0);
+  return (bitRead(_scratch.data[z], pix) ? VOX_ON : VOX_OFF);
 }
