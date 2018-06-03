@@ -80,9 +80,6 @@
       
     // Enable all items with _LCDML_G1
     LCDML_DISP_groupEnable(_LCDML_G1); // enable group 1
-    
-    // Enable menu rollover if needed
-    //LCDML.enRollover();
   
     // LCDMenu Setup
     LCDML_setup(_LCDML_BACK_cnt);  

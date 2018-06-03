@@ -92,7 +92,8 @@
 // *********************************************************************
   void setup()
   {  
-    // serial init; only be needed if serial control is used   
+    // serial init; only be needed if serial control is used 
+    while(!Serial);                    // wait until serial ready
     Serial.begin(9600);                // start serial    
     Serial.println(F(_LCDML_VERSION)); // only for examples
     
@@ -111,9 +112,6 @@
   
     // Enable all items with _LCDML_G1
     LCDML_DISP_groupEnable(_LCDML_G1); // enable group 1
-    
-    // Enable menu rollover if needed
-    //LCDML.enRollover();
   
     // LCDMenu Setup
     LCDML_setup(_LCDML_BACK_cnt);  
