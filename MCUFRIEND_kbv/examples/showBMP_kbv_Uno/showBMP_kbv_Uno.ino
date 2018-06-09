@@ -13,7 +13,11 @@
 #include <MCUFRIEND_kbv.h>
 MCUFRIEND_kbv tft;
 
+#if defined(ESP32)
+#define SD_CS     5
+#else
 #define SD_CS     10
+#endif
 #define NAMEMATCH ""        // "" matches any name
 //#define NAMEMATCH "tiger"   // *tiger*.bmp
 #define PALETTEDEPTH   0     // do not support Palette modes
@@ -101,13 +105,13 @@ void loop()
 
 uint16_t read16(File& f) {
     uint16_t result;         // read little-endian
-    f.read(&result, sizeof(result));
+    f.read((uint8_t*)&result, sizeof(result));
     return result;
 }
 
 uint32_t read32(File& f) {
     uint32_t result;
-    f.read(&result, sizeof(result));
+    f.read((uint8_t*)&result, sizeof(result));
     return result;
 }
 

@@ -12,64 +12,78 @@ MCUFRIEND_kbv tft;
 #define WHITE   0xFFFF
 #define GRAY    0x8410
 
+uint16_t version = MCUFRIEND_KBV_H_;
+
 void setup()
 {
     Serial.begin(9600);
     if (!Serial) delay(5000);           //allow some time for Leonardo
     uint16_t ID = tft.readID(); //
-    Serial.println("Diagnose whether this controller is supported");
-    Serial.println("There are FAQs in extras/mcufriend_how_to.txt");
-    Serial.println("");
-    Serial.print("tft.readID() finds: ID = 0x");
+    Serial.println(F("Diagnose whether this controller is supported"));
+    Serial.println(F("There are FAQs in extras/mcufriend_how_to.txt"));
+    Serial.println(F(""));
+    Serial.print(F("tft.readID() finds: ID = 0x"));
     Serial.println(ID, HEX);
-    Serial.println("");
+    Serial.println(F(""));
+	Serial.print(F("MCUFRIEND_kbv version: "));
+    Serial.print(version/100);
+	Serial.print(F("."));
+    Serial.print((version / 10) % 10);
+	Serial.print(F("."));
+    Serial.println(version % 10);
+    Serial.println(F(""));
     if (ID == 0x0404) {
-        Serial.println("Probably a write-only Mega2560 Shield");
-        Serial.println("#define USE_SPECIAL in mcufriend_shield.h");
-        Serial.println("#define appropriate SPECIAL in mcufriend_special.h");
-        Serial.println("e.g. USE_MEGA_16BIT_SHIELD");
-        Serial.println("e.g. USE_MEGA_8BIT_SHIELD");
-        Serial.println("Hint.  A Mega2560 Shield has a 18x2 male header");
-        Serial.println("Often a row of resistor-packs near the 18x2");
-        Serial.println("RP1-RP7 implies 16-bit but it might be 8-bit");
-        Serial.println("RP1-RP4 or RP1-RP5 can only be 8-bit");
+        Serial.println(F("Probably a write-only Mega2560 Shield"));
+        Serial.println(F("#define USE_SPECIAL in mcufriend_shield.h"));
+        Serial.println(F("#define appropriate SPECIAL in mcufriend_special.h"));
+        Serial.println(F("e.g. USE_MEGA_16BIT_SHIELD"));
+        Serial.println(F("e.g. USE_MEGA_8BIT_SHIELD"));
+        Serial.println(F("Hint.  A Mega2560 Shield has a 18x2 male header"));
+        Serial.println(F("Often a row of resistor-packs near the 18x2"));
+        Serial.println(F("RP1-RP7 implies 16-bit but it might be 8-bit"));
+        Serial.println(F("RP1-RP4 or RP1-RP5 can only be 8-bit"));
     }
     if (ID == 0xD3D3) {
         uint16_t guess_ID = 0x9481; // write-only shield
-        Serial.println("Probably a write-only Mega2560 Shield");
-        Serial.print("Try to force ID = 0x");
+        Serial.println(F("Probably a write-only Mega2560 Shield"));
+        Serial.print(F("Try to force ID = 0x"));
         Serial.println(guess_ID, HEX);
         tft.begin(guess_ID);
     }
     else tft.begin(ID);
-    Serial.println("");
+    Serial.println(F(""));
     if (tft.width() == 0) {
-        Serial.println("This ID is not supported");
-        Serial.println("look up ID in extras/mcufriend_how_to.txt");
-        Serial.println("you may need to edit MCUFRIEND_kbv.cpp");
-        Serial.println("to enable support for this ID");
-        Serial.println("e.g. #define SUPPORT_8347D");
-        Serial.println("");
-        Serial.println("New controllers appear on Ebay often");
-        Serial.println("If your ID is not supported");
-        Serial.println("run LCD_ID_readreg.ino from examples/");
-        Serial.println("Copy-Paste the output from the Serial Terminal");
-        Serial.println("to a message in Displays topic on Arduino Forum");
-        Serial.println("or to Issues on GitHub");
-        while (1);    //just die
+        Serial.println(F("This ID is not supported"));
+        Serial.println(F("look up ID in extras/mcufriend_how_to.txt"));
+        Serial.println(F("you may need to edit MCUFRIEND_kbv.cpp"));
+        Serial.println(F("to enable support for this ID"));
+        Serial.println(F("e.g. #define SUPPORT_8347D"));
+        Serial.println(F(""));
+        Serial.println(F("New controllers appear on Ebay often"));
+        Serial.println(F("If your ID is not supported"));
+        Serial.println(F("run LCD_ID_readreg.ino from examples/"));
+        Serial.println(F("Copy-Paste the output from the Serial Terminal"));
+        Serial.println(F("to a message in Displays topic on Arduino Forum"));
+        Serial.println(F("or to Issues on GitHub"));
+        Serial.println(F(""));
+        Serial.println(F("Note that OPEN-SMART boards have diff pinout"));
+        Serial.println(F("Edit the pin defines in LCD_ID_readreg to match"));
+        Serial.println(F("Edit mcufiend_shield.h for USE_SPECIAL"));
+        Serial.println(F("Edit mcufiend_special.h for USE_OPENSMART_SHIELD_PINOUT"));
+       while (1);    //just die
     } else {
-        Serial.print("PORTRAIT is ");
+        Serial.print(F("PORTRAIT is "));
         Serial.print(tft.width());
-        Serial.print(" x ");
+        Serial.print(F(" x "));
         Serial.println(tft.height());
-        Serial.println("");
-        Serial.println("Run the examples/graphictest_kbv sketch");
-        Serial.println("All colours, text, directions, rotations, scrolls");
-        Serial.println("should work.  If there is a problem,  make notes on paper");
-        Serial.println("Post accurate description of problem to Forum");
-        Serial.println("Or post a link to a video (or photos)");
-        Serial.println("");
-        Serial.println("I rely on good information from remote users");
+        Serial.println(F(""));
+        Serial.println(F("Run the examples/graphictest_kbv sketch"));
+        Serial.println(F("All colours, text, directions, rotations, scrolls"));
+        Serial.println(F("should work.  If there is a problem,  make notes on paper"));
+        Serial.println(F("Post accurate description of problem to Forum"));
+        Serial.println(F("Or post a link to a video (or photos)"));
+        Serial.println(F(""));
+        Serial.println(F("I rely on good information from remote users"));
     }
 }
 
@@ -103,6 +117,10 @@ void loop()
     tft.setTextColor(WHITE);
     tft.setCursor(40, 130);
     tft.print(colorname[aspect]);
+    tft.setCursor(40, 160);
+    tft.setTextSize(1);
+    tft.print("MCUFRIEND_KBV_H_ = ");
+    tft.print(version);
     if (++aspect > 3) aspect = 0;
     delay(5000);
 }

@@ -105,7 +105,8 @@
   #define D13_PORT GPIOB
   #define D13_PIN  13    //3
   #define A0_PORT GPIOB
-  #define A0_PIN  5
+  #define A0_PIN  5      //original pcb uses SPI pin 
+//  #define A0_PIN  0      //hardware mod to Adapter to PB0.  Allows use of PB5 for SD Card
   #define A1_PORT GPIOB
   #define A1_PIN  6
   #define A2_PORT GPIOB
@@ -181,7 +182,7 @@
 #define PIN_INPUT(port, pin) {if (pin > 7) PIN_MODE4((port)->CRH, (pin&7), 0x4); else  PIN_MODE4((port)->CRL, pin, 0x4); }  //input
 
 
-#elif defined(NUCLEO) || defined(TARGET_NUCLEO_F072RB) || defined(TARGET_NUCLEO_F401RE) || defined(TARGET_NUCLEO_F411RE) || defined(TARGET_NUCLEO_F103RB) || defined(TARGET_NUCLEO_L476RG)
+#elif defined(NUCLEO) || defined(TARGET_NUCLEO_F072RB) || defined(TARGET_NUCLEO_F401RE) || defined(TARGET_NUCLEO_F411RE) || defined(TARGET_NUCLEO_F103RB) || defined(TARGET_NUCLEO_L476RG) || defined(TARGET_NUCLEO_F446RE)
 #define PIN_MODE2(reg, pin, mode) reg=(reg&~(0x3<<((pin)<<1)))|(mode<<((pin)<<1))
 #if __MBED__
 #warning MBED knows everything
@@ -195,7 +196,7 @@
   #endif
 #elif defined(STM32L476xx)
   #include <STM32L4XX.h>
-#elif defined(STM32F401xE) || defined(STM32F411xE)
+#elif defined(STM32F401xE) || defined(STM32F411xE) || defined(STM32F446xx)
   #include <STM32F4XX.h>
 #endif
   #define D0_PORT GPIOA

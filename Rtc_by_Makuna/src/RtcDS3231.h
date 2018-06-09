@@ -122,9 +122,9 @@ public:
 protected:
     DS3231AlarmOneControl _flags;
 
-	uint8_t _dayOf;
-	uint8_t _hour;
-	uint8_t _minute;
+    uint8_t _dayOf;
+    uint8_t _hour;
+    uint8_t _minute;
     uint8_t _second;  
 };
 
@@ -189,9 +189,9 @@ public:
 protected:
     DS3231AlarmTwoControl _flags;
 
-	uint8_t _dayOf;
-	uint8_t _hour;
-	uint8_t _minute;
+    uint8_t _dayOf;
+    uint8_t _hour;
+    uint8_t _minute;
 };
 
 
@@ -244,6 +244,7 @@ public:
         uint8_t creg = getReg(DS3231_REG_CONTROL);
         return !(creg & _BV(DS3231_EOSC));
     }
+
     void SetIsRunning(bool isRunning)
     {
         uint8_t creg = getReg(DS3231_REG_CONTROL);
@@ -282,13 +283,19 @@ public:
             centuryFlag = _BV(7);
         }
 
-        _wire.write(Uint8ToBcd(dt.DayOfWeek()));
+        // RTC Hardware Day of Week is 1-7, 1 = Monday
+        // convert our Day of Week to Rtc Day of Week
+        uint8_t rtcDow = RtcDateTime::ConvertDowToRtc(dt.DayOfWeek());
+
+        _wire.write(Uint8ToBcd(rtcDow));
+
         _wire.write(Uint8ToBcd(dt.Day()));
         _wire.write(Uint8ToBcd(dt.Month()) | centuryFlag);
         _wire.write(Uint8ToBcd(year));
 
         _wire.endTransmission();
     }
+
     RtcDateTime GetDateTime()
     {
         _wire.beginTransmission(DS3231_ADDRESS);
@@ -322,13 +329,23 @@ public:
         _wire.write(DS3231_REG_TEMP);
         _wire.endTransmission();
 
-        _wire.requestFrom(DS3231_ADDRESS, DS3231_REG_TEMP_SIZE);
-        int8_t degrees = _wire.read();
-        // fraction is just the upper bits
-        // representing 1/4 of a degree
-        uint8_t fract = (_wire.read() >> 6) * 25;
+        // Temperature is represented as a 10-bit code with a resolution
+        // of 1/4th °C and is accessable as a signed 16-bit integer at
+        // locations 11h and 12h.
+        //
+        //       |         r11h          | DP |         r12h         |
+        // Bit:   15 14 13 12 11 10  9  8   .  7  6  5  4  3  2  1  0  -1 -2
+        //         s  i  i  i  i  i  i  i   .  f  f  0  0  0  0  0  0
+        //
+        // As it takes (8) right-shifts to register the decimal point (DP) to
+        // the right of the 0th bit, the overall word scaling equals 256.
+        //
+        // For example, at +/- 25.25°C, concatenated registers <r11h:r12h> =
+        // 256 * (+/- 25+(1/4)) = +/- 6464, or 1940h / E6C0h.
 
-        return RtcTemperature(degrees, fract);
+        _wire.requestFrom(DS3231_ADDRESS, DS3231_REG_TEMP_SIZE);
+        int8_t  r11h = _wire.read();                  // MS byte, signed temperature
+        return RtcTemperature( r11h, _wire.read() );  // LS byte is r12h
     }
 
     void Enable32kHzPin(bool enable)
@@ -346,6 +363,7 @@ public:
 
         setReg(DS3231_REG_STATUS, sreg);
     }
+
     void SetSquareWavePin(DS3231SquareWavePinMode pinMode)
     {
         uint8_t creg = getReg(DS3231_REG_CONTROL);
@@ -404,10 +422,17 @@ public:
         _wire.write(Uint8ToBcd(alarm.Minute()) | ((alarm.ControlFlags() & 0x02) << 6));
         _wire.write(Uint8ToBcd(alarm.Hour()) | ((alarm.ControlFlags() & 0x04) << 5)); // 24 hour mode only
 
-        _wire.write(Uint8ToBcd(alarm.DayOf()) | ((alarm.ControlFlags() & 0x18) << 3));
+        uint8_t rtcDow = alarm.DayOf();
+        if (alarm.ControlFlags() == DS3231AlarmOneControl_HoursMinutesSecondsDayOfWeekMatch)
+        {
+            rtcDow = RtcDateTime::ConvertDowToRtc(rtcDow);
+        }
+
+        _wire.write(Uint8ToBcd(rtcDow) | ((alarm.ControlFlags() & 0x18) << 3));
 
         _wire.endTransmission();
     }
+
     void SetAlarmTwo(const DS3231AlarmTwo& alarm)
     {
         _wire.beginTransmission(DS3231_ADDRESS);
@@ -416,10 +441,18 @@ public:
         _wire.write(Uint8ToBcd(alarm.Minute()) | ((alarm.ControlFlags() & 0x01) << 7));
         _wire.write(Uint8ToBcd(alarm.Hour()) | ((alarm.ControlFlags() & 0x02) << 6)); // 24 hour mode only
 
-        _wire.write(Uint8ToBcd(alarm.DayOf()) | ((alarm.ControlFlags() & 0x0c) << 4));
+        // convert our Day of Week to Rtc Day of Week if needed
+        uint8_t rtcDow = alarm.DayOf();
+        if (alarm.ControlFlags() == DS3231AlarmTwoControl_HoursMinutesDayOfWeekMatch)
+        {
+            rtcDow = RtcDateTime::ConvertDowToRtc(rtcDow);
+        }
+        
+        _wire.write(Uint8ToBcd(rtcDow) | ((alarm.ControlFlags() & 0x0c) << 4));
 
         _wire.endTransmission();
     }
+
     DS3231AlarmOne GetAlarmOne()
     {
         _wire.beginTransmission(DS3231_ADDRESS);
@@ -444,8 +477,14 @@ public:
         flags |= (raw & 0xc0) >> 3;
         uint8_t dayOf = BcdToUint8(raw & 0x3f);
 
+        if (flags == DS3231AlarmOneControl_HoursMinutesSecondsDayOfWeekMatch)
+        {
+            dayOf = RtcDateTime::ConvertRtcToDow(dayOf);
+        }
+
         return DS3231AlarmOne(dayOf, hour, minute, second, (DS3231AlarmOneControl)flags);
     }
+
     DS3231AlarmTwo GetAlarmTwo()
     {
         _wire.beginTransmission(DS3231_ADDRESS);
@@ -466,8 +505,14 @@ public:
         flags |= (raw & 0xc0) >> 4;
         uint8_t dayOf = BcdToUint8(raw & 0x3f);
 
+        if (flags == DS3231AlarmTwoControl_HoursMinutesDayOfWeekMatch)
+        {
+            dayOf = RtcDateTime::ConvertRtcToDow(dayOf);
+        }
+
         return DS3231AlarmTwo(dayOf, hour, minute, (DS3231AlarmTwoControl)flags);
     }
+
     // Latch must be called after an alarm otherwise it will not
     // trigger again
     DS3231AlarmFlag LatchAlarmsTriggeredFlags()
@@ -496,6 +541,7 @@ public:
     {
         return getReg(DS3231_REG_AGING);
     }
+
     void SetAgingOffset(int8_t value)
     {
         setReg(DS3231_REG_AGING, value);
@@ -516,6 +562,7 @@ private:
         uint8_t regValue = _wire.read();
         return regValue;
     }
+
     void setReg(uint8_t regAddress, uint8_t regValue)
     {
         _wire.beginTransmission(DS3231_ADDRESS);
@@ -523,6 +570,7 @@ private:
         _wire.write(regValue);
         _wire.endTransmission();
     }
+
 };
 
 #endif // __RTCDS3231_H__

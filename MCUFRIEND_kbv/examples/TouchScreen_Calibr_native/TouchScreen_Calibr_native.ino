@@ -51,7 +51,7 @@ bool ISPRESSED(void)
     bool state, oldstate;
     while (count < 10) {
         readResistiveTouch();
-        state = tp.z > 20;
+        state = tp.z > 200;     //ADJUST THIS VALUE TO SUIT YOUR SCREEN e.g. 20 ... 250
         if (state == oldstate) count++;
         else count = 0;
         oldstate = state;
@@ -173,14 +173,14 @@ void loop()
     centerprint("***********", text_y_center - 12);
     centerprint("***********", text_y_center + 12);
 
-    calibrate(10, 10, 0);
-    calibrate(10, dispy / 2, 1);
-    calibrate(10, dispy - 11, 2);
-    calibrate(dispx / 2, 10, 3);
-    calibrate(dispx / 2, dispy - 11, 4);
-    calibrate(dispx - 11, 10, 5);
-    calibrate(dispx - 11, dispy / 2, 6);
-    calibrate(dispx - 11, dispy - 11, 7);
+    calibrate(10, 10, 0, F(" LEFT, TOP, Pressure"));
+    calibrate(10, dispy / 2, 1, F(" LEFT, MIDH, Pressure"));
+    calibrate(10, dispy - 11, 2, F(" LEFT, BOT, Pressure"));
+    calibrate(dispx / 2, 10, 3, F(" MIDW, TOP, Pressure"));
+    calibrate(dispx / 2, dispy - 11, 4, F(" MIDW, BOT, Pressure"));
+    calibrate(dispx - 11, 10, 5, F(" RT, TOP, Pressure"));
+    calibrate(dispx - 11, dispy / 2, 6, F(" RT, MIDH, Pressure"));
+    calibrate(dispx - 11, dispy - 11, 7, F(" RT, BOT, Pressure"));
 
     cals = (long(dispx - 1) << 12) + (dispy - 1);
     if (TOUCH_ORIENTATION == PORTRAIT) swapxy = rx[2] - rx[0];
@@ -261,7 +261,7 @@ void readCoordinates()
     cz = tp.z;
 }
 
-void calibrate(int x, int y, int i)
+void calibrate(int x, int y, int i, String msg)
 {
     drawCrossHair(x, y, WHITE);
     readCoordinates();
@@ -272,6 +272,7 @@ void calibrate(int x, int y, int i)
     Serial.print("\r\ncx="); Serial.print(cx);
     Serial.print(" cy="); Serial.print(cy);
     Serial.print(" cz="); Serial.print(cz);
+    if (msg) Serial.print(msg);
     while (ISPRESSED() == true) {}
 }
 
@@ -306,6 +307,12 @@ void report()
     sprintf(buf, "MCUFRIEND_kbv ID=0x%04X  %d x %d",
             tft.readID(), TS_WID, TS_HT);
     tft.println(buf);
+    Serial.println(buf);
+    sprintf(buf, "\nconst int XP=%d,XM=A%d,YP=A%d,YM=%d; //%dx%d ID=0x%04X", 
+            XP, XM - A0, YP - A0, YM, TS_WID, TS_HT, tft.readID());
+    Serial.println(buf);
+    sprintf(buf, "const int TS_LEFT=%d,TS_RT=%d,TS_TOP=%d,TS_BOT=%d;", 
+            TS_LEFT, TS_RT, TS_TOP, TS_BOT);
     Serial.println(buf);
     sprintf(buf, "PORTRAIT CALIBRATION     %d x %d", TS_WID, TS_HT);
     tft.println("");
@@ -400,4 +407,3 @@ void fail()
 
     while (true) {};
 }
-
