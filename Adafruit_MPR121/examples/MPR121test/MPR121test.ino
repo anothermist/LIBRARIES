@@ -18,6 +18,10 @@ BSD license, all text above must be included in any redistribution
 #include <Wire.h>
 #include "Adafruit_MPR121.h"
 
+#ifndef _BV
+#define _BV(bit) (1 << (bit)) 
+#endif
+
 // You can have up to 4 on one i2c bus but one is enough for testing!
 Adafruit_MPR121 cap = Adafruit_MPR121();
 
@@ -27,9 +31,12 @@ uint16_t lasttouched = 0;
 uint16_t currtouched = 0;
 
 void setup() {
-  while (!Serial);        // needed to keep leonardo/micro from starting too fast!
-
   Serial.begin(9600);
+
+  while (!Serial) { // needed to keep leonardo/micro from starting too fast!
+    delay(10);
+  }
+  
   Serial.println("Adafruit MPR121 Capacitive Touch sensor test"); 
   
   // Default address is 0x5A, if tied to 3.3V its 0x5B

@@ -4,19 +4,16 @@
 ///@file FastLED.h
 /// central include file for FastLED, defines the CFastLED class/object
 
-#define xstr(s) str(s)
-#define str(s) #s
-
 #if (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 4)
 #define FASTLED_HAS_PRAGMA_MESSAGE
 #endif
 
-#define  FASTLED_VERSION 3001005
+#define FASTLED_VERSION 3003002
 #ifndef FASTLED_INTERNAL
 #  ifdef FASTLED_HAS_PRAGMA_MESSAGE
-#    pragma message "FastLED version 3.001.006"
+#    pragma message "FastLED version 3.003.002"
 #  else
-#    warning FastLED version 3.001.006  (Not really a warning, just telling you here.)
+#    warning FastLED version 3.003.002  (Not really a warning, just telling you here.)
 #  endif
 #endif
 
@@ -25,15 +22,15 @@
 #endif
 
 #ifdef SmartMatrix_h
-#include<SmartMatrix.h>
+#include <SmartMatrix.h>
 #endif
 
 #ifdef DmxSimple_h
-#include<DmxSimple.h>
+#include <DmxSimple.h>
 #endif
 
 #ifdef DmxSerial_h
-#include<DMXSerial.h>
+#include <DMXSerial.h>
 #endif
 
 #include <stdint.h>
@@ -50,7 +47,7 @@
 #include "controller.h"
 #include "fastpin.h"
 #include "fastspi_types.h"
-#include "./dmx.h"
+#include "dmx.h"
 
 #include "platforms.h"
 #include "fastled_progmem.h"
@@ -72,6 +69,7 @@ FASTLED_NAMESPACE_BEGIN
 
 /// definitions for the spi chipset constants
 enum ESPIChipsets {
+    LPD6803,
 	LPD8806,
 	WS2801,
 	WS2803,
@@ -84,6 +82,7 @@ enum ESPIChipsets {
 
 enum ESM { SMART_MATRIX };
 enum OWS2811 { OCTOWS2811,OCTOWS2811_400, OCTOWS2813};
+enum SWS2812 { WS2812SERIAL };
 
 #ifdef HAS_PIXIE
 template<uint8_t DATA_PIN, EOrder RGB_ORDER> class PIXIE : public PixieController<DATA_PIN, RGB_ORDER> {};
@@ -91,6 +90,7 @@ template<uint8_t DATA_PIN, EOrder RGB_ORDER> class PIXIE : public PixieControlle
 
 #ifdef FASTLED_HAS_CLOCKLESS
 template<uint8_t DATA_PIN> class NEOPIXEL : public WS2812Controller800Khz<DATA_PIN, GRB> {};
+template<uint8_t DATA_PIN, EOrder RGB_ORDER> class SM16703 : public SM16703Controller<DATA_PIN, RGB_ORDER> {};
 template<uint8_t DATA_PIN, EOrder RGB_ORDER> class TM1829 : public TM1829Controller800Khz<DATA_PIN, RGB_ORDER> {};
 template<uint8_t DATA_PIN, EOrder RGB_ORDER> class TM1812 : public TM1809Controller800Khz<DATA_PIN, RGB_ORDER> {};
 template<uint8_t DATA_PIN, EOrder RGB_ORDER> class TM1809 : public TM1809Controller800Khz<DATA_PIN, RGB_ORDER> {};
@@ -103,6 +103,7 @@ template<uint8_t DATA_PIN, EOrder RGB_ORDER> class UCS2903 : public UCS2903Contr
 template<uint8_t DATA_PIN, EOrder RGB_ORDER> class WS2812 : public WS2812Controller800Khz<DATA_PIN, RGB_ORDER> {};
 template<uint8_t DATA_PIN, EOrder RGB_ORDER> class WS2852 : public WS2812Controller800Khz<DATA_PIN, RGB_ORDER> {};
 template<uint8_t DATA_PIN, EOrder RGB_ORDER> class WS2812B : public WS2812Controller800Khz<DATA_PIN, RGB_ORDER> {};
+template<uint8_t DATA_PIN, EOrder RGB_ORDER> class GS1903 : public WS2812Controller800Khz<DATA_PIN, RGB_ORDER> {};
 template<uint8_t DATA_PIN, EOrder RGB_ORDER> class SK6812 : public SK6812Controller<DATA_PIN, RGB_ORDER> {};
 template<uint8_t DATA_PIN, EOrder RGB_ORDER> class SK6822 : public SK6822Controller<DATA_PIN, RGB_ORDER> {};
 template<uint8_t DATA_PIN, EOrder RGB_ORDER> class APA106 : public SK6822Controller<DATA_PIN, RGB_ORDER> {};
@@ -111,6 +112,7 @@ template<uint8_t DATA_PIN, EOrder RGB_ORDER> class WS2811 : public WS2811Control
 template<uint8_t DATA_PIN, EOrder RGB_ORDER> class WS2813 : public WS2813Controller<DATA_PIN, RGB_ORDER> {};
 template<uint8_t DATA_PIN, EOrder RGB_ORDER> class APA104 : public WS2811Controller800Khz<DATA_PIN, RGB_ORDER> {};
 template<uint8_t DATA_PIN, EOrder RGB_ORDER> class WS2811_400 : public WS2811Controller400Khz<DATA_PIN, RGB_ORDER> {};
+template<uint8_t DATA_PIN, EOrder RGB_ORDER> class GE8822 : public GE8822Controller800Khz<DATA_PIN, RGB_ORDER> {};
 template<uint8_t DATA_PIN, EOrder RGB_ORDER> class GW6205 : public GW6205Controller800Khz<DATA_PIN, RGB_ORDER> {};
 template<uint8_t DATA_PIN, EOrder RGB_ORDER> class GW6205_400 : public GW6205Controller400Khz<DATA_PIN, RGB_ORDER> {};
 template<uint8_t DATA_PIN, EOrder RGB_ORDER> class LPD1886 : public LPD1886Controller1250Khz<DATA_PIN, RGB_ORDER> {};
@@ -220,6 +222,7 @@ public:
 	/// @returns a reference to the added controller
 	template<ESPIChipsets CHIPSET,  uint8_t DATA_PIN, uint8_t CLOCK_PIN, EOrder RGB_ORDER, uint8_t SPI_DATA_RATE > CLEDController &addLeds(struct CRGB *data, int nLedsOrOffset, int nLedsIfOffset = 0) {
 		switch(CHIPSET) {
+			case LPD6803: { static LPD6803Controller<DATA_PIN, CLOCK_PIN, RGB_ORDER, SPI_DATA_RATE> c; return addLeds(&c, data, nLedsOrOffset, nLedsIfOffset); }
 			case LPD8806: { static LPD8806Controller<DATA_PIN, CLOCK_PIN, RGB_ORDER, SPI_DATA_RATE> c; return addLeds(&c, data, nLedsOrOffset, nLedsIfOffset); }
 			case WS2801: { static WS2801Controller<DATA_PIN, CLOCK_PIN, RGB_ORDER, SPI_DATA_RATE> c; return addLeds(&c, data, nLedsOrOffset, nLedsIfOffset); }
 			case WS2803: { static WS2803Controller<DATA_PIN, CLOCK_PIN, RGB_ORDER, SPI_DATA_RATE> c; return addLeds(&c, data, nLedsOrOffset, nLedsIfOffset); }
@@ -233,6 +236,7 @@ public:
 
 	template<ESPIChipsets CHIPSET,  uint8_t DATA_PIN, uint8_t CLOCK_PIN > static CLEDController &addLeds(struct CRGB *data, int nLedsOrOffset, int nLedsIfOffset = 0) {
 		switch(CHIPSET) {
+			case LPD6803: { static LPD6803Controller<DATA_PIN, CLOCK_PIN> c; return addLeds(&c, data, nLedsOrOffset, nLedsIfOffset); }
 			case LPD8806: { static LPD8806Controller<DATA_PIN, CLOCK_PIN> c; return addLeds(&c, data, nLedsOrOffset, nLedsIfOffset); }
 			case WS2801: { static WS2801Controller<DATA_PIN, CLOCK_PIN> c; return addLeds(&c, data, nLedsOrOffset, nLedsIfOffset); }
 			case WS2803: { static WS2803Controller<DATA_PIN, CLOCK_PIN> c; return addLeds(&c, data, nLedsOrOffset, nLedsIfOffset); }
@@ -246,6 +250,7 @@ public:
 
 	template<ESPIChipsets CHIPSET,  uint8_t DATA_PIN, uint8_t CLOCK_PIN, EOrder RGB_ORDER > static CLEDController &addLeds(struct CRGB *data, int nLedsOrOffset, int nLedsIfOffset = 0) {
 		switch(CHIPSET) {
+			case LPD6803: { static LPD6803Controller<DATA_PIN, CLOCK_PIN, RGB_ORDER> c; return addLeds(&c, data, nLedsOrOffset, nLedsIfOffset); }
 			case LPD8806: { static LPD8806Controller<DATA_PIN, CLOCK_PIN, RGB_ORDER> c; return addLeds(&c, data, nLedsOrOffset, nLedsIfOffset); }
 			case WS2801: { static WS2801Controller<DATA_PIN, CLOCK_PIN, RGB_ORDER> c; return addLeds(&c, data, nLedsOrOffset, nLedsIfOffset); }
 			case WS2803: { static WS2803Controller<DATA_PIN, CLOCK_PIN, RGB_ORDER> c; return addLeds(&c, data, nLedsOrOffset, nLedsIfOffset); }
@@ -310,6 +315,14 @@ public:
 		return addLeds(&c, data, nLedsOrOffset, nLedsIfOffset);
 	}
 
+#if defined(__FASTLED_HAS_FIBCC) && (__FASTLED_HAS_FIBCC == 1)
+  template<uint8_t NUM_LANES, template<uint8_t DATA_PIN, EOrder RGB_ORDER> class CHIPSET, uint8_t DATA_PIN, EOrder RGB_ORDER=RGB>
+  static CLEDController &addLeds(struct CRGB *data, int nLeds) {
+    static __FIBCC<CHIPSET, DATA_PIN, NUM_LANES, RGB_ORDER> c;
+    return addLeds(&c, data, nLeds);
+  }
+#endif
+
 	#ifdef FASTSPI_USE_DMX_SIMPLE
 	template<EClocklessChipsets CHIPSET, uint8_t DATA_PIN, EOrder RGB_ORDER=RGB>
 	static CLEDController &addLeds(struct CRGB *data, int nLedsOrOffset, int nLedsIfOffset = 0)
@@ -371,6 +384,15 @@ public:
 		return addLeds<CHIPSET,GRB>(data,nLedsOrOffset,nLedsIfOffset);
 	}
 
+#endif
+
+#ifdef USE_WS2812SERIAL
+	template<SWS2812 CHIPSET, int DATA_PIN, EOrder RGB_ORDER>
+	static CLEDController &addLeds(struct CRGB *data, int nLedsOrOffset, int nLedsIfOffset = 0)
+	{
+		static CWS2812SerialController<DATA_PIN,RGB_ORDER> controller;
+		return addLeds(&controller, data, nLedsOrOffset, nLedsIfOffset);
+	}
 #endif
 
 #ifdef SmartMatrix_h
@@ -479,7 +501,7 @@ public:
 
 	/// clear the leds, wiping the local array of data, optionally black out the leds as well
 	/// @param writeData whether or not to write out to the leds as well
-	void clear(boolean writeData = false);
+	void clear(bool writeData = false);
 
 	/// clear out the local data array
 	void clearData();

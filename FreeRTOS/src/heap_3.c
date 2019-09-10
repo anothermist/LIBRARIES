@@ -1,6 +1,6 @@
 /*
- * FreeRTOS Kernel V10.0.0
- * Copyright (C) 2017 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ * FreeRTOS Kernel V10.2.0
+ * Copyright (C) 2019 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -10,8 +10,7 @@
  * subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software. If you wish to use our Amazon
- * FreeRTOS name, please do so in a fair use way that does not cause confusion.
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
@@ -58,38 +57,38 @@ void *pvPortMalloc( size_t xWantedSize )
 {
 void *pvReturn;
 
-	vTaskSuspendAll();
-	{
-		pvReturn = malloc( xWantedSize );
-		traceMALLOC( pvReturn, xWantedSize );
-	}
-	( void ) xTaskResumeAll();
+    vTaskSuspendAll();
+    {
+        pvReturn = malloc( xWantedSize );
+        traceMALLOC( pvReturn, xWantedSize );
+    }
+    ( void ) xTaskResumeAll();
 
-	#if( configUSE_MALLOC_FAILED_HOOK == 1 )
-	{
-		if( pvReturn == NULL )
-		{
-			extern void vApplicationMallocFailedHook( void );
-			vApplicationMallocFailedHook();
-		}
-	}
-	#endif
+    #if( configUSE_MALLOC_FAILED_HOOK == 1 )
+    {
+        if( pvReturn == NULL )
+        {
+            extern void vApplicationMallocFailedHook( void );
+            vApplicationMallocFailedHook();
+        }
+    }
+    #endif
 
-	return pvReturn;
+    return pvReturn;
 }
 /*-----------------------------------------------------------*/
 
 void vPortFree( void *pv )
 {
-	if( pv )
-	{
-		vTaskSuspendAll();
-		{
-			free( pv );
-			traceFREE( pv, 0 );
-		}
-		( void ) xTaskResumeAll();
-	}
+    if( pv )
+    {
+        vTaskSuspendAll();
+        {
+            free( pv );
+            traceFREE( pv, 0 );
+        }
+        ( void ) xTaskResumeAll();
+    }
 }
 
 #endif /* ( configSUPPORT_DYNAMIC_ALLOCATION > 0 ) */

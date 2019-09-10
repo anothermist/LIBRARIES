@@ -24,7 +24,7 @@ Adafruit_TMP006::Adafruit_TMP006(uint8_t i2caddr) {
 }
 
 
-boolean Adafruit_TMP006::begin(uint16_t samplerate) {
+boolean Adafruit_TMP006::begin(uint8_t samplerate) {
   Wire.begin();
 
   write16(TMP006_CONFIG, TMP006_CFG_MODEON | TMP006_CFG_DRDYEN | samplerate);
@@ -155,6 +155,7 @@ uint16_t Adafruit_TMP006::read16(uint8_t a) {
 #endif
   Wire.endTransmission(); // end transmission
   
+  Wire.beginTransmission(_addr); // start transmission to device 
   Wire.requestFrom(_addr, (uint8_t)2);// send data n-bytes read
 #if (ARDUINO >= 100)
   ret = Wire.read(); // receive DATA
@@ -165,6 +166,7 @@ uint16_t Adafruit_TMP006::read16(uint8_t a) {
   ret <<= 8;
   ret |= Wire.receive(); // receive DATA
 #endif
+  Wire.endTransmission(); // end transmission
 
   return ret;
 }

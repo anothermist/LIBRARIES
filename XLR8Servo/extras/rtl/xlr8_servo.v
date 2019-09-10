@@ -33,6 +33,16 @@
 //                 also set and the software library can use this to determine that it needs to
 //                 read the register again to get a valid result.       
 //
+//               UPDATED June 2019 by Mike Berry
+//                 Added additional parameter to control servo speed by using
+//                 the upper 4 bits of SVPWH register (for easy backward
+//                 compatibility) to define a speed of 1-15, where 15 is
+//                 fastest, and 1 is the slowest setting (0 means go as fast
+//                 as the servo is able, so effectively ignore the speed
+//                 setting).  From a library perspective, the write and
+//                 writeMicroseconds functions will need an extra (optional)
+//                 speed parameter.
+//
 // Copyright 2015, Superion Technology Group. All Rights Reserved
 /////////////////////////////////
 
@@ -94,10 +104,14 @@ module xlr8_servo
   logic [7:0] svcr_rdata;
   logic       SVEN;
   logic [4:0] SVCHAN;
+  logic [3:0] SVSPD;
   logic [3:0] SVPWH;
   logic [7:0] SVPWL;
   logic [4:0] chan_in;
-  logic [11:0] chan_pw [NUM_TIMERS-1:0]; // pulse width per channel
+  logic [11:0] chan_pw [NUM_SERVOS-1:0]; // pulse width per channel from SW
+  logic [11:0] chan_pw_out [NUM_SERVOS-1:0]; // pulse width per channel to servos
+  logic [3:0] chan_sp [NUM_SERVOS-1:0]; // servo speed per channel
+  logic [5:0] pw_chg [NUM_SERVOS-1:0]; //  increment/decrement value related to speed
   logic [14:0]  timercnt; // Need to count to 20000us. That's 15 bits.
 
   /////////////////////////////////
@@ -119,7 +133,7 @@ module xlr8_servo
   assign svpwl_re = svpwl_sel && (SVPWL_DM_LOC ?  ramre : iore); 
 
   assign dbus_out =  ({8{svcr_sel}} & svcr_rdata) |
-                     ({8{svpwh_sel}} & {4'h0,SVPWH}) | 
+                     ({8{svpwh_sel}} & {SVSPD,SVPWH}) | 
                      ({8{svpwl_sel}} & SVPWL); 
   assign io_out_en = svcr_re || 
                      svpwh_re ||
@@ -145,7 +159,11 @@ module xlr8_servo
   always @(posedge clk) begin
     if (svcr_we) begin
       // Max pulse we'll do is 2.4ms which is 2400 counts at 1MHz. Need 12 bits.
-      if (dbus_in[SVUP_BIT]) chan_pw[chan_in[3:0]] <= {SVPWH,SVPWL};
+      if (dbus_in[SVUP_BIT])
+        begin
+          chan_pw[chan_in] <= {SVPWH,SVPWL};
+          chan_sp[chan_in] <= SVSPD;
+        end
     end
   end // always @ (posedge clk or negedge rstn)
   assign svcr_rdata = ({7'h0,SVEN}   << SVEN_BIT) |
@@ -153,8 +171,10 @@ module xlr8_servo
   always @(posedge clk or negedge rstn) begin
     if (!rstn)  begin
       SVPWH <= 4'h0;
+      SVSPD <= 4'h0;
     end else if (svpwh_we) begin
       SVPWH  <= dbus_in[3:0];
+      SVSPD  <= dbus_in[7:4];
     end 
   end
   always @(posedge clk or negedge rstn) begin
@@ -185,13 +205,37 @@ module xlr8_servo
   genvar i;
   generate 
     for (i=0;i<NUM_SERVOS;i++) begin : gen_chan
+      // the increment/decrement value is 4X the chan_sp coming in
+      assign pw_chg[i] = chan_sp[i] << 2;
       always @(posedge clk or negedge rstn) begin
         if (!rstn) begin
           servos_out[i] <= 1'b0;
+          chan_pw_out[i] <= 12'd1500; // start centered then move
         end else begin
+          // every 20ms (corresponds to every update of the servo pulse width)
+          // update the value sent to to servo, incrementing or decrementing
+          // based on the chan_sp value.
+          //
+          // Assume a nominal range of 1000-2000us, and assume the slowest
+          // we'd want to go is 5 seconds.  20ms updates means 50/second, so
+          // in 5 seconds we'll see 250 updates.  For 1000us of change, each
+          // increment/decrement will be 4us for slowest operation, and 15X
+          // that (since we have settings of 1-15) would be 60us per update
+          // (which translates to 1/3 second for full travel).
+          if (chan_sp[i] == 4'd0) begin
+            chan_pw_out[i] <= chan_pw[i]; // pass the value through if chan_sp is zero
+          end else if (en1mhz && (timercnt == 15'd0)) begin
+            if (chan_pw[i] >= (chan_pw_out[i] + pw_chg[i])) begin
+              chan_pw_out[i] <= chan_pw_out[i] + pw_chg[i];
+            end else if (chan_pw[i] <= (chan_pw_out[i] - pw_chg[i])) begin
+              chan_pw_out[i] <= chan_pw_out[i] - pw_chg[i];
+            end else begin
+              chan_pw_out[i] <= chan_pw[i];
+            end
+          end
           // Do full less-than check instead of just checking for equals at the ends to 
           //  avoid missing a change in cases where chan_pw changes
-          servos_out[i] <= servos_en[i] && (timercnt[14:12] == {1'b0,i[1:0]}) && (timercnt[11:0] <= chan_pw[i[3:0]]);
+          servos_out[i] <= servos_en[i] && (timercnt[14:12] == {1'b0,i[1:0]}) && (timercnt[11:0] <= chan_pw_out[i]);
         end
       end // always @ (posedge clk or negedge rstn)
     end // block: gen_chan

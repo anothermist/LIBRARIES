@@ -34,7 +34,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 #include <Arduino.h>
-#if defined(__AVR__) || defined(__arm__)
+#if defined(__AVR__) || defined(__arm__) || defined(__ARDUINO_ARC__)
 	#include <avr/pgmspace.h>
 #else
 	#include <pgmspace.h>
@@ -68,6 +68,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #else
 #define TOTALFONTS		4
 #endif
+
+#define swapOLED(a, b) { uint8_t t = a; a = b; b = t; }
 
 // Add the font name as declared in the header file.  Remove as many as possible to conserve FLASH memory.
 const unsigned char *MicroOLED::fontsPointer[]={
@@ -205,7 +207,6 @@ void MicroOLED::begin()
 	setDrawMode(NORM);
 	setCursor(0,0);
 
-	pinMode(dcPin, OUTPUT);
 	pinMode(rstPin, OUTPUT);
 
 	// Set up the selected interface:
@@ -492,13 +493,13 @@ Draw line using color and mode from x0,y0 to x1,y1 of the screen buffer.
 void MicroOLED::line(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint8_t color, uint8_t mode) {
 	uint8_t steep = abs(y1 - y0) > abs(x1 - x0);
 	if (steep) {
-		swap(x0, y0);
-		swap(x1, y1);
+		swapOLED(x0, y0);
+		swapOLED(x1, y1);
 	}
 
 	if (x0 > x1) {
-		swap(x0, x1);
-		swap(y0, y1);
+		swapOLED(x0, x1);
+		swapOLED(y0, y1);
 	}
 
 	uint8_t dx, dy;

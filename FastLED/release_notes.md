@@ -1,4 +1,92 @@
-3.1.6
+FastLED 3.3.2
+=============
+
+* Fix APA102 compile error #870 
+* Normalize pin definition macros so that we can have an .ino file that can be used to output what pin/port mappings should be for a platform
+* Add defnition for ATmega32
+
+FastLED 3.3.1
+=============
+
+* Fix teensy build issue 
+* Bring in sam's RMT timing fix
+
+FastLED 3.3.0
+==============
+* Preliminary Teensy 4 support
+* Fix #861 - power computation for OctoWS2811
+* keywords and other minor changes for compilers (#854, #845)
+* Fix some nrf52 issues (#856), #840
+
+FastLED 3.2.10
+==============
+* Adafruit Metro M4 Airlift support
+* Arduino Nano 33 IOT preliminary definitions
+* Bug fixes
+
+FastLED 3.2.9
+=============
+* Update ItsyBitsy support
+* Remove conflicting types courtesy of an esp8266 framework update
+* Fixes to clockless M0 code to allow for more interrupt enabled environments
+* ATTiny25 compilation fix
+* Some STM32 fixes (the platform still seems unhappy, though)
+* NRF52 support
+* Updated ESP32 support - supporting up to 24-way parallel output
+
+
+
+FastLED 3.2.6
+=============
+
+* typo fix
+
+FastLED 3.2.5
+=============
+
+* Fix for SAMD51 based boards (a SAMD21 optimization broke the D51 builds, now D51 is a separate platform)
+
+FastLED 3.2.4
+=============
+
+* fix builds for WAV boards
+
+FastLED 3.2.2
+=============
+
+* Perf tweak for SAMD21
+* LPD6803 support
+* Add atmega328pb support
+* Variety of minor bug/correctness/typo fixes
+* Added SM16703, GE8822, GS1903
+
+FastLED 3.2.1
+=============
+* ATmega644P support
+* Adafruit Hallowwing (Thanks to Lady Ada)
+* Improved STM 32 support
+* Some user contributed cleanups
+* ESP32 APA102 output fix
+
+FastLED3.2
+==========
+* ESP32 support with improved output and parallel output options (thanks Sam Guyer!)
+* various minor contributed fixes
+
+FastLED 3.1.8
+=============
+* Added support for Adafruit Circuit Playground Express (Thanks to Lady Ada)
+* Improved support for Adafruit Gemma and Trinket m0 (Thanks to Lady Ada)
+* Added support for PJRC's WS2812Serial (Thanks to Paul Stoffregen)
+* Added support for ATmega328 non-picopower hardware pins (Thanks to John Whittington)
+* Fixes for ESP32 support (Thanks to Daniel Tullemans)
+* 'Makefile' compilation fix (Thanks to Nico Hood)
+
+FastLED 3.1.7 (skipped)
+=======================
+
+FastLED 3.1.6
+=============
 * Preliminary support for esp32
 * Variety of random bug fixes
 * 6-channel parallel output for the esp8266
@@ -7,36 +95,38 @@
 * Various fixes falling out from "fixing" scale 8 adjustments
 * Add gemma m0 support (thanks @ladyada!)
 
-3.1.5
+FastLED 3.1.5
+=============
 * Fix due parallel output build issue
 
-3.1.4
+FastLED 3.1.4
+=============
 * fix digispark avr build issue
 
 FastLED3.1.3
 ===============
 
 * Add SK6822 timings
-* Add ESP8266 support - note, only tested w/the arduino esp8266 build environment 
+* Add ESP8266 support - note, only tested w/the arduino esp8266 build environment
 * Improvements to hsv2rgb, palette, and noise performance
 * Improvements to rgb2hsv accuracy
-* Fixed noise discontinuity 
+* Fixed noise discontinuity
 * Add wino board support
 * Fix scale8 (so now, scale8(255,255) == 255, not 254!)
-* Add ESP8266 parallel output support 
+* Add ESP8266 parallel output support
 
 
 FastLED3.1.1
 ============
 * Enabled RFDuino/nrf51822 hardware SPI support
-* Fix edge case bug w/HSV palette blending 
+* Fix edge case bug w/HSV palette blending
 * Fix power management issue w/parallel output
 * Use static_asserts for some more useful compile time errors around bad pins
 * Roll power management into FastLED.show/delay directly
 * Support for adafruit pixies on arduino type platforms that have SoftwareSerial
   * TODO: support hardware serial on platforms that have it available
 * Add UCS2903 timings
-* Preliminary CPixelView/CRGBSet code - more flexible treatment of groups of arrays 
+* Preliminary CPixelView/CRGBSet code - more flexible treatment of groups of arrays
   * https://github.com/FastLED/FastLED/wiki/RGBSet-Reference
 
 
@@ -48,7 +138,7 @@ FastLED3.1.0
   * RFDuino/nrf51822
   * Spark Core
 * Major internal code reoganization
-* Started doxygen based documentation 
+* Started doxygen based documentation
 * Lots of bug/performance fixes
 * Parallel output on various arm platforms
 * lots of new stuff
@@ -97,7 +187,7 @@ FastLED3.0
 * Fixed DMXSERIAL/DMXSIMPLE support
 * Timing adjustments for existing SPI chipsets
 * Cleaned up the code layout to make platform support easier
-* Many bug fixes 
+* Many bug fixes
 * A number of performance/memory improvements
 * Remove Squant (takes up space!)
 
@@ -107,7 +197,7 @@ FastLED2
 ## Full release of the library
 
 ## Release Candidate 6
-* Rename library, offically, to FastLED, move to github 
+* Rename library, offically, to FastLED, move to github
 * Update keywords with all the new stuffs
 
 ## Release Candidate 5
@@ -123,7 +213,7 @@ FastLED2
 * Added ability to set pixel color directly from HSV
 * Added ability to retrieve current random16 seed
 
-## Release Candidate 2 
+## Release Candidate 2
 * mostly bug fixes
 * Fix SPI macro definitions for latest teensy3 software update
 * Teensy 2 compilation fix
@@ -136,7 +226,7 @@ FastLED2
 * high speed memory management operations
 * library for interpolation/easing functions
 * various api changes, addition of clear and showColor functions
-* scale value applied to all show methods 
+* scale value applied to all show methods
 * bug fixes for SM16716
 * performance improvements, lpd8806 exceeds 22Mbit now
 * hardware def fixes
@@ -165,5 +255,3 @@ en if you're using the hardware SPI pins
 
 ## Preview 1
 * Initial release
-
-

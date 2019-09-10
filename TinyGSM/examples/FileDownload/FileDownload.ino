@@ -5,7 +5,7 @@
  *   or from http://librarymanager/all#CRC32+checksum
  *
  * TinyGSM Getting Started guide:
- *   http://tiny.cc/tiny-gsm-readme
+ *   https://tiny.cc/tinygsm-readme
  *
  * ATTENTION! Downloading big files requires of knowledge of
  * the TinyGSM internals and some modem specifics,
@@ -16,12 +16,21 @@
 // Select your modem:
 #define TINY_GSM_MODEM_SIM800
 // #define TINY_GSM_MODEM_SIM808
+// #define TINY_GSM_MODEM_SIM868
 // #define TINY_GSM_MODEM_SIM900
+// #define TINY_GSM_MODEM_SIM7000
+// #define TINY_GSM_MODEM_UBLOX
+// #define TINY_GSM_MODEM_SARAR4
+// #define TINY_GSM_MODEM_M95
+// #define TINY_GSM_MODEM_BG96
 // #define TINY_GSM_MODEM_A6
 // #define TINY_GSM_MODEM_A7
 // #define TINY_GSM_MODEM_M590
+// #define TINY_GSM_MODEM_MC60
+// #define TINY_GSM_MODEM_MC60E
 // #define TINY_GSM_MODEM_ESP8266
 // #define TINY_GSM_MODEM_XBEE
+// #define TINY_GSM_MODEM_SEQUANS_MONARCH
 
 // Increase RX buffer if needed
 #define TINY_GSM_RX_BUFFER 1024
@@ -202,4 +211,3 @@ void loop() {
     delay(1000);
   }
 }
-

@@ -166,9 +166,9 @@ public:
                      const byte aBody[] = NULL);
 
     /** Send an additional header line.  This can only be called in between the
-      calls to startRequest and finishRequest.
+      calls to beginRequest and endRequest.
       @param aHeader Header line to send, in its entirety (but without the
-                     trailing CRLF.  E.g. "Authorization: Basic YQDDCAIGES" 
+                     trailing CRLF.  E.g. "Authorization: Basic YQDDCAIGES"
     */
     void sendHeader(const char* aHeader);
 
@@ -307,7 +307,7 @@ public:
     virtual int read();
     virtual int read(uint8_t *buf, size_t size);
     virtual int peek() { return iClient->peek(); };
-    virtual void flush() { return iClient->flush(); };
+    virtual void flush() { iClient->flush(); };
 
     // Inherited from Client
     virtual int connect(IPAddress ip, uint16_t port) { return iClient->connect(ip, port); };

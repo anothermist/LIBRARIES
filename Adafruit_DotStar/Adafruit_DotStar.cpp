@@ -1,37 +1,61 @@
-/*------------------------------------------------------------------------
-  Arduino library to control Adafruit Dot Star addressable RGB LEDs.
-
-  Written by Limor Fried and Phil Burgess for Adafruit Industries.
-
-  Adafruit invests time and resources providing this open source code,
-  please support Adafruit and open-source hardware by purchasing products
-  from Adafruit!
-
-  ------------------------------------------------------------------------
-  This file is part of the Adafruit Dot Star library.
-
-  Adafruit Dot Star is free software: you can redistribute it and/or
-  modify it under the terms of the GNU Lesser General Public License
-  as published by the Free Software Foundation, either version 3 of
-  the License, or (at your option) any later version.
-
-  Adafruit Dot Star is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU Lesser General Public License for more details.
-
-  You should have received a copy of the GNU Lesser General Public
-  License along with DotStar.  If not, see <http://www.gnu.org/licenses/>.
-  ------------------------------------------------------------------------*/
+/*!
+ * @file Adafruit_DotStar.cpp
+ *
+ * @mainpage Arduino Library for driving Adafruit DotStar addressable LEDs
+ * and compatible devicess -- APA102, etc.
+ *
+ * @section intro_sec Introduction
+ *
+ * This is the documentation for Adafruit's DotStar library for the
+ * Arduino platform, allowing a broad range of microcontroller boards
+ * (most AVR boards, many ARM devices, ESP8266 and ESP32, among others)
+ * to control Adafruit DotStars and compatible devices -- APA102, etc.
+ *
+ * Adafruit invests time and resources providing this open source code,
+ * please support Adafruit and open-source hardware by purchasing products
+ * from Adafruit!
+ *
+ * @section author Author
+ *
+ * Written by Limor Fried and Phil Burgess for Adafruit Industries with
+ * contributions from members of the open source community.
+ *
+ * @section license License
+ *
+ * This file is part of the Adafruit_DotStar library.
+ *
+ * Adafruit_DotStar is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * Adafruit_DotStar is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with DotStar. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 
 #include "Adafruit_DotStar.h"
 #if !defined(__AVR_ATtiny85__)
  #include <SPI.h>
 #endif
 
-#define USE_HW_SPI 255 // Assign this to dataPin to indicate 'hard' SPI
+#define USE_HW_SPI 255 ///< Assigned to dataPin to indicate 'hard' SPI
 
-// Constructor for hardware SPI -- must connect to MOSI, SCK pins
+/*!
+  @brief   DotStar constructor for hardware SPI. Must be connected to
+           MOSI, SCK pins.
+  @param   n  Number of DotStars in strand.
+  @param   o  Pixel type -- one of the DOTSTAR_* constants defined in
+              Adafruit_DotStar.h, for example DOTSTAR_BRG for DotStars
+              expecting color bytes expressed in blue, red, green order
+              per pixel. Default if unspecified is DOTSTAR_BRG.
+  @return  Adafruit_DotStar object. Call the begin() function before use.
+*/
 Adafruit_DotStar::Adafruit_DotStar(uint16_t n, uint8_t o) :
  numLEDs(n), dataPin(USE_HW_SPI), brightness(0), pixels(NULL),
  rOffset(o & 3), gOffset((o >> 2) & 3), bOffset((o >> 4) & 3)
@@ -39,40 +63,68 @@ Adafruit_DotStar::Adafruit_DotStar(uint16_t n, uint8_t o) :
   updateLength(n);
 }
 
-// Constructor for 'soft' (bitbang) SPI -- any two pins can be used
+/*!
+  @brief   DotStar constructor for 'soft' (bitbang) SPI. Any two pins
+           can be used.
+  @param   n      Number of DotStars in strand.
+  @param   data   Arduino pin number for data out.
+  @param   clock  Arduino pin number for clock out.
+  @param   o      Pixel type -- one of the DOTSTAR_* constants defined in
+                  Adafruit_DotStar.h, for example DOTSTAR_BRG for DotStars
+                  expecting color bytes expressed in blue, red, green order
+                  per pixel. Default if unspecified is DOTSTAR_BRG.
+  @return  Adafruit_DotStar object. Call the begin() function before use.
+*/
 Adafruit_DotStar::Adafruit_DotStar(uint16_t n, uint8_t data, uint8_t clock,
-  uint8_t o) :
- dataPin(data), clockPin(clock), brightness(0), pixels(NULL),
+  uint8_t o) : dataPin(data), clockPin(clock), brightness(0), pixels(NULL),
  rOffset(o & 3), gOffset((o >> 2) & 3), bOffset((o >> 4) & 3)
 {
   updateLength(n);
 }
 
-Adafruit_DotStar::~Adafruit_DotStar(void) { // Destructor
-  if(pixels)                free(pixels);
+/*!
+  @brief   Deallocate Adafruit_DotStar object, set data and clock pins
+           back to INPUT.
+*/
+Adafruit_DotStar::~Adafruit_DotStar(void) {
+  free(pixels);
   if(dataPin == USE_HW_SPI) hw_spi_end();
   else                      sw_spi_end();
 }
 
-void Adafruit_DotStar::begin(void) { // Initialize SPI
+/*!
+  @brief   Initialize Adafruit_DotStar object -- sets data and clock pins
+           to outputs and initializes hardware SPI if necessary.
+*/
+void Adafruit_DotStar::begin(void) {
   if(dataPin == USE_HW_SPI) hw_spi_init();
   else                      sw_spi_init();
 }
 
 // Pins may be reassigned post-begin(), so a sketch can store hardware
-// config in flash, SD card, etc. rather than hardcoded.  Also permits
+// config in flash, SD card, etc. rather than hardcoded. Also permits
 // "recycling" LED ram across multiple strips: set pins to first strip,
 // render & write all data, reassign pins to next strip, render & write,
-// etc.  They won't update simultaneously, but usually unnoticeable.
+// etc. They won't update simultaneously, but usually unnoticeable.
 
-// Change to hardware SPI -- must connect to MOSI, SCK pins
+/*!
+  @brief   Switch over to hardware SPI. DotStars must be connected to
+           MOSI, SCK pins. Data in pixel buffer is unaffected and can
+           continue to be used.
+*/
 void Adafruit_DotStar::updatePins(void) {
   sw_spi_end();
   dataPin = USE_HW_SPI;
   hw_spi_init();
 }
 
-// Change to 'soft' (bitbang) SPI -- any two pins can be used
+/*!
+  @brief   Switch over to 'soft' (bitbang) SPI. DotStars can be connected
+           to any two pins. Data in pixel buffer is unaffected and can
+           continue to be used.
+  @param   data   Arduino pin number for data out.
+  @param   clock  Arduino pin number for clock out.
+*/
 void Adafruit_DotStar::updatePins(uint8_t data, uint8_t clock) {
   hw_spi_end();
   dataPin  = data;
@@ -80,12 +132,17 @@ void Adafruit_DotStar::updatePins(uint8_t data, uint8_t clock) {
   sw_spi_init();
 }
 
-// Length can be changed post-constructor for similar reasons (sketch
-// config not hardcoded).  But DON'T use this for "recycling" strip RAM...
-// all that reallocation is likely to fragment and eventually fail.
-// Instead, set length once to longest strip.
+/*!
+  @brief   Change the length of a previously-declared Adafruit_DotStar
+           strip object. Old data is deallocated and new data is cleared.
+           Pin numbers and pixel format are unchanged.
+  @param   n  New length of strip, in pixels.
+  @note    This function is deprecated, here only for old projects that
+           may still be calling it. New projects should instead use the
+           'new' keyword.
+*/
 void Adafruit_DotStar::updateLength(uint16_t n) {
-  if(pixels) free(pixels);
+  free(pixels);
   uint16_t bytes = (rOffset == gOffset) ?
     n + ((n + 3) / 4) : // MONO: 10 bits/pixel, round up to next byte
     n * 3;              // COLOR: 3 bytes/pixel
@@ -99,12 +156,21 @@ void Adafruit_DotStar::updateLength(uint16_t n) {
 
 // SPI STUFF ---------------------------------------------------------------
 
+/*!
+  @brief   Initialize hardware SPI.
+  @note    This library is written in pre-SPI-transactions style and needs
+           some rewriting to correctly share the SPI bus with other devices.
+*/
 void Adafruit_DotStar::hw_spi_init(void) { // Initialize hardware SPI
 #ifdef __AVR_ATtiny85__
   PORTB &= ~(_BV(PORTB1) | _BV(PORTB2)); // Outputs
   DDRB  |=   _BV(PORTB1) | _BV(PORTB2);  // DO (NOT MOSI) + SCK
 #elif (SPI_INTERFACES_COUNT > 0) || !defined(SPI_INTERFACES_COUNT)
   SPI.begin();
+  // Hardware SPI clock speeds are chosen to run at roughly 1-8 MHz for most
+  // boards, providing a slower but more reliable experience by default.  If
+  // you want faster LED updates, experiment with the clock speeds to find
+  // what works best with your particular setup.
  #if defined(__AVR__) || defined(CORE_TEENSY) || defined(__ARDUINO_ARC__) || defined(__ARDUINO_X86__)
   SPI.setClockDivider(SPI_CLOCK_DIV2); // 8 MHz (6 MHz on Pro Trinket 3V)
  #else
@@ -123,7 +189,10 @@ void Adafruit_DotStar::hw_spi_init(void) { // Initialize hardware SPI
 #endif
 }
 
-void Adafruit_DotStar::hw_spi_end(void) { // Stop hardware SPI
+/*!
+  @brief   Stop hardware SPI.
+*/
+void Adafruit_DotStar::hw_spi_end(void) {
 #ifdef __AVR_ATtiny85__
   DDRB &= ~(_BV(PORTB1) | _BV(PORTB2)); // Inputs
 #elif (SPI_INTERFACES_COUNT > 0) || !defined(SPI_INTERFACES_COUNT)
@@ -131,7 +200,11 @@ void Adafruit_DotStar::hw_spi_end(void) { // Stop hardware SPI
 #endif
 }
 
-void Adafruit_DotStar::sw_spi_init(void) { // Init 'soft' (bitbang) SPI
+/*!
+  @brief   Initialize 'soft' (bitbang) SPI. Data and clock pins are set
+           to outputs.
+*/
+void Adafruit_DotStar::sw_spi_init(void) {
   pinMode(dataPin , OUTPUT);
   pinMode(clockPin, OUTPUT);
 #ifdef __AVR__
@@ -147,7 +220,10 @@ void Adafruit_DotStar::sw_spi_init(void) { // Init 'soft' (bitbang) SPI
 #endif
 }
 
-void Adafruit_DotStar::sw_spi_end() { // Stop 'soft' SPI
+/*!
+  @brief   Stop 'soft' (bitbang) SPI. Data and clock pins are set to inputs.
+*/
+void Adafruit_DotStar::sw_spi_end() {
   pinMode(dataPin , INPUT);
   pinMode(clockPin, INPUT);
 }
@@ -169,7 +245,7 @@ static void spi_out(uint8_t n) { // Clock out one byte
 
 // All other boards have full-featured hardware support for SPI
 
-#define spi_out(n) (void)SPI.transfer(n)
+#define spi_out(n) (void)SPI.transfer(n) ///< Call hardware SPI function
 // Pipelining reads next byte while current byte is clocked out
 #if (defined(__AVR__) && !defined(__AVR_ATtiny85__)) || defined(CORE_TEENSY)
  #define SPI_PIPELINE
@@ -180,7 +256,11 @@ static void spi_out(uint8_t n) { // Clock out one byte
 
 #endif
 
-void Adafruit_DotStar::sw_spi_out(uint8_t n) { // Bitbang SPI write
+/*!
+  @brief   Soft (bitbang) SPI write.
+  @param   n  8-bit value to transfer.
+*/
+void Adafruit_DotStar::sw_spi_out(uint8_t n) {
   for(uint8_t i=8; i--; n <<= 1) {
 #ifdef __AVR__
     if(n & 0x80) *dataPort |=  dataPinMask;
@@ -191,7 +271,17 @@ void Adafruit_DotStar::sw_spi_out(uint8_t n) { // Bitbang SPI write
     if(n & 0x80) digitalWrite(dataPin, HIGH);
     else         digitalWrite(dataPin, LOW);
     digitalWrite(clockPin, HIGH);
+#if F_CPU >= 48000000
+    __asm__ volatile(
+    "nop \n nop"
+    );
+#endif
     digitalWrite(clockPin, LOW);
+#if F_CPU >= 48000000
+    __asm__ volatile(
+    "nop \n nop"
+    );
+#endif
 #endif
   }
 }
@@ -199,16 +289,20 @@ void Adafruit_DotStar::sw_spi_out(uint8_t n) { // Bitbang SPI write
 /* ISSUE DATA TO LED STRIP -------------------------------------------------
 
   Although the LED driver has an additional per-pixel 5-bit brightness
-  setting, it is NOT used or supported here because it's a brain-dead
-  misfeature that's counter to the whole point of Dot Stars, which is to
-  have a much faster PWM rate than NeoPixels.  It gates the high-speed
-  PWM output through a second, much slower PWM (about 400 Hz), rendering
-  it useless for POV.  This brings NOTHING to the table that can't be
-  already handled better in one's sketch code.  If you really can't live
-  without this abomination, you can fork the library and add it for your
-  own use, but any pull requests for this will NOT be merged, nuh uh!
+  setting, it is NOT used or supported here. On APA102, the normally
+  very fast PWM is gated through a much slower PWM (about 400 Hz),
+  rendering it useless for POV or other high-speed things that are
+  probably why one is using DotStars instead of NeoPixels in the first
+  place. I'm told that some APA102 clones use current control rather than
+  PWM for this, which would be much more worthwhile. Still, no support
+  here, no plans for it. If you really can't live without it, you can fork
+  the library and add it for your own use, but any pull requests for this
+  are unlikely be merged for the foreseeable future.
 */
 
+/*!
+  @brief   Transmit pixel data in RAM to DotStars.
+*/
 void Adafruit_DotStar::show(void) {
 
   if(!pixels) return;
@@ -218,6 +312,8 @@ void Adafruit_DotStar::show(void) {
   uint16_t b16 = (uint16_t)brightness; // Type-convert for fixed-point math
 
   if(dataPin == USE_HW_SPI) {
+
+    // TO DO: modernize this for SPI transactions
 
 #ifdef SPI_PIPELINE
     uint8_t next;
@@ -251,7 +347,7 @@ void Adafruit_DotStar::show(void) {
     // pixel, and empirical testing suggests it can be left out...but it's
     // always a good idea to follow the datasheet, in case future hardware
     // revisions are more strict (e.g. might mandate use of end-frame
-    // before start-frame marker).  i.e. let's not remove this. But after
+    // before start-frame marker). i.e. let's not remove this. But after
     // testing a bit more the suggestion is to use at least (numLeds+1)/2
     // high values (1) or (numLeds+15)/16 full bytes as EndFrame. For details see also:
     // https://cpldcpu.wordpress.com/2014/11/30/understanding-the-apa102-superled/
@@ -275,13 +371,22 @@ void Adafruit_DotStar::show(void) {
   }
 }
 
-void Adafruit_DotStar::clear() { // Write 0s (off) to full pixel buffer
+/*!
+  @brief   Fill the whole DotStar strip with 0 / black / off.
+*/
+void Adafruit_DotStar::clear() {
   memset(pixels, 0, (rOffset == gOffset) ?
     numLEDs + ((numLEDs + 3) / 4) : // MONO: 10 bits/pixel
     numLEDs * 3);                   // COLOR: 3 bytes/pixel
 }
 
-// Set pixel color, separate R,G,B values (0-255 ea.)
+/*!
+  @brief   Set a pixel's color using separate red, green and blue components.
+  @param   n  Pixel index, starting from 0.
+  @param   r  Red brightness, 0 = minimum (off), 255 = maximum.
+  @param   g  Green brightness, 0 = minimum (off), 255 = maximum.
+  @param   b  Blue brightness, 0 = minimum (off), 255 = maximum.
+*/
 void Adafruit_DotStar::setPixelColor(
  uint16_t n, uint8_t r, uint8_t g, uint8_t b) {
   if(n < numLEDs) {
@@ -292,7 +397,13 @@ void Adafruit_DotStar::setPixelColor(
   }
 }
 
-// Set pixel color, 'packed' RGB value (0x000000 - 0xFFFFFF)
+/*!
+  @brief   Set a pixel's color using a 32-bit 'packed' RGB value.
+  @param   n  Pixel index, starting from 0.
+  @param   c  32-bit color value. Most significant byte is 0, second is
+              red, then green, and least significant byte is blue.
+              e.g. 0x00RRGGBB
+*/
 void Adafruit_DotStar::setPixelColor(uint16_t n, uint32_t c) {
   if(n < numLEDs) {
     uint8_t *p = &pixels[n * 3];
@@ -302,12 +413,143 @@ void Adafruit_DotStar::setPixelColor(uint16_t n, uint32_t c) {
   }
 }
 
-// Convert separate R,G,B to packed value
-uint32_t Adafruit_DotStar::Color(uint8_t r, uint8_t g, uint8_t b) {
-  return ((uint32_t)r << 16) | ((uint32_t)g << 8) | b;
+/*!
+  @brief   Fill all or part of the DotStar strip with a color.
+  @param   c      32-bit color value. Most significant byte is 0, second
+                  is red, then green, and least significant byte is blue.
+                  e.g. 0x00RRGGBB. If all arguments are unspecified, this
+                  will be 0 (off).
+  @param   first  Index of first pixel to fill, starting from 0. Must be
+                  in-bounds, no clipping is performed. 0 if unspecified.
+  @param   count  Number of pixels to fill, as a positive value. Passing
+                  0 or leaving unspecified will fill to end of strip.
+*/
+void Adafruit_DotStar::fill(uint32_t c, uint16_t first, uint16_t count) {
+  uint16_t i, end;
+
+  if(first >= numLEDs) {
+    return; // If first LED is past end of strip, nothing to do
+  }
+
+  // Calculate the index ONE AFTER the last pixel to fill
+  if(count == 0) {
+    // Fill to end of strip
+    end = numLEDs;
+  } else {
+    // Ensure that the loop won't go past the last pixel
+    end = first + count;
+    if(end > numLEDs) end = numLEDs;
+  }
+
+  for(i = first; i < end; i++) {
+    this->setPixelColor(i, c);
+  }
 }
 
-// Read color from previously-set pixel, returns packed RGB value.
+/*!
+  @brief   Convert hue, saturation and value into a packed 32-bit RGB color
+           that can be passed to setPixelColor() or other RGB-compatible
+           functions.
+  @param   hue  An unsigned 16-bit value, 0 to 65535, representing one full
+                loop of the color wheel, which allows 16-bit hues to "roll
+                over" while still doing the expected thing (and allowing
+                more precision than the wheel() function that was common to
+                prior DotStar and NeoPixel examples).
+  @param   sat  Saturation, 8-bit value, 0 (min or pure grayscale) to 255
+                (max or pure hue). Default of 255 if unspecified.
+  @param   val  Value (brightness), 8-bit value, 0 (min / black / off) to
+                255 (max or full brightness). Default of 255 if unspecified.
+  @return  Packed 32-bit RGB color. Result is linearly but not perceptually
+           correct, so you may want to pass the result through the gamma32()
+           function (or your own gamma-correction operation) else colors may
+           appear washed out. This is not done automatically by this
+           function because coders may desire a more refined gamma-
+           correction function than the simplified one-size-fits-all
+           operation of gamma32(). Diffusing the LEDs also really seems to
+           help when using low-saturation colors.
+*/
+uint32_t Adafruit_DotStar::ColorHSV(uint16_t hue, uint8_t sat, uint8_t val) {
+
+  uint8_t r, g, b;
+
+  // Remap 0-65535 to 0-1529. Pure red is CENTERED on the 64K rollover;
+  // 0 is not the start of pure red, but the midpoint...a few values above
+  // zero and a few below 65536 all yield pure red (similarly, 32768 is the
+  // midpoint, not start, of pure cyan). The 8-bit RGB hexcone (256 values
+  // each for red, green, blue) really only allows for 1530 distinct hues
+  // (not 1536, more on that below), but the full unsigned 16-bit type was
+  // chosen for hue so that one's code can easily handle a contiguous color
+  // wheel by allowing hue to roll over in either direction.
+  hue = (hue * 1530L + 32768) / 65536;
+  // Because red is centered on the rollover point (the +32768 above,
+  // essentially a fixed-point +0.5), the above actually yields 0 to 1530,
+  // where 0 and 1530 would yield the same thing. Rather than apply a
+  // costly modulo operator, 1530 is handled as a special case below.
+
+  // So you'd think that the color "hexcone" (the thing that ramps from
+  // pure red, to pure yellow, to pure green and so forth back to red,
+  // yielding six slices), and with each color component having 256
+  // possible values (0-255), might have 1536 possible items (6*256),
+  // but in reality there's 1530. This is because the last element in
+  // each 256-element slice is equal to the first element of the next
+  // slice, and keeping those in there this would create small
+  // discontinuities in the color wheel. So the last element of each
+  // slice is dropped...we regard only elements 0-254, with item 255
+  // being picked up as element 0 of the next slice. Like this:
+  // Red to not-quite-pure-yellow is:        255,   0, 0 to 255, 254,   0
+  // Pure yellow to not-quite-pure-green is: 255, 255, 0 to   1, 255,   0
+  // Pure green to not-quite-pure-cyan is:     0, 255, 0 to   0, 255, 254
+  // and so forth. Hence, 1530 distinct hues (0 to 1529), and hence why
+  // the constants below are not the multiples of 256 you might expect.
+
+  // Convert hue to R,G,B (nested ifs faster than divide+mod+switch):
+  if(hue < 510) {         // Red to Green-1
+    b = 0;
+    if(hue < 255) {       //   Red to Yellow-1
+      r = 255;
+      g = hue;            //     g = 0 to 254
+    } else {              //   Yellow to Green-1
+      r = 510 - hue;      //     r = 255 to 1
+      g = 255;
+    }
+  } else if(hue < 1020) { // Green to Blue-1
+    r = 0;
+    if(hue <  765) {      //   Green to Cyan-1
+      g = 255;
+      b = hue - 510;      //     b = 0 to 254
+    } else {              //   Cyan to Blue-1
+      g = 1020 - hue;     //     g = 255 to 1
+      b = 255;
+    }
+  } else if(hue < 1530) { // Blue to Red-1
+    g = 0;
+    if(hue < 1275) {      //   Blue to Magenta-1
+      r = hue - 1020;     //     r = 0 to 254
+      b = 255;
+    } else {              //   Magenta to Red-1
+      r = 255;
+      b = 1530 - hue;     //     b = 255 to 1
+    }
+  } else {                // Last 0.5 Red (quicker than % operator)
+    r = 255;
+    g = b = 0;
+  }
+
+  // Apply saturation and value to R,G,B, pack into 32-bit result:
+  uint32_t v1 =   1 + val; // 1 to 256; allows >>8 instead of /255
+  uint16_t s1 =   1 + sat; // 1 to 256; same reason
+  uint8_t  s2 = 255 - sat; // 255 to 0
+  return ((((((r * s1) >> 8) + s2) * v1) & 0xff00) << 8) |
+          (((((g * s1) >> 8) + s2) * v1) & 0xff00)       |
+         ( ((((b * s1) >> 8) + s2) * v1)           >> 8);
+}
+
+/*!
+  @brief   Query the color of a previously-set pixel.
+  @param   n  Index of pixel to read (0 = first).
+  @return  'Packed' 32-bit RGB value. Most significant byte is 0, second is
+           is red, then green, and least significant byte is blue.
+*/
 uint32_t Adafruit_DotStar::getPixelColor(uint16_t n) const {
   if(n >= numLEDs) return 0;
   uint8_t *p = &pixels[n * 3];
@@ -316,94 +558,58 @@ uint32_t Adafruit_DotStar::getPixelColor(uint16_t n) const {
           (uint32_t)p[bOffset];
 }
 
-uint16_t Adafruit_DotStar::numPixels(void) { // Ret. strip length
-  return numLEDs;
-}
-
-// Set global strip brightness.  This does not have an immediate effect;
-// must be followed by a call to show().  Not a fan of this...for various
-// reasons I think it's better handled in one's sketch, but it's here for
-// parity with the NeoPixel library.  Good news is that brightness setting
-// in this library is 'non destructive' -- it's applied as color data is
-// being issued to the strip, not during setPixel(), and also means that
-// getPixelColor() returns the exact value originally stored.
+/*!
+  @brief   Adjust output brightness. Does not immediately affect what's
+           currently displayed on the LEDs. The next call to show() will
+           refresh the LEDs at this level.
+  @param   b  Brightness setting, 0=minimum (off), 255=brightest.
+  @note    For various reasons I think brightness is better handled in
+           one's sketch, but it's here for parity with the NeoPixel
+           library. Good news is that brightness setting in this library
+           is 'non destructive' -- it's applied as color data is being
+           issued to the strip, not during setPixelColor(), and also
+           means that getPixelColor() returns the exact value originally
+           stored.
+*/
 void Adafruit_DotStar::setBrightness(uint8_t b) {
-  // Stored brightness value is different than what's passed.  This
+  // Stored brightness value is different than what's passed. This
   // optimizes the actual scaling math later, allowing a fast 8x8-bit
-  // multiply and taking the MSB.  'brightness' is a uint8_t, adding 1
+  // multiply and taking the MSB. 'brightness' is a uint8_t, adding 1
   // here may (intentionally) roll over...so 0 = max brightness (color
   // values are interpreted literally; no scaling), 1 = min brightness
   // (off), 255 = just below max brightness.
   brightness = b + 1;
 }
 
+/*!
+  @brief   Retrieve the last-set brightness value for the strip.
+  @return  Brightness value: 0 = minimum (off), 255 = maximum.
+*/
 uint8_t Adafruit_DotStar::getBrightness(void) const {
   return brightness - 1; // Reverse above operation
 }
 
-// Return pointer to the library's pixel data buffer.  Use carefully,
-// much opportunity for mayhem.  It's mostly for code that needs fast
-// transfers, e.g. SD card to LEDs.  Color data is in BGR order.
-uint8_t *Adafruit_DotStar::getPixels(void) const {
-  return pixels;
-}
-
-/* A PROGMEM (flash mem) table containing 8-bit unsigned sine wave (0-255).
-   Copy & paste this snippet into a Python REPL to regenerate:
-import math
-for x in range(256):
-    print("{:3},".format(int((math.sin(x/128.0*math.pi)+1.0)*127.5+0.5))),
-    if x&15 == 15: print
+/*!
+  @brief   A gamma-correction function for 32-bit packed RGB colors.
+           Makes color transitions appear more perceptially correct.
+  @param   x  32-bit packed RGB color.
+  @return  Gamma-adjusted packed color, can then be passed in one of the
+           setPixelColor() functions. Like gamma8(), this uses a fixed
+           gamma correction exponent of 2.6, which seems reasonably okay
+           for average DotStars in average tasks. If you need finer
+           control you'll need to provide your own gamma-correction
+           function instead.
 */
-static const uint8_t PROGMEM _sineTable[256] = {
-  128,131,134,137,140,143,146,149,152,155,158,162,165,167,170,173,
-  176,179,182,185,188,190,193,196,198,201,203,206,208,211,213,215,
-  218,220,222,224,226,228,230,232,234,235,237,238,240,241,243,244,
-  245,246,248,249,250,250,251,252,253,253,254,254,254,255,255,255,
-  255,255,255,255,254,254,254,253,253,252,251,250,250,249,248,246,
-  245,244,243,241,240,238,237,235,234,232,230,228,226,224,222,220,
-  218,215,213,211,208,206,203,201,198,196,193,190,188,185,182,179,
-  176,173,170,167,165,162,158,155,152,149,146,143,140,137,134,131,
-  128,124,121,118,115,112,109,106,103,100, 97, 93, 90, 88, 85, 82,
-   79, 76, 73, 70, 67, 65, 62, 59, 57, 54, 52, 49, 47, 44, 42, 40,
-   37, 35, 33, 31, 29, 27, 25, 23, 21, 20, 18, 17, 15, 14, 12, 11,
-   10,  9,  7,  6,  5,  5,  4,  3,  2,  2,  1,  1,  1,  0,  0,  0,
-    0,  0,  0,  0,  1,  1,  1,  2,  2,  3,  4,  5,  5,  6,  7,  9,
-   10, 11, 12, 14, 15, 17, 18, 20, 21, 23, 25, 27, 29, 31, 33, 35,
-   37, 40, 42, 44, 47, 49, 52, 54, 57, 59, 62, 65, 67, 70, 73, 76,
-   79, 82, 85, 88, 90, 93, 97,100,103,106,109,112,115,118,121,124};
-
-/* Similar to above, but for an 8-bit gamma-correction table.
-   Copy & paste this snippet into a Python REPL to regenerate:
-import math
-gamma=2.6
-for x in range(256):
-    print("{:3},".format(int(math.pow((x)/255.0,gamma)*255.0+0.5))),
-    if x&15 == 15: print
-*/
-static const uint8_t PROGMEM _gammaTable[256] = {
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-    0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,  1,  1,  1,  1,
-    1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,  2,  3,  3,  3,  3,
-    3,  3,  4,  4,  4,  4,  5,  5,  5,  5,  5,  6,  6,  6,  6,  7,
-    7,  7,  8,  8,  8,  9,  9,  9, 10, 10, 10, 11, 11, 11, 12, 12,
-   13, 13, 13, 14, 14, 15, 15, 16, 16, 17, 17, 18, 18, 19, 19, 20,
-   20, 21, 21, 22, 22, 23, 24, 24, 25, 25, 26, 27, 27, 28, 29, 29,
-   30, 31, 31, 32, 33, 34, 34, 35, 36, 37, 38, 38, 39, 40, 41, 42,
-   42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
-   58, 59, 60, 61, 62, 63, 64, 65, 66, 68, 69, 70, 71, 72, 73, 75,
-   76, 77, 78, 80, 81, 82, 84, 85, 86, 88, 89, 90, 92, 93, 94, 96,
-   97, 99,100,102,103,105,106,108,109,111,112,114,115,117,119,120,
-  122,124,125,127,129,130,132,134,136,137,139,141,143,145,146,148,
-  150,152,154,156,158,160,162,164,166,168,170,172,174,176,178,180,
-  182,184,186,188,191,193,195,197,199,202,204,206,209,211,213,215,
-  218,220,223,225,227,230,232,235,237,240,242,245,247,250,252,255};
-
-uint8_t Adafruit_DotStar::sine8(uint8_t x) const {
-  return pgm_read_byte(&_sineTable[x]); // 0-255 in, 0-255 out
+uint32_t Adafruit_DotStar::gamma32(uint32_t x) {
+  uint8_t *y = (uint8_t *)&x;
+  // All four bytes of a 32-bit value are filtered to avoid a bunch of
+  // shifting and masking that would be necessary for properly handling
+  // different endianisms (and each byte is a fairly trivial operation,
+  // so it might not even be wasting cycles vs a check and branch.
+  // In theory this might cause trouble *if* someone's storing information
+  // in the unused most significant byte of an RGB value, but this seems
+  // exceedingly rare and if it's encountered in reality they can mask
+  // values going in or coming out.
+  for(uint8_t i=0; i<4; i++) y[i] = gamma8(y[i]);
+  return x; // Packed 32-bit return
 }
-
-uint8_t Adafruit_DotStar::gamma8(uint8_t x) const {
-  return pgm_read_byte(&_gammaTable[x]); // 0-255 in, 0-255 out
-}
-

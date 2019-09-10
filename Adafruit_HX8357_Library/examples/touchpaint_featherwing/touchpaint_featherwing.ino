@@ -30,18 +30,6 @@
    #define TFT_DC   33
    #define SD_CS    14
 #endif
-#ifdef __AVR_ATmega32U4__
-   #define STMPE_CS 6
-   #define TFT_CS   9
-   #define TFT_DC   10
-   #define SD_CS    5
-#endif
-#ifdef ARDUINO_SAMD_FEATHER_M0
-   #define STMPE_CS 6
-   #define TFT_CS   9
-   #define TFT_DC   10
-   #define SD_CS    5
-#endif
 #ifdef TEENSYDUINO
    #define TFT_DC   10
    #define TFT_CS   4
@@ -67,8 +55,17 @@
    #define SD_CS    P3_2
 #endif
 
+// Anything else!
+#if defined (__AVR_ATmega32U4__) || defined(ARDUINO_SAMD_FEATHER_M0) || defined (__AVR_ATmega328P__) || defined(ARDUINO_SAMD_ZERO) || defined(__SAMD51__) || defined(__SAM3X8E__) || defined(ARDUINO_NRF52_FEATHER)
+   #define STMPE_CS 6
+   #define TFT_CS   9
+   #define TFT_DC   10
+   #define SD_CS    5
+#endif
+
 #define TFT_RST -1
 
+// Init screen on hardware SPI, HX8357D type:
 Adafruit_HX8357 tft = Adafruit_HX8357(TFT_CS, TFT_DC, TFT_RST);
 Adafruit_STMPE610 ts = Adafruit_STMPE610(STMPE_CS);
 
@@ -96,9 +93,9 @@ void setup() {
   }
   Serial.println("Touchscreen started");
   
-  tft.begin(HX8357D);
+  tft.begin();
   tft.fillScreen(HX8357_BLACK);
-    // make the color selection boxes
+  // make the color selection boxes
   tft.fillRect(0, 0, BOXSIZE, BOXSIZE, HX8357_RED);
   tft.fillRect(BOXSIZE, 0, BOXSIZE, BOXSIZE, HX8357_YELLOW);
   tft.fillRect(BOXSIZE*2, 0, BOXSIZE, BOXSIZE, HX8357_GREEN);

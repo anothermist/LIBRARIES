@@ -1,23 +1,28 @@
 #include "spi.h"
 #include <pthread.h>
+#include <unistd.h>
 
 static pthread_mutex_t spiMutex = PTHREAD_MUTEX_INITIALIZER;
+bool bcmIsInitialized = false;
 
 SPI::SPI() {
 
 }
 
-
 void SPI::begin( int busNo ) {
-	if (!bcm2835_init()){
+    if(!bcmIsInitialized){	  
+      if (!bcm2835_init()){
 		return;
-	}
-	
-	bcm2835_spi_begin();
+	  }
+    }
+    bcmIsInitialized = true;
+    bcm2835_spi_begin();
 }
 
 void SPI::beginTransaction(SPISettings settings){
-   
+	if (geteuid() != 0){
+		throw -1;
+	}
 	pthread_mutex_lock (&spiMutex);
 	setBitOrder(settings.border);
 	setDataMode(settings.dmode);

@@ -1,0 +1,38 @@
+set_global_assignment -name TOP_LEVEL_ENTITY xlr8_alorium_top
+#==============================================================================
+# Copyright (c) 2016 Alorium Technology.  All right reserved.
+#==============================================================================
+#
+# File Name  : xlr8_16MHz.qsf
+# Author     : Steve Phillips
+# Contact    : support@aloriumtech.com
+# Description:
+#
+# This file sets a coupleof parameters need for the specific clock
+# speed we are compiling at and then loads the other Quartus settings
+# files. This file should not be edited by users of OpenXLR8
+#
+# Quartus settings for XLR8 project
+#  http://www.aloriumtech.com/xlr8
+#  https://github.com/AloriumTechnology
+#==============================================================================
+
+
+#------------------------------------------------------------------------------
+# Set the values in this section based on the clock speed desired
+
+# Set values for DESIGN_CONFIG. Use 16MHz=520, 32MHz=522, 64MHz=524
+set_parameter -name DESIGN_CONFIG 520     # Use 16MHz=520 by default
+
+# Select AVR core based on Clock speed
+set_global_assignment -name QXP_FILE ../../../XLR8Core/extras/quartus/xlr8_atmega328clone_16MHz.qxp
+
+#------------------------------------------------------------------------------
+# Load standard settings that apply to all XLR8 builds
+
+source ../../../XLR8Core/extras/quartus/xlr8_top_core.qsf
+source ../../../XLR8Core/extras/quartus/xlr8_base.qsf
+
+#------------------------------------------------------------------------------
+
+set_global_assignment -name LAST_QUARTUS_VERSION "17.1.0 Standard Edition"

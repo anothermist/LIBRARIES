@@ -1,9 +1,7 @@
 # AD7173-Arduino
 Analog Devices AD7173 analog digital converter Arduino library
 
-This library is developed for AD7173 to be used with Brain-Duino and therefore implements only basic functionality. Find more information @ http://brain-duino.com
-
-For Brain-Duino we use the following setup, meaning this is the most tested setup for this library:
+Mostly tested setup for this library:
 
 * 1007 data rate
 * external crystal

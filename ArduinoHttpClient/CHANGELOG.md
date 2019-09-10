@@ -1,3 +1,11 @@
+## ArduinoHttpClient 0.4.0 - 2019.04.09
+
+* Added URLEncoder helper
+
+## ArduinoHttpClient 0.3.2 - 2019.02.04
+
+* Changed Flush return value resulting in compilation error. Thanks @forGGe
+
 ## ArduinoHttpClient 0.3.1 - 2017.09.25
 
 * Changed examples to support Arduino Create secret tabs

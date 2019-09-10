@@ -13,13 +13,13 @@ The library is also available on [PlatformIO](https://platformio.org/lib/show/61
 
 The following examples show how you can use the library with various Arduino compatible hardware:
 
-- [Arduino Yun & Yun-Shield](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoYun/ArduinoYun.ino) ([SSL](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoYun_SSL/ArduinoYun_SSL.ino))
+- [Arduino Yun & Yun-Shield](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoYun/ArduinoYun.ino) ([Secure](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoYunSecure/ArduinoYunSecure.ino))
 - [Arduino Ethernet Shield](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoEthernetShield/ArduinoEthernetShield.ino)    
 - [Arduino WiFi Shield](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoWiFiShield/ArduinoWiFiShield.ino)
-- [Adafruit HUZZAH ESP8266](https://github.com/256dpi/arduino-mqtt/blob/master/examples/AdafruitHuzzahESP8266/AdafruitHuzzahESP8266.ino) ([SSL](https://github.com/256dpi/arduino-mqtt/blob/master/examples/AdafruitHuzzahESP8266_SSL/AdafruitHuzzahESP8266_SSL.ino))
-- [Arduino/Genuino WiFi101 Shield](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoWiFi101/ArduinoWiFi101.ino) ([SSL](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoWiFi101_SSL/ArduinoWiFi101_SSL.ino))
-- [Arduino MKR GSM 1400](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoMKRGSM1400/ArduinoMKRGSM1400.ino) ([SSL](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoMKRGSM1400_SSL/ArduinoMKRGSM1400_SSL.ino))
-- [ESP32 Development Board](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ESP32DevelopmentBoard/ESP32DevelopmentBoard.ino) ([SSL](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ESP32DevelopmentBoard_SSL/ESP32DevelopmentBoard_SSL.ino))
+- [Adafruit HUZZAH ESP8266](https://github.com/256dpi/arduino-mqtt/blob/master/examples/AdafruitHuzzahESP8266/AdafruitHuzzahESP8266.ino) ([Secure](https://github.com/256dpi/arduino-mqtt/blob/master/examples/AdafruitHuzzahESP8266Secure/AdafruitHuzzahESP8266Secure.ino))
+- [Arduino/Genuino WiFi101 Shield](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoWiFi101/ArduinoWiFi101.ino) ([Secure](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoWiFi101Secure/ArduinoWiFi101Secure.ino))
+- [Arduino MKR GSM 1400](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoMKRGSM1400/ArduinoMKRGSM1400.ino) ([Secure](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ArduinoMKRGSM1400Secure/ArduinoMKRGSM1400Secure.ino))
+- [ESP32 Development Board](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ESP32DevelopmentBoard/ESP32DevelopmentBoard.ino) ([Secure](https://github.com/256dpi/arduino-mqtt/blob/master/examples/ESP32DevelopmentBoardSecure/ESP32DevelopmentBoardSecure.ino))
 
 Other shields and boards should also work if they provide a [Client](https://www.arduino.cc/en/Reference/ClientConstructor) based network implementation.
 
@@ -107,7 +107,7 @@ void begin(const char hostname[], Client &client);
 void begin(const char hostname[], int port, Client &client);
 ```
 
-- Specify port `8883` when using SSL clients for secure connections.
+- Specify port `8883` when using secure clients for encrypted connections.
 - Local domain names (e.g. `Computer.local` on OSX) are not supported by Arduino. You need to set the IP address directly.
 
 The hostname and port can also be changed after calling `begin()`:
@@ -117,7 +117,7 @@ void setHost(const char hostname[]);
 void setHost(const char hostname[], int port);
 ```
 
-Set a will message (last testament) that gets registered on the broker after connecting:
+Set a will message (last testament) that gets registered on the broker after connecting. `setWill()` has to be called before calling `connect()`:
 
 ```c++
 void setWill(const char topic[]);
@@ -133,7 +133,7 @@ void onMessage(MQTTClientCallbackSimple);
 // Callback signature: void messageReceived(String &topic, String &payload) {}
 
 void onMessageAdvanced(MQTTClientCallbackAdvanced);
-// Callback signature: void messageReceived(MQTTClient *client, char[] topic, char payload[], int payload_length) {}
+// Callback signature: void messageReceived(MQTTClient *client, char topic[], char payload[], int payload_length) {}
 ```
 
 - The set callback is mostly called during a call to `loop()` but may also be called during a call to `subscribe()`, `unsubscribe()` or `publish() // QoS > 0` if messages have been received before receiving the required acknowledgement. Therefore, it is strongly recommended to not call `subscribe()`, `unsubscribe()` or `publish() // QoS > 0` directly in the callback.
@@ -144,18 +144,28 @@ Set more advanced options:
 void setOptions(int keepAlive, bool cleanSession, int timeout);
 ```
 
-- The `keepAlive` option controls the keep alive interval (default: 10).
+- The `keepAlive` option controls the keep alive interval in seconds (default: 10).
 - The `cleanSession` option controls the session retention on the broker side (default: true).
-- The `timeout` option controls the default timeout for all commands in milliseconds (default: 1000). 
+- The `timeout` option controls the default timeout for all commands in milliseconds (default: 1000).
+
+Set a custom clock source "custom millis" callback to enable deep sleep applications:
+
+```c++
+void setClockSource(MQTTClientClockSource);
+// Callback signature: uint32_t clockSource() {}
+```
+
+- The specified callback is used by the internal timers to get a monotonic time in milliseconds. Since the clock source for the built-in `millis` is stopped when the the Arduino goes into deep sleep, you need to provide a custom callback that first syncs with a built-in or external Real Time Clock (RTC). You can pass `NULL` to reset to the default implementation.
 
 Connect to broker using the supplied client id and an optional username and password:
 
 ```c++
-bool connect(const char clientId[]);
-bool connect(const char clientId[], const char username[]);
-bool connect(const char clientId[], const char username[], const char password[]);
+bool connect(const char clientId[], bool skip = false);
+bool connect(const char clientId[], const char username[], bool skip = false);
+bool connect(const char clientId[], const char username[], const char password[], bool skip = false);
 ```
 
+- If the `skip` option is set to true, the client will skip the network level connection and jump to the MQTT level connection. This option can be used in order to establish and verify TLS connections manually before giving control to the MQTT client. 
 - This functions returns a boolean that indicates if the connection has been established successfully.
 
 Publishes a message to the broker with an optional payload:

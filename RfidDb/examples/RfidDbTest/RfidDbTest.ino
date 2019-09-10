@@ -15,6 +15,10 @@ void setup() {
     ;
   }
 
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+  EEPROM.begin(db.dbSize());
+#endif
+
   EEPROM.put(0, 0);
   db.begin();
 

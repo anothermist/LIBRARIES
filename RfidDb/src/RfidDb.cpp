@@ -33,6 +33,14 @@ void RfidDb::begin() {
   }
 }
 
+uint32_t RfidDb::dbSize() {
+  uint32_t recordSize = maxNameLength() + sizeof(uint32_t);
+  
+  return 1 // magic number
+    + 1    // record count
+    + (recordSize * maxSize()); // size of each record multiplied by the maximum number of records
+}
+
 uint8_t RfidDb::maxSize() {
   return _maxSize;
 }
@@ -65,6 +73,7 @@ bool RfidDb::insert(uint32_t id, const char* name) {
   writeId(c, id);
   writeName(c, name);  
   EEPROM.write(countOffset(), c + 1);
+  commitEeprom();
   return true;
 }
 
@@ -84,6 +93,7 @@ void RfidDb::remove(uint32_t id) {
     copyName(newCount, posToRemove);
   }
   EEPROM.write(countOffset(), newCount);
+  commitEeprom();
 }
 
 bool RfidDb::getId(uint8_t pos, uint32_t &id) {
@@ -163,6 +173,7 @@ void RfidDb::writeName(uint8_t pos, const char* name) {
     // Ensure we null terminate
     EEPROM.write(base + _maxNameLength - 1, '\0');
   }
+  commitEeprom();
 }
 
 void RfidDb::copyName(uint8_t srcPos, uint8_t destPos) {
@@ -176,6 +187,7 @@ void RfidDb::copyName(uint8_t srcPos, uint8_t destPos) {
         break;
       }
     }
+    commitEeprom();
   }
 }
 
@@ -190,6 +202,13 @@ bool RfidDb::hasMagic() {
 void RfidDb::initDb() {
   EEPROM.write(_eepromOffset, RFID_DB_MAGIC);
   EEPROM.write(countOffset(), 0);
+  commitEeprom();
+}
+
+void RfidDb::commitEeprom() {
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+  EEPROM.commit();
+#endif
 }
 
 void RfidDb::init(uint8_t maxSize, uint16_t eepromOffset, uint8_t maxNameLength) {
@@ -197,3 +216,5 @@ void RfidDb::init(uint8_t maxSize, uint16_t eepromOffset, uint8_t maxNameLength)
   _eepromOffset = eepromOffset;
   _maxNameLength = maxNameLength;
 }
+
+

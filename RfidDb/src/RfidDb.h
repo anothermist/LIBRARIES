@@ -38,6 +38,9 @@ class RfidDb {
     // contain.
     uint8_t maxSize();
 
+    // The number of bytes that the entire database takes up in EEPROM
+    uint32_t dbSize();
+
     // Returns the maximum length of name that can be stored, including null
     // terminator
     uint8_t maxNameLength();
@@ -100,6 +103,7 @@ class RfidDb {
     void copyName(uint8_t srcPos, uint8_t destPos);
     bool hasMagic();
     void initDb();
+    void commitEeprom();
     void init(uint8_t maxSize, uint16_t eepromOffset, uint8_t maxNameSize);
 };
 

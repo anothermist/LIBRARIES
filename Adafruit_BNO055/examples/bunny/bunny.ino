@@ -30,7 +30,9 @@
 /* Set the delay between fresh samples */
 #define BNO055_SAMPLERATE_DELAY_MS (100)
 
-Adafruit_BNO055 bno = Adafruit_BNO055(55);
+// Check I2C device address and correct line below (by default address is 0x29 or 0x28)
+//                                   id, address
+Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
 
 /**************************************************************************/
 /*
@@ -71,9 +73,12 @@ void setup(void)
     Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
     while(1);
   }
-
+   
   delay(1000);
 
+  /* Use external crystal for better accuracy */
+  bno.setExtCrystalUse(true);
+   
   /* Display some basic information on this sensor */
   displaySensorDetails();
 }

@@ -40,6 +40,7 @@
 #define WII_BIT7 7
 
 #define WII_VALUES_ARRAY_SIZE 19
+#define dataArraySize 6
 
 typedef enum _controllertype {
 	Unknown,
@@ -60,7 +61,7 @@ class Accessory: public Classic,
 		public Guitar {
 public:
 	Accessory();
-	static void reset();
+	void reset();
 	ControllerType type;
 
 	uint8_t* getDataArray();
@@ -216,8 +217,9 @@ public:
 protected:
 	bool _encrypted;
 	// allow sub classes to view the data
-
-	uint8_t _dataarray[6];
+	uint8_t _dataarrayTMP[dataArraySize];
+	uint8_t _dataarrayReadConsec[dataArraySize];
+	uint8_t _dataarray[dataArraySize];
 	uint8_t _multiplexI2C = 0;
 	uint8_t _multiplexSwitch;
 

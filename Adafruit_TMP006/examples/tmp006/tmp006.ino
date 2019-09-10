@@ -1,5 +1,5 @@
 /*************************************************** 
-  This is an example for the TMP006 Barometric Pressure & Temp Sensor
+  This is an example for the TMP006 Contact-less Infrared Thermopile Sensor 
 
   Designed specifically to work with the Adafruit TMP006 Breakout 
   ----> https://www.adafruit.com/products/1296
@@ -15,6 +15,7 @@
  ****************************************************/
 
 #include <Wire.h>
+#include <Adafruit_Sensor.h>
 #include "Adafruit_TMP006.h"
 
 // Connect VCC to +3V (its a quieter supply than the 5V supply on an Arduino

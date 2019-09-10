@@ -1,20 +1,39 @@
+/**
+ * DS1307, DS3231 and DS3232 RTCs basic library
+ *
+ * Really tiny library to basic RTC functionality on Arduino.
+ *
+ * Supported features:
+ *     * SQuare Wave Generator
+ *     * Fixed output pin for DS1307
+ *     * RAM for DS1307 and DS3232
+ *     * temperature sensor for DS3231 and DS3232
+ *     * Alarms (1 and 2) for DS3231 and DS3232
+ *     * Power failure check for DS3231 and DS3232
+ *
+ * See uEEPROMLib for EEPROM support.
+ *
+ * @copyright Naguissa
+ * @author Naguissa
+ * @url https://github.com/Naguissa/uRTCLib
+ * @url https://www.foroelectro.net/librerias-arduino-ide-f29/rtclib-arduino-libreria-simple-y-eficaz-para-rtc-y-t95.html
+ * @email naguissa@foroelectro.net
+ * @version 6.2.0
+ * @created 2015-05-07
+ */
 #include "Arduino.h"
 #include "Wire.h"
 #include "uRTCLib.h"
 
 
 // uRTCLib rtc;
-uRTCLib rtc(0x68, 0x57);
+uRTCLib rtc(0x68);
 
-
-
-unsigned int pos;
 
 void setup() {
 delay (2000);
 	Serial.begin(9600);
 	Serial.println("Serial OK");
-	//  Max position: 32767
 
 	#ifdef ARDUINO_ARCH_ESP8266
 		Wire.begin(0, 2); // D3 and D4 on ESP8266
@@ -22,65 +41,8 @@ delay (2000);
 		Wire.begin();
 	#endif
 
-
-	#ifdef _VARIANT_ARDUINO_STM32_
-		Serial.println("Board: STM32");
-	#else
-		Serial.println("Board: Other");
-	#endif
-#ifdef ARDUINO_ARCH_AVR
-	int inttmp = 32123;
-#else
-	// too logng for AVR 16 bits!
-	int inttmp = 24543557;
-#endif
-	float floattmp = 3.1416;
-	char chartmp = 'A';
-
-	// Testing template
-	if (!rtc.eeprom_write(0, inttmp)) {
-		Serial.println("Failed to store INT");
-	} else {
-		Serial.println("INT correctly stored");
-	}
-	if (!rtc.eeprom_write(4, floattmp)) {
-		Serial.println("Failed to store FLOAT");
-	} else {
-		Serial.println("FLOAT correctly stored");
-	}
-	if (!rtc.eeprom_write(8, chartmp)) {
-		Serial.println("Failed to store CHAR");
-	} else {
-		Serial.println("CHAR correctly stored");
-	}
-
 	rtc.set(0, 42, 16, 6, 2, 5, 15);
 	//  RTCLib::set(byte second, byte minute, byte hour, byte dayOfWeek, byte dayOfMonth, byte month, byte year)
-
-
-	inttmp = 0;
-	floattmp = 0;
-	chartmp = 0;
-
-
-
-	Serial.print("int: ");
-	rtc.eeprom_read(0, &inttmp);
-	Serial.println(inttmp);
-	Serial.print("float: ");
-	rtc.eeprom_read(4, &floattmp);
-	Serial.println((float) floattmp);
-	Serial.print("char: ");
-	rtc.eeprom_read(8, &chartmp);
-	Serial.println(chartmp);
-	Serial.println();
-
-
-	for(pos = 9; pos < 1000; pos++) {
-		rtc.eeprom_write(pos, (unsigned char) (pos % 256));
-	}
-
-	pos = 0;
 }
 
 void loop() {
@@ -105,16 +67,9 @@ void loop() {
 	Serial.print(rtc.dayOfWeek());
 
 	Serial.print(" - Temp: ");
-	Serial.print(rtc.temp());
-
-	Serial.print(" ---- ");
-	Serial.print(pos);
-	Serial.print(": ");
-	Serial.print(rtc.eeprom_read(pos));
+	Serial.print(rtc.temp()  / 100);
 
 	Serial.println();
 
-	pos++;
-	pos %= 1000;
 	delay(1000);
 }

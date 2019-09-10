@@ -477,7 +477,7 @@ LIB8STATIC uint16_t lerp16by16( uint16_t a, uint16_t b, fract16 frac)
     uint16_t result;
     if( b > a ) {
         uint16_t delta = b - a;
-        uint32_t scaled = scale16(delta, frac);
+        uint16_t scaled = scale16(delta, frac);
         result = a + scaled;
     } else {
         uint16_t delta = a - b;
@@ -604,7 +604,7 @@ LIB8STATIC uint8_t ease8InOutQuad(uint8_t val) {
       "sbrc %[val], 7 \n"
       "com %[j]       \n"
       "clr __zero_reg__   \n"
-      : [j] "+a" (j)
+      : [j] "+&a" (j)
       : [val] "a" (val)
       : "r0", "r1"
       );
@@ -614,6 +614,22 @@ LIB8STATIC uint8_t ease8InOutQuad(uint8_t val) {
 #else
 #error "No implementation for ease8InOutQuad available."
 #endif
+
+/// ease16InOutQuad: 16-bit quadratic ease-in / ease-out function
+// C implementation at this point
+LIB8STATIC uint16_t ease16InOutQuad( uint16_t i)
+{
+    uint16_t j = i;
+    if( j & 0x8000 ) {
+        j = 65535 - j;
+    }
+    uint16_t jj  = scale16( j, j);
+    uint16_t jj2 = jj << 1;
+    if( i & 0x8000 ) {
+        jj2 = 65535 - jj2;
+    }
+    return jj2;
+}
 
 
 /// ease8InOutCubic: 8-bit cubic ease-in / ease-out function
@@ -690,7 +706,7 @@ LIB8STATIC uint8_t ease8InOutApprox( fract8 i)
 
         "Ldone_%=:               \n\t"
 
-        : [i] "+a" (i)
+        : [i] "+&a" (i)
         :
         : "r0", "r1"
         );

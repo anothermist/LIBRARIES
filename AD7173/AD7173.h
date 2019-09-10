@@ -2,40 +2,40 @@
 ===================================================================================
 library to control the AD7173 ADC
 
-							  G    A    A    A    A    A    A
-					R    R    P    I    I    I    I    I    I    A
-					E    E    I    N    N    N    N    N    N    I
-					F    F    O    1    1    1    1    1    1    N
-					+    -    3    5    4    3    2    1    0    9
-					|    |    |    |    |    |    |    |    |    |
-				_________________________________________________________
-			  /    40.  39.  38.  37.  36.  35.  34.  33.  32.  31.     |
-			 |                                                          |
-	 AIN16 --| 1.                                                   30. |-- AIN8
+                              G    A    A    A    A    A    A
+                    R    R    P    I    I    I    I    I    I    A
+                    E    E    I    N    N    N    N    N    N    I
+                    F    F    O    1    1    1    1    1    1    N
+                    +    -    3    5    4    3    2    1    0    9
+                    |    |    |    |    |    |    |    |    |    |
+               _________________________________________________________
+              /    40.  39.  38.  37.  36.  35.  34.  33.  32.  31.     |
+             |                                                          |
+     AIN16 --| 1.                                                   30. |-- AIN8
 AIN0/REF2- --| 2.                                                   29. |-- AIN7
 AIN1/REF2+ --| 3.                                                   28. |-- AIN6
-	  AIN2 --| 4.                                                   27. |-- AIN5
-	  AIN3 --| 5.                                                   26. |-- AIN4
-	REFOUT --| 6.                                                   25. |-- GPIO2
+      AIN2 --| 4.                                                   27. |-- AIN5
+      AIN3 --| 5.                                                   26. |-- AIN4
+    REFOUT --| 6.                                                   25. |-- GPIO2
    REGCAPA --| 7.                                                   24. |-- GPIO1
-	  AVSS --| 8.                                                   23. |-- GPIO0
-	 AVDD1 --| 9.                                                   22. |-- REGCAPD
-	 AVDD2 --| 10.                                                  21. |-- DGND
-			 |                                                          |
-			 |     11.  12.  13.  14.  15.  16.  17.  18.  19.  20.     |
-			 |__________________________________________________________|
-					|    |    |    |    |    |    |    |    |    |
-					P    X    X    D    D    S    C    E    S    I
-					D    T    T    O    I    C    S    R    Y    O
-					S    A    A    U    N    L         R    N    V
-					W    L    L    T         K         O    C    D
-					1    2                             R         D
-						 /
-						 C
-						 L
-						 K
-						 I
-						 O
+      AVSS --| 8.                                                   23. |-- GPIO0
+     AVDD1 --| 9.                                                   22. |-- REGCAPD
+     AVDD2 --| 10.                                                  21. |-- DGND
+             |                                                          |
+             |     11.  12.  13.  14.  15.  16.  17.  18.  19.  20.     |
+             |__________________________________________________________|
+                    |    |    |    |    |    |    |    |    |    |
+                    P    X    X    D    D    S    C    E    S    I
+                    D    T    T    O    I    C    S    R    Y    O
+                    S    A    A    U    N    L         R    N    V
+                    W    L    L    T         K         O    C    D
+                         1    2                             R    D
+                              /
+                              C
+                              L
+                              K
+                              I
+                              O
 ===================================================================================
 */
 
@@ -198,6 +198,32 @@ typedef enum {
 	EXTERNAL_CRYSTAL = 0x03
 } clock_mode_t;
 
+/* ADC internal reference modes */
+typedef enum {
+	REF_DISABLE = 0x00,
+	REF_ENABLE = 0x01
+} ref_mode_t;
+
+/* ADC channel buffer setting */
+typedef enum {
+	AIN_BUF_DISABLE = 0x00,
+	AIN_BUF_ENABLE = 0x03
+} ain_buf_mode_t;
+
+/* setup to select reference source */
+/*
+	00 External reference source
+	01 AIN1/REF2+ and AIN0/REF2−
+	10 Internal reference source
+	11 External AVDD1 – AVSS
+*/
+typedef enum {
+	REF_EXT = 0x00,
+	REF_AIN = 0x01,
+	REF_INT = 0x02,
+	REF_PWR = 0x03
+} setup_ref_source_t;
+
 /* ADC data ready indicator */
 #define DATA_READY digitalRead(MISO) == LOW
 
@@ -210,7 +236,7 @@ public:
 	set default ADC data conversion mode
 	=====================================
 	*/
-	AD7173Class() : m_data_mode(CONTINUOUS_CONVERSION_MODE) {
+	AD7173Class() : m_data_mode(CONTINUOUS_CONVERSION_MODE), append_status_reg(false) {
 		/* ... */
 	}
 
@@ -251,7 +277,7 @@ public:
 	@return int - error code
 	================================
 	*/
-	int set_adc_mode_config(data_mode_t, clock_mode_t);
+	int set_adc_mode_config(data_mode_t, clock_mode_t, ref_mode_t);
 
 	/*
 	==================================================
@@ -260,7 +286,7 @@ public:
 	@return int - error code
 	==================================================
 	*/
-	int set_interface_mode_config(bool);
+	int set_interface_mode_config(bool, bool);
 
 	/*
 	==========================================
@@ -296,10 +322,11 @@ public:
 	sets the ADC setups coding mode
 	@param byte - setup register
 	@param condig_mode_t - coding mode
+	@param ain_buf_t - analog input buffer
 	@return int - error code
 	==================================
 	*/
-	int set_setup_config(adc7173_register_t, coding_mode_t);
+	int set_setup_config(adc7173_register_t, coding_mode_t, ain_buf_mode_t, setup_ref_source_t);
 
 	/*
 	==========================================
@@ -324,6 +351,9 @@ public:
 private:
 	/* ADC data mode */
 	data_mode_t m_data_mode;
+	
+	/* Append status register to data */
+	bool append_status_reg;
 
 	/*
 	===========================

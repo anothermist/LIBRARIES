@@ -1,26 +1,27 @@
 /* SevSeg Library
- 
- Copyright 2017 Dean Reading
- 
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at 
- http://www.apache.org/licenses/LICENSE-2.0
- 
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
- 
- 
- This library allows an Arduino to easily display numbers in decimal format on
- a 7-segment display without a separate 7-segment display controller.
- 
- Direct any questions or suggestions to deanreading@hotmail.com
- See the included readme for instructions.
+ *
+ * Copyright 2017 Dean Reading
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ * This library allows an Arduino to easily display numbers and letters on a
+ * 7-segment display without a separate 7-segment display controller.
+ *
+ * Direct any questions or suggestions to deanreading@hotmail.com
+ * See the included readme for instructions.
+ * https://github.com/DeanIsMe/SevSeg
  */
- 
+
 #ifndef MAXNUMDIGITS
 #define MAXNUMDIGITS 8 // Can be increased, but the max number is 2^31
 #endif
@@ -51,7 +52,8 @@ public:
   void refreshDisplay();
   void begin(byte hardwareConfig, byte numDigitsIn, byte digitPinsIn[],
           byte segmentPinsIn[], bool resOnSegmentsIn=0, 
-          bool updateWithDelaysIn=0, bool leadingZerosIn=0);
+          bool updateWithDelaysIn=0, bool leadingZerosIn=0,
+		  bool disableDecPoint=0);
   void setBrightness(int brightnessIn); // A number from 0..100
 
   void setNumber(long numToShow, char decPlaces=-1, bool hex=0);
@@ -70,16 +72,23 @@ private:
   void setNewNum(long numToShow, char decPlaces, bool hex=0);
   void findDigits(long numToShow, char decPlaces, bool hex, byte digits[]);
   void setDigitCodes(byte nums[], char decPlaces);
+  void segmentOn(byte segmentNum);
+  void segmentOff(byte segmentNum);
+  void digitOn(byte digitNum);
+  void digitOff(byte digitNum);
 
-  bool digitOn,digitOff,segmentOn,segmentOff;
+  bool digitOnVal,digitOffVal,segmentOnVal,segmentOffVal;
   bool resOnSegments, updateWithDelays, leadingZeros;
   byte digitPins[MAXNUMDIGITS];
   byte segmentPins[8];
   byte numDigits;
-  byte prevUpdateIdx;
-  byte digitCodes[MAXNUMDIGITS];
-  int ledOnTime;
-  unsigned long prevUpdateTime;
+  byte numSegments;
+  byte prevUpdateIdx; // The previously updated segment or digit
+  byte digitCodes[MAXNUMDIGITS]; // The active setting of each segment of each digit
+  unsigned long prevUpdateTime; // The time (millis()) when the display was last updated
+  int ledOnTime; // The time (us) to wait with LEDs on
+  int waitOffTime; // The time (us) to wait with LEDs off
+  bool waitOffActive; // Whether  the program is waiting with LEDs off
 };
 
 #endif //SevSeg_h

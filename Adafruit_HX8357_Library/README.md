@@ -1,5 +1,4 @@
-# Adafruit HX8357 Arduino Library [![Build Status](https://travis-ci.org/adafruit/Adafruit_HX8357_Library.svg?branch=master)](https://travis-ci.org/adafruit/Adafruit_HX8357_Library)
-
+# Adafruit HX8357 Arduino Library [![Build Status](https://travis-ci.com/adafruit/Adafruit_HX8357_Library.svg?branch=master)](https://travis-ci.com/adafruit/Adafruit_HX8357_Library)
 
 This is a library for the Adafruit HX8357 display products
 
@@ -19,8 +18,6 @@ products from Adafruit!
 Written by Limor Fried/Ladyada for Adafruit Industries.
 MIT license, all text above must be included in any redistribution
 
-To download. click the DOWNLOADS button in the top right corner, rename the uncompressed folder Adafruit_HX8357. Check that the Adafruit_HX8357 folder contains Adafruit_HX8357.cpp and Adafruit_HX8357.h
-
-Place the Adafruit_HX8357 library folder your arduinosketchfolder/libraries/ folder. You may need to create the libraries subfolder if its your first library. Restart the IDE
+Recent Arduino IDE releases include the Library Manager for easy installation. Otherwise, to download, click the DOWNLOAD ZIP button, uncompress and rename the uncompressed folder Adafruit_HX8357. Confirm that the Adafruit_HX8357 folder contains Adafruit_HX8357.cpp and Adafruit_HX8357.h. Place the Adafruit_HX8357 library folder your ArduinoSketchFolder/Libraries/ folder. You may need to create the Libraries subfolder if its your first library. Restart the IDE.
 
 Also requires the Adafruit_GFX library for Arduino.

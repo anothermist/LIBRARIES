@@ -28,22 +28,24 @@ class RtcDateTime
 public:
     RtcDateTime(uint32_t secondsFrom2000 = 0);
     RtcDateTime(uint16_t year,
-            uint8_t month,
-            uint8_t dayOfMonth,
-            uint8_t hour,
-            uint8_t minute,
-            uint8_t second) :
-            _yearFrom2000((year >= c_OriginYear) ? year - c_OriginYear : year),
-            _month(month),
-            _dayOfMonth(dayOfMonth),
-            _hour(hour),
-            _minute(minute),
-            _second(second)
+        uint8_t month,
+        uint8_t dayOfMonth,
+        uint8_t hour,
+        uint8_t minute,
+        uint8_t second) :
+        _yearFrom2000((year >= c_OriginYear) ? year - c_OriginYear : year),
+        _month(month),
+        _dayOfMonth(dayOfMonth),
+        _hour(hour),
+        _minute(minute),
+        _second(second)
     {
     }
 
     // RtcDateTime compileDateTime(__DATE__, __TIME__);
     RtcDateTime(const char* date, const char* time);
+
+    bool IsValid() const;
 
     uint16_t Year() const
     {

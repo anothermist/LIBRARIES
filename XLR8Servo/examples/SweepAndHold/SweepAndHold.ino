@@ -1,6 +1,6 @@
 /* SweepAndHold
  Copyright (c) 2016 Alorium Technology.  All rights reserved.
- by Matt Weber (linkedin.com/in/mattweber0) of
+ by Matt Weber (support@aloriumtech.com) of
  Alorium Technology (info@aloriumtech.com)
  
  Demonstrates the awesomeness of the XLR8 Servo library and
@@ -30,7 +30,7 @@
 //  easier to switch back and forth
 #define NUM_SERVOS 12
  
-#define SWEEP_PIN 9
+#define SWEEP_PIN 2
 // skip RX and TX pins 
 #define SKIP_PINS 2
  

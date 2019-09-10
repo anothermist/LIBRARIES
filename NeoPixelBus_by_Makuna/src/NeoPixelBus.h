@@ -57,8 +57,9 @@ License along with NeoPixel.  If not, see
 #include "internal/NeoBufferMethods.h"
 #include "internal/NeoBuffer.h"
 #include "internal/NeoSpriteSheet.h"
-#include "internal/NeoBitmapFile.h"
 #include "internal/NeoDib.h"
+#include "internal/NeoBitmapFile.h"
+
 #include "internal/NeoEase.h"
 #include "internal/NeoGamma.h"
 
@@ -71,6 +72,8 @@ License along with NeoPixel.  If not, see
 
 #elif defined(ARDUINO_ARCH_ESP32)
 
+#include "internal/NeoEsp32I2sMethod.h"
+#include "internal/NeoEsp32RmtMethod.h"
 #include "internal/NeoEspBitBangMethod.h"
 #include "internal/DotStarGenericMethod.h"
 
@@ -136,14 +139,21 @@ public:
         Dirty();
     }
 
-    void Show()
+    // used by DotStartSpiMethod if pins can be configured
+    void Begin(int8_t sck, int8_t miso, int8_t mosi, int8_t ss)
+    {
+        _method.Initialize(sck, miso, mosi, ss);
+        Dirty();
+    }
+
+    void Show(bool maintainBufferConsistency = true)
     {
         if (!IsDirty())
         {
             return;
         }
 
-        _method.Update();
+        _method.Update(maintainBufferConsistency);
 
         ResetDirty();
     }
@@ -321,7 +331,14 @@ public:
         }
     }
     
+    void SwapPixelColor(uint16_t indexPixelOne, uint16_t indexPixelTwo)
+    {
+        auto colorOne = GetPixelColor(indexPixelOne);
+        auto colorTwo = GetPixelColor(indexPixelTwo);
 
+        SetPixelColor(indexPixelOne, colorTwo);
+        SetPixelColor(indexPixelTwo, colorOne);
+    };
  
 protected:
     const uint16_t _countPixels; // Number of RGB LEDs in strip

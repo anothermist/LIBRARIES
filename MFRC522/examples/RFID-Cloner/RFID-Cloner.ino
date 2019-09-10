@@ -1,6 +1,6 @@
 /*
  * Copy the RFID card data into variables and then 
- * scan the second empty card to copy all the date
+ * scan the second empty card to copy all the data
  * ----------------------------------------------------------------------------
  * Example sketch/program which will try the most used default keys listed in 
  * https://code.google.com/p/mfcuk/wiki/MifareClassicDefaultKeys to dump the
@@ -93,9 +93,9 @@ void dump_byte_array1(byte *buffer, byte bufferSize) {
  * @return true when the given key worked, false otherwise.
  */
  
-boolean try_key(MFRC522::MIFARE_Key *key)
+bool try_key(MFRC522::MIFARE_Key *key)
 {
-    boolean result = false;
+    bool result = false;
     
     for(byte block = 0; block < 64; block++){
       

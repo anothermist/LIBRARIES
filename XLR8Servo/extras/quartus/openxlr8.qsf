@@ -1,0 +1,57 @@
+#==============================================================================
+# Copyright (c) 2016 Alorium Technology.  All right reserved.
+#==============================================================================
+#
+# File Name  : openxlr8.qsf
+# Author     : Steve Phillips
+# Contact    : support@aloriumtech.com
+# Description:
+#
+# This is the file that the OpenXLR8 user should use to set all the
+# Quartus settings specific to the OpenXLR8 being developed. This is
+# typically used to include the RTL files needed.
+#
+
+# The following list shows the settings files in the order they are
+# read. Indentation indicates which files are sources by parent
+# files. The [board]_[clock].qsf file is called automatically based on
+# the design revision selected in Quartus. Use the menu item
+# Project->Revisions to selct a revision.
+#
+# +- XLR8Build/extras/quartus/[board]_[clock].qsf
+#    +- XLR8Core/extras/quartus/[board]_top_core.qsf
+#    |  +- XLR8Core/extras/quartus/xlr8_top_core.tcl
+#    |  +- XLR8Core/extras/quartus/xlr8_top.sdc
+#    +- XLR8Core/extras/quartus/xlr8_base.qsf
+#       +- XLR8Build/extras/quartus/openxlr8.qsf
+#       +- XLR8Build/extras/quartus/openxlr8_builtin.qsf
+
+# Quartus settings for XLR8 project
+#  http://www.aloriumtech.com/xlr8
+#  https://github.com/AloriumTechnology
+#==============================================================================
+
+#==============================================================================
+# Set paths to specifc source files as need here
+
+# The XLR8Servo includes both a Verilog and a VHDL version of the
+# Servo code, in order to demonstrate how easy it is to mix Verilog
+# and VHDL in OpenXLR8. Since both versions define exactly the same
+# module ports, the instantiation of the xlr8_servo in the openxlr8.v
+# file works with either iimplementation. The only thing the user need
+# do to switch from Verilog to VHDL is to comment out the
+# SYSTEMVERILOG_FILE line below and uncomment the VHDL_FILE line. Or
+# vice versa to go back to Verilog.
+
+
+# Choose only one of the following choices!
+
+# VERILOG: Uncomment the following line to use the Verilog version
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../XLR8Build/extras/rtl/xlr8_servo.v
+
+# VHDL: Uncomment the following line to use the VHDL version
+# set_global_assignment -name VHDL_FILE ../../../XLR8Build/extras/rtl/xlr8_servo.vhd
+
+
+
+#==============================================================================

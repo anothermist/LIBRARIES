@@ -39,14 +39,24 @@ License along with NeoPixel.  If not, see
 extern "C" void ICACHE_RAM_ATTR bitbang_send_pixels_800(uint8_t* pixels, uint8_t* end, uint8_t pin);
 extern "C" void ICACHE_RAM_ATTR bitbang_send_pixels_400(uint8_t* pixels, uint8_t* end, uint8_t pin);
 
-class NeoEspBitBangSpeedWs2813
+class NeoEspBitBangSpeedWs2812x
 {
 public:
     static void send_pixels(uint8_t* pixels, uint8_t* end, uint8_t pin)
     {
         bitbang_send_pixels_800(pixels, end, pin);
     }
-    static const uint32_t ResetTimeUs = 250;
+    static const uint32_t ResetTimeUs = 300;
+};
+
+class NeoEspBitBangSpeedSk6812
+{
+public:
+    static void send_pixels(uint8_t* pixels, uint8_t* end, uint8_t pin)
+    {
+        bitbang_send_pixels_800(pixels, end, pin);
+    }
+    static const uint32_t ResetTimeUs = 80;
 };
 
 class NeoEspBitBangSpeed800Kbps
@@ -103,7 +113,7 @@ public:
         _endTime = micros();
     }
 
-    void Update()
+    void Update(bool)
     {
         // Data latch = 50+ microsecond pause in the output stream.  Rather than
         // put a delay at the end of the function, the ending time is noted and
@@ -116,11 +126,23 @@ public:
             yield(); // allows for system yield if needed
         }
 
-        noInterrupts(); // Need 100% focus on instruction timing
+		// Need 100% focus on instruction timing
+#if defined(ARDUINO_ARCH_ESP32)
+		delay(1); // required
+		portMUX_TYPE updateMux = portMUX_INITIALIZER_UNLOCKED;
+
+        portENTER_CRITICAL(&updateMux);
+#else
+        noInterrupts(); 
+#endif
 
         T_SPEED::send_pixels(_pixels, _pixels + _sizePixels, _pin);
-
+		
+#if defined(ARDUINO_ARCH_ESP32)
+        portEXIT_CRITICAL(&updateMux);
+#else
         interrupts();
+#endif
 
         // save EOD time for latch on next call
         _endTime = micros();
@@ -146,21 +168,28 @@ private:
 
 #if defined(ARDUINO_ARCH_ESP32)
 
-typedef NeoEspBitBangMethodBase<NeoEspBitBangSpeedWs2813> NeoEsp32BitBangWs2813Method;
+typedef NeoEspBitBangMethodBase<NeoEspBitBangSpeedWs2812x> NeoEsp32BitBangWs2812xMethod;
+typedef NeoEspBitBangMethodBase<NeoEspBitBangSpeedSk6812> NeoEsp32BitBangSk6812Method;
 typedef NeoEspBitBangMethodBase<NeoEspBitBangSpeed800Kbps> NeoEsp32BitBang800KbpsMethod;
 typedef NeoEspBitBangMethodBase<NeoEspBitBangSpeed400Kbps> NeoEsp32BitBang400KbpsMethod;
 
-// Bitbang method is the default method for Esp32
-typedef NeoEsp32BitBangWs2813Method NeoWs2813Method;
-typedef NeoEsp32BitBang800KbpsMethod Neo800KbpsMethod;
-typedef NeoEsp32BitBang400KbpsMethod Neo400KbpsMethod;
+typedef NeoEsp32BitBangWs2812xMethod NeoEsp32BitBangWs2813Method;
+typedef NeoEsp32BitBang800KbpsMethod NeoEsp32BitBangWs2812Method;
+typedef NeoEsp32BitBangSk6812Method NeoEsp32BitBangLc8812Method;
+typedef NeoEsp32BitBang400KbpsMethod NeoEsp32BitBangApa106Method;
 
 #else
 
-typedef NeoEspBitBangMethodBase<NeoEspBitBangSpeedWs2813> NeoEsp8266BitBangWs2813Method;
+typedef NeoEspBitBangMethodBase<NeoEspBitBangSpeedWs2812x> NeoEsp8266BitBangWs2812xMethod;
+typedef NeoEspBitBangMethodBase<NeoEspBitBangSpeedSk6812> NeoEsp8266BitBangSk6812Method;
 typedef NeoEspBitBangMethodBase<NeoEspBitBangSpeed800Kbps> NeoEsp8266BitBang800KbpsMethod;
 typedef NeoEspBitBangMethodBase<NeoEspBitBangSpeed400Kbps> NeoEsp8266BitBang400KbpsMethod;
 
+typedef NeoEsp8266BitBangWs2812xMethod NeoEsp8266BitBangWs2813Method;
+typedef NeoEsp8266BitBang800KbpsMethod NeoEsp8266BitBangWs2812Method;
+typedef NeoEsp8266BitBangSk6812Method NeoEsp8266BitBangLc8812Method;
+typedef NeoEsp8266BitBang400KbpsMethod NeoEsp8266BitBangApa106Method;
 #endif
 
+// ESP bitbang doesn't have defaults and should avoided except for testing
 #endif

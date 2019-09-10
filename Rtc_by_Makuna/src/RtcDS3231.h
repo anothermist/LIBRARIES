@@ -206,11 +206,11 @@ enum DS3231SquareWaveClock
 enum DS3231SquareWavePinMode
 {
     DS3231SquareWavePin_ModeNone,
-    DS3231SquareWavePin_ModeBatteryBackup,
-    DS3231SquareWavePin_ModeClock,
     DS3231SquareWavePin_ModeAlarmOne,
     DS3231SquareWavePin_ModeAlarmTwo,
-    DS3231SquareWavePin_ModeAlarmBoth
+    // note:  the same as DS3231SquareWavePin_ModeAlarmOne | DS3231SquareWavePin_ModeAlarmTwo
+    DS3231SquareWavePin_ModeAlarmBoth, 
+    DS3231SquareWavePin_ModeClock
 };
 
 enum DS3231AlarmFlag
@@ -224,13 +224,19 @@ template<class T_WIRE_METHOD> class RtcDS3231
 {
 public:
     RtcDS3231(T_WIRE_METHOD& wire) :
-        _wire(wire)
+        _wire(wire),
+        _lastError(0)
     {
     }
 
     void Begin()
     {
         _wire.begin();
+    }
+
+    uint8_t LastError()
+    {
+        return _lastError;
     }
 
     bool IsDateTimeValid()
@@ -293,14 +299,18 @@ public:
         _wire.write(Uint8ToBcd(dt.Month()) | centuryFlag);
         _wire.write(Uint8ToBcd(year));
 
-        _wire.endTransmission();
+        _lastError = _wire.endTransmission();
     }
 
     RtcDateTime GetDateTime()
     {
         _wire.beginTransmission(DS3231_ADDRESS);
         _wire.write(DS3231_REG_TIMEDATE);
-        _wire.endTransmission();
+        _lastError = _wire.endTransmission();
+        if (_lastError != 0)
+        {
+            return RtcDateTime(0);
+        }
 
         _wire.requestFrom(DS3231_ADDRESS, DS3231_REG_TIMEDATE_SIZE);
         uint8_t second = BcdToUint8(_wire.read() & 0x7F);
@@ -327,7 +337,11 @@ public:
     {
         _wire.beginTransmission(DS3231_ADDRESS);
         _wire.write(DS3231_REG_TEMP);
-        _wire.endTransmission();
+        _lastError = _wire.endTransmission();
+        if (_lastError != 0)
+        {
+            return RtcTemperature(0);
+        }
 
         // Temperature is represented as a 10-bit code with a resolution
         // of 1/4th °C and is accessable as a signed 16-bit integer at
@@ -364,41 +378,37 @@ public:
         setReg(DS3231_REG_STATUS, sreg);
     }
 
-    void SetSquareWavePin(DS3231SquareWavePinMode pinMode)
+    void SetSquareWavePin(DS3231SquareWavePinMode pinMode, bool enableWhileInBatteryBackup = true)
     {
         uint8_t creg = getReg(DS3231_REG_CONTROL);
 
         // clear all relevant bits to a known "off" state
         creg &= ~(DS3231_AIEMASK | _BV(DS3231_BBSQW));
-        creg |= _BV(DS3231_INTCN);  // set INTCN to disables SQW
+        creg |= _BV(DS3231_INTCN);  // set INTCN to disables clock SQW
 
-        switch (pinMode)
+        if (pinMode != DS3231SquareWavePin_ModeNone)
         {
-        case DS3231SquareWavePin_ModeNone:
-            break;
+            if (pinMode == DS3231SquareWavePin_ModeClock)
+            {
+                creg &= ~_BV(DS3231_INTCN); // clear INTCN to enable clock SQW 
+            }
+            else
+            {
+                if (pinMode & DS3231SquareWavePin_ModeAlarmOne)
+                {
+                    creg |= _BV(DS3231_A1IE);
+                }
+                if (pinMode & DS3231SquareWavePin_ModeAlarmTwo)
+                {
+                    creg |= _BV(DS3231_A2IE);
+                }
+            }
 
-        case DS3231SquareWavePin_ModeBatteryBackup:
-            creg |= _BV(DS3231_BBSQW); // set battery backup flag
-            creg &= ~_BV(DS3231_INTCN); // clear INTCN to enable SQW 
-            break;
-
-        case DS3231SquareWavePin_ModeClock:
-            creg &= ~_BV(DS3231_INTCN); // clear INTCN to enable SQW 
-            break;
-
-        case DS3231SquareWavePin_ModeAlarmOne:
-            creg |= _BV(DS3231_A1IE);
-            break;
-
-        case DS3231SquareWavePin_ModeAlarmTwo:
-            creg |= _BV(DS3231_A2IE);
-            break;
-
-        case DS3231SquareWavePin_ModeAlarmBoth:
-            creg |= _BV(DS3231_A1IE) | _BV(DS3231_A2IE);
-            break;
+            if (enableWhileInBatteryBackup)
+            {
+                creg |= _BV(DS3231_BBSQW); // set enable int/sqw while in battery backup flag
+            }
         }
-
         setReg(DS3231_REG_CONTROL, creg);
     }
 
@@ -430,7 +440,7 @@ public:
 
         _wire.write(Uint8ToBcd(rtcDow) | ((alarm.ControlFlags() & 0x18) << 3));
 
-        _wire.endTransmission();
+        _lastError = _wire.endTransmission();
     }
 
     void SetAlarmTwo(const DS3231AlarmTwo& alarm)
@@ -450,14 +460,18 @@ public:
         
         _wire.write(Uint8ToBcd(rtcDow) | ((alarm.ControlFlags() & 0x0c) << 4));
 
-        _wire.endTransmission();
+        _lastError = _wire.endTransmission();
     }
 
     DS3231AlarmOne GetAlarmOne()
     {
         _wire.beginTransmission(DS3231_ADDRESS);
         _wire.write(DS3231_REG_ALARMONE);
-        _wire.endTransmission();
+        _lastError = _wire.endTransmission();
+        if (_lastError != 0)
+        {
+            return DS3231AlarmOne(0, 0, 0, 0, DS3231AlarmOneControl_HoursMinutesSecondsDayOfMonthMatch);
+        }
 
         _wire.requestFrom(DS3231_ADDRESS, DS3231_REG_ALARMONE_SIZE);
 
@@ -489,7 +503,11 @@ public:
     {
         _wire.beginTransmission(DS3231_ADDRESS);
         _wire.write(DS3231_REG_ALARMTWO);
-        _wire.endTransmission();
+        _lastError = _wire.endTransmission();
+        if (_lastError != 0)
+        {
+            return DS3231AlarmTwo(0, 0, 0, DS3231AlarmTwoControl_HoursMinutesDayOfMonthMatch);
+        }
 
         _wire.requestFrom(DS3231_ADDRESS, DS3231_REG_ALARMTWO_SIZE);
 
@@ -549,12 +567,17 @@ public:
 
 private:
     T_WIRE_METHOD& _wire;
+    uint8_t _lastError;
 
     uint8_t getReg(uint8_t regAddress)
     {
         _wire.beginTransmission(DS3231_ADDRESS);
         _wire.write(regAddress);
-        _wire.endTransmission();
+        _lastError = _wire.endTransmission();
+        if (_lastError != 0)
+        {
+            return 0;
+        }
 
         // control register
         _wire.requestFrom(DS3231_ADDRESS, (uint8_t)1);
@@ -568,7 +591,7 @@ private:
         _wire.beginTransmission(DS3231_ADDRESS);
         _wire.write(regAddress);
         _wire.write(regValue);
-        _wire.endTransmission();
+        _lastError = _wire.endTransmission();
     }
 
 };

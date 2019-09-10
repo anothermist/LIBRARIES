@@ -2,7 +2,7 @@
 #include <Wire.h>
 
 Accessory::Accessory() {
-	type=NUNCHUCK;
+	type = NUNCHUCK;
 }
 /**
  * Reads the device type from the controller
@@ -76,9 +76,10 @@ void Accessory::sendMultiSwitch(uint8_t iic, uint8_t sw) {
 		Wire.endTransmission();
 		err = Wire.endTransmission();
 		if (err != 0) {
-			Serial.println("sendMultiSwitch Resetting because of " + String(err));
-			reset();
-		}else
+//			Serial.println(
+//					"sendMultiSwitch Resetting because of " + String(err));
+//			reset();
+		} else
 			return;
 	}
 
@@ -105,7 +106,7 @@ void Accessory::switchMultiplexer(uint8_t iic, uint8_t sw) {
 	if (TWCR == 0)
 #endif
 		Wire.begin();
-	 // Start I2C if it's not running
+	// Start I2C if it's not running
 	sendMultiSwitch(iic, sw);
 }
 
@@ -154,8 +155,6 @@ void Accessory::setDataArray(uint8_t data[6]) {
 	for (int i = 0; i < 6; i++)
 		_dataarray[i] = data[i];
 }
-
-
 
 int Accessory::decodeInt(uint8_t mmsbbyte, uint8_t mmsbstart, uint8_t mmsbend,
 		uint8_t msbbyte, uint8_t msbstart, uint8_t msbend, uint8_t csbbyte,
@@ -259,14 +258,19 @@ void Accessory::begin() {
 #if defined(TWCR)
 	if (TWCR == 0)
 #endif
-		Wire.begin();
+#if defined(ARDUINO_ARCH_ESP32)
+		Wire.begin(SDA,SCL,10000);
+#else
+	Wire.begin();
+
+#endif
 	// Start I2C if it's not running
 
 	switchMultiplexer();
 
 	initBytes();
 	identifyController();
-	if(getControllerType()==DrawsomeTablet){
+	if (getControllerType() == DrawsomeTablet) {
 		initBytesDrawsome();
 	}
 	delay(100);
@@ -276,35 +280,106 @@ void Accessory::begin() {
 }
 
 boolean Accessory::_burstRead(uint8_t addr) {
-	//int readAmnt = sizeof(_dataarray);
+	//int readAmnt = dataArraySize;
 	uint8_t err = 0;
-	int i = 0;
-	for (; i < 10; i++) {
+	bool dataBad = true;
+	int b = 0;
+	//bool consecCheck = true;
+	uint8_t readBytes=0;
+	for (; b < 5; b++) {
 		Wire.beginTransmission(WII_I2C_ADDR);
 		Wire.write(addr);
 		err = Wire.endTransmission();
 		if (err == 0) {			// wait for data to be converted
-			delayMicroseconds(175);
 
+			delayMicroseconds(275);
+			int requested = Wire.requestFrom(WII_I2C_ADDR, dataArraySize);
+			delayMicroseconds(100);
 			// read data
-			uint8_t readBytes = Wire.readBytes(_dataarray,
-
-					Wire.requestFrom(WII_I2C_ADDR, sizeof(_dataarray)));
-
-			if (_encrypted) {
-				for (int i = 0; i < sizeof(_dataarray); i++)
-					_dataarray[i] = decryptByte(_dataarray[i], addr + i);
-
+			 readBytes = Wire.readBytes(_dataarrayTMP,requested);
+			dataBad = true;
+			//consecCheck=true;
+			// If all bytes are 255, this is likely an error packet, reject
+			for (int i = 0; i < dataArraySize && dataBad; i++){
+				if(_dataarrayTMP[i]!=(uint8_t)255){
+					dataBad=false;
+				}
 			}
-			getValues();//parse the data into readable data
-			return readBytes == sizeof(_dataarray);
+			// check to see we read enough bytes and that they are valid
+			if(readBytes == dataArraySize && dataBad==false){
+				// decrypt bytes
+				if (_encrypted) {
+					for (int i = 0; i < dataArraySize; i++)
+						_dataarray[i] = decryptByte(_dataarrayTMP[i], addr + i);
+
+				}else{
+					//Serial.print(" DATA= ");
+					for (int i = 0; i < dataArraySize; i++){
+						_dataarray[i] = _dataarrayTMP[i];
+						//Serial.print(" , "+String( (uint8_t)_dataarray[i]));
+					}
+				}
+				// Check the read in data aganst the last read date,
+				// a valid burst read is 2 reads that produce the same data
+				dataBad=false;
+//				for (int x = 0; x< dataArraySize && dataBad==false; x++){
+//					if(_dataarray[x]!=_dataarrayReadConsec[x]){
+//						dataBad=true;
+////						if(b>2){
+////							Serial.print("\nBad Data Packet repeted: _burstRead Resetting " + String(b+1)+"\n\tExpected: ");
+////							for (int i = 0; i < dataArraySize; i++){
+////
+////								Serial.print(" "+String( (uint8_t)_dataarrayReadConsec[i]));
+////							}
+////							Serial.print("\n\tgot:      ");
+////							for (int i = 0; i < dataArraySize; i++){
+////
+////								Serial.print(" "+String( (uint8_t)_dataarray[i]));
+////							}
+////						}
+//						//consecCheck=false;
+//					}
+//				}
+				// copy current frame to compare to next frame
+				for (int i = 0; i < dataArraySize; i++){
+					_dataarrayReadConsec[i]=_dataarray[i];
+				}
+				// after 2 identical reads, process the data
+				if(!dataBad){
+					getValues();			//parse the data into readable data
+					return true; // fast return once the success case is reached
+				}else{
+					//delay(3);
+				}
+
+			}else{
+
+				dataBad=true;
+			}
 		}
-		if(i>5)
-			Serial.println("_burstRead Resetting because of " + String(err)+" repeted: "+String(i));
-		reset();
+		if(dataBad || (err != 0) ){
+			if((err != 0)){
+				Serial.println(	"\nI2C error code _burstRead error: " + String(err)
+												+ " repeted: " + String(b+1));
+				if(err==5){
+					begin();
+				}
+
+			}else if(readBytes != dataArraySize){
+				Serial.println("\nI2C Read length failure _burstRead Resetting " + String(readBytes)
+												+ " repeted: " + String(dataArraySize));
+			}else if(dataBad){
+
+			}else
+				Serial.println(
+						"\nOther I2C error, packet all 255 _burstRead Resetting " + String(err)
+								+ " repeted: " + String(b+1));
+			reset();
+		}
+
 	}
 
-	return false;
+	return !dataBad && (err == 0);
 }
 
 void Accessory::_writeRegister(uint8_t reg, uint8_t value) {
@@ -320,9 +395,11 @@ void Accessory::_writeRegister(uint8_t reg, uint8_t value) {
 		Wire.write(value);
 		err = Wire.endTransmission();
 		if (err != 0) {
-			Serial.println("_writeRegister Resetting because of " + String(err)+" repeted: "+String(i));
+//			Serial.println(
+//					"_writeRegister Resetting because of " + String(err)
+//							+ " repeted: " + String(i));
 			reset();
-		}else
+		} else
 			return;
 	}
 
@@ -345,25 +422,28 @@ void Accessory::_burstWriteWithAddress(uint8_t addr, uint8_t* arr,
 			Wire.write(arr[i]);
 		err = Wire.endTransmission();
 		if (err != 0) {
-			Serial.println("_burstWriteWithAddress Resetting because of " + String(err)+" repeted: "+String(i));
+//			Serial.println(
+//					"_burstWriteWithAddress Resetting because of " + String(err)
+//							+ " repeted: " + String(i));
 			reset();
-		}else
+		} else
 			return;
 	}
 
 }
 
-void Accessory::reset(){
+void Accessory::reset() {
 #if defined(ARDUINO_ARCH_ESP32)
-	Wire.reset();
+		Wire.begin(SDA,SCL,10000);
+#else
+	Wire.begin();
+
 #endif
 }
 
 void Accessory::enableEncryption(bool enc) {
 	_encrypted = enc;
 }
-
-
 
 int Accessory::smap(int16_t val, int16_t aMax, int16_t aMid, int16_t aMin,
 		int16_t sMax, int16_t sZero, int16_t sMin) {
@@ -378,15 +458,13 @@ int Accessory::smap(int16_t val, int16_t aMax, int16_t aMid, int16_t aMin,
 	return mapv;
 }
 
-
-
 uint8_t Accessory::decryptByte(uint8_t byte, uint8_t address) {
 //return (byte ^ _key_table_1[address % 8]) + _key_table_1[(address % 8)+0x08];
 	return (byte ^ 0x97) + 0x97;
 }
 
 void Accessory::printInputs(Stream& stream) {
-	switch(getControllerType()){
+	switch (getControllerType()) {
 	case WIICLASSIC:
 		printInputsClassic(stream);
 		break;
@@ -415,8 +493,8 @@ void Accessory::printInputs(Stream& stream) {
 	}
 }
 
-uint8_t * Accessory::getValues(){
-	switch(getControllerType()){
+uint8_t * Accessory::getValues() {
+	switch (getControllerType()) {
 	case WIICLASSIC:
 		getValuesClassic(values);
 		break;
@@ -442,5 +520,6 @@ uint8_t * Accessory::getValues(){
 
 	}
 	return values;
-};
+}
+;
 

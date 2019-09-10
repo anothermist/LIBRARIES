@@ -1,0 +1,7 @@
+Adafruit_BMP183	KEYWORD1
+begin	KEYWORD2
+getTemperature	KEYWORD2
+getPressure	KEYWORD2
+getAltitude	KEYWORD2
+readRawTemperature	KEYWORD2
+readRawPressure	KEYWORD2

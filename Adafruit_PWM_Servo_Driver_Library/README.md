@@ -1,8 +1,8 @@
-# Adafruit PCA9685 PWM Servo Driver Library [![Build Status](https://travis-ci.org/adafruit/Adafruit_PWMServoDriver.svg?branch=master)](https://travis-ci.org/adafruit/Adafruit_PWMServoDriver)
+# Adafruit PCA9685 PWM Servo Driver Library [![Build Status](https://travis-ci.com/adafruit/Adafruit-PWM-Servo-Driver-Library.svg?branch=master)](https://travis-ci.com/adafruit/Adafruit-PWM-Servo-Driver-Library)
 
 This is a library for our Adafruit 16-channel PWM & Servo driver, shield or FeatherWing
 
-<img src="https://cdn-shop.adafruit.com/970x728/815-04.jpg" height="300"/>
+<a href="https://www.adafruit.com/products/815"><img src="https://cdn-shop.adafruit.com/970x728/815-04.jpg" height="300"/></a>
 
 Pick one up today in the adafruit shop!
   * https://www.adafruit.com/products/815

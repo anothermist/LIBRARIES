@@ -45,8 +45,19 @@ void setup ()
 
     if (!Rtc.IsDateTimeValid()) 
     {
-        Serial.println("RTC lost confidence in the DateTime!");
-        Rtc.SetDateTime(compiled);
+        if (Rtc.LastError() != 0)
+        {
+            // we have a communications error
+            // see https://www.arduino.cc/en/Reference/WireEndTransmission for 
+            // what the number means
+            Serial.print("RTC communications error = ");
+            Serial.println(Rtc.LastError());
+        }
+        else
+        {
+            Serial.println("RTC lost confidence in the DateTime!");
+            Rtc.SetDateTime(compiled);
+        }
     }
 
     if (!Rtc.GetIsRunning())
@@ -78,9 +89,20 @@ void loop ()
 {
     if (!Rtc.IsDateTimeValid()) 
     {
-        // Common Cuases:
-        //    1) the battery on the device is low or even missing and the power line was disconnected
-        Serial.println("RTC lost confidence in the DateTime!");
+        if (Rtc.LastError() != 0)
+        {
+            // we have a communications error
+            // see https://www.arduino.cc/en/Reference/WireEndTransmission for 
+            // what the number means
+            Serial.print("RTC communications error = ");
+            Serial.println(Rtc.LastError());
+        }
+        else
+        {
+            // Common Causes:
+            //    1) the battery on the device is low or even missing and the power line was disconnected
+            Serial.println("RTC lost confidence in the DateTime!");
+        }
     }
 
     RtcDateTime now = Rtc.GetDateTime();
@@ -119,10 +141,9 @@ void loop ()
         Serial.print("data read (");
         Serial.print(gotten);
         Serial.print(") = \"");
-        while (gotten > 0)
+        for (uint8_t ch = 0; ch < gotten; ch++)
         {
-            Serial.print((char)buff[count - gotten]);
-            gotten--;
+            Serial.print((char)buff[ch]);
         }
         Serial.println("\"");
     }
